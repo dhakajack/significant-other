@@ -32,7 +32,7 @@
 // If you offer a hardware kit using this software, show your appreciation by sending the author a complimentary kit or a bottle of bourbon ;-)
 
 
-
+//based on ...
 #define CODE_VERSION "2012101701"
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
@@ -239,15 +239,15 @@
 
 // Pins
 
-#define paddle_left 2
-#define paddle_right 5
-#define tx_key_line_1 11       // (high = key down/tx on)
-#define tx_key_line_2 13//12
+#define paddle_left 7
+#define paddle_right 8
+#define tx_key_line_1 6       // (high = key down/tx on)
+#define tx_key_line_2 0//12
 #define tx_key_line_3 0
 #define tx_key_line_4 0
 #define tx_key_line_5 0
 #define tx_key_line_6 0
-#define sidetone_line 4         // connect a speaker for sidetone
+#define sidetone_line 9         // connect a speaker for sidetone
 #define potentiometer A0        // Speed potentiometer (0 to 5 V) Use pot from 1k to 10k
 //#define potentiometer A7 //Rev A & B nanokeyer
 #define ptt_tx_1 0              // PTT ("push to talk") lines
@@ -260,7 +260,7 @@
 #define cw_decoder_pin A5 //A3
 
 #ifdef FEATURE_COMMAND_BUTTONS
-#define analog_buttons_pin A1
+#define analog_buttons_pin A3
 //#define analog_buttons_pin A6  //Rev A & B nanokeyer
 #endif //FEATURE_COMMAND_BUTTONS
 
