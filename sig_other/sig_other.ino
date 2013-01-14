@@ -174,7 +174,7 @@
 #define FEATURE_COMMAND_BUTTONS  // this is now required for the regular buttons and command mode (added in version 2012061601)
 #define FEATURE_SAY_HI
 #define FEATURE_MEMORIES
-#define FEATURE_MEMORY_MACROS
+//#define FEATURE_MEMORY_MACROS
 //#define FEATURE_WINKEY_EMULATION    // this requires FEATURE_SERIAL - disabling Automatic Software Reset is recommended (see documentation)
 //#define OPTION_WINKEY_2_SUPPORT     // requires FEATURE_WINKEY_EMULATION
 //#define FEATURE_BEACON
