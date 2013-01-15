@@ -51,12 +51,10 @@
 //    \#     Play memory #                             (requires FEATURES_MEMORIES; can only play memories 1 - 9)
 //    \a     Iambic A mode
 //    \b     Iambic B mode
-//    \c     Switch to CW (from Hell)
 //    \d     Ultimatic mode
 //    \e#### Set serial number to ####
 //    \f#### Set sidetone frequency to #### hertz
 //    \g     Bug mode
-//    \h     Switch to Hell sending                    (requires FEATURE_HELL)
 //    \i     Transmit enable/disable
 //    \j###  Dah to dit ratio (300 = 3.00)
 //    \k     Callsign receive practice
@@ -114,8 +112,6 @@
 //    \d###  Delay for ### seconds
 //    \e     Play serial number, then increment
 //    \f#### Change sidetone to #### hertz (must be four digits - use leading zero below 1000 hz)
-//    \h     Switch to Hell sending
-//    \l     Switch to CW (from Hell mode)
 //    \n     Decrement serial number, do not send
 //    \q##   Switch to QRSS mode, dit length ## seconds
 //    \r     Switch to regular speed mode
@@ -147,7 +143,6 @@
 //#define FEATURE_CALLSIGN_RECEIVE_PRACTICE
 #define FEATURE_POTENTIOMETER         // do not enable unless you have a potentiometer connected, otherwise noise will falsely trigger wpm changes
 //#define FEATURE_SERIAL_HELP
-//#define FEATURE_HELL
 //#define FEATURE_DEAD_OP_WATCHDOG
 //#define FEATURE_AUTOSPACE
 //#define FEATURE_FARNSWORTH
@@ -184,7 +179,6 @@
 //#define DEBUG_MEMORY_WRITE
 //#define DEBUG_MEMORYCHECK
 //#define DEBUG_CAPTURE_COM_PORT
-//#define DEBUG_HELL_TEST
 //#define DEBUG_WINKEY_PROTOCOL
 //#define DEBUG_CHECK_SERIAL
 //#define FEATURE_FREQ_COUNTER                 // not implemented yet
@@ -272,7 +266,6 @@
 #define lcd_columns 16
 #define lcd_rows 2
 #define eeprom_magic_number 73
-#define hell_pixel_microseconds 4025
 #define program_memory_limit_consec_spaces 1
 #define serial_leading_zeros 1            // set to 1 to activate leading zeros in serial numbers (i.e. #1 = 001)
 #define serial_cut_numbers 0              // set to 1 to activate cut numbers in serial numbers (i.e. #10 = 1T, #19 = 1N)
@@ -312,7 +305,6 @@
 #define SPEED_QRSS 1
 
 #define CW 0
-#define HELL 1
 
 #define SERIAL_NORMAL 0
 #define SERIAL_WINKEY_EMULATION 1
@@ -445,7 +437,6 @@ byte machine_mode;   // NORMAL, BEACON, COMMAND
 byte paddle_mode;    // PADDLE_NORMAL, PADDLE_REVERSE
 byte keyer_mode;     // STRAIGHT, IAMBIC_A, IAMBIC_B, BUG
 byte sidetone_mode;  // SIDETONE_OFF, SIDETONE_ON, SIDETONE_PADDLE_ONLY
-byte char_send_mode; // CW, HELL
 byte key_tx;         // 0 = tx_key_line control suppressed
 byte dit_buffer;     // used for buffering paddle hits in iambic operation
 byte dah_buffer;     // used for buffering paddle hits in iambic operation
@@ -591,60 +582,6 @@ byte winkey_sending = 0;
 byte winkey_interrupted = 0;
 #endif //FEATURE_WINKEY_EMULATION
 
-#ifdef FEATURE_HELL
-prog_uchar hell_font1[] __attribute__((section(".progmem.data"))) = {B00111111, B11100000, B00011001, B11000000, B01100011, B00000001, B10011100, B00111111, B11100000,    // A
-                                   B00110000, B00110000, B11111111, B11000011, B00110011, B00001100, B11001100, B00011100, B11100000,    // B
-                                   B00111111, B11110000, B11000000, B11000011, B00000011, B00001100, B00001100, B00110000, B00110000,    // C
-                                   B00110000, B00110000, B11111111, B11000011, B00000011, B00001100, B00001100, B00011111, B11100000,    // D
-                                   B00111111, B11110000, B11001100, B11000011, B00110011, B00001100, B00001100, B00110000, B00110000,
-                                   B00111111, B11110000, B00001100, B11000000, B00110011, B00000000, B00001100, B00000000, B00110000,
-                                   B00111111, B11110000, B11000000, B11000011, B00000011, B00001100, B11001100, B00111111, B00110000,
-                                   B00111111, B11110000, B00001100, B00000000, B00110000, B00000000, B11000000, B00111111, B11110000,
-                                   B00000000, B00000000, B00000000, B00000011, B11111111, B00000000, B00000000, B00000000, B00000000,
-                                   B00111100, B00000000, B11000000, B00000011, B00000000, B00001100, B00000000, B00111111, B11110000,
-                                   B00111111, B11110000, B00001100, B00000000, B01110000, B00000011, B00110000, B00111000, B11100000,
-                                   B00111111, B11110000, B11000000, B00000011, B00000000, B00001100, B00000000, B00110000, B00000000,
-                                   B00111111, B11110000, B00000001, B10000000, B00001100, B00000000, B00011000, B00111111, B11110000,
-                                   B00111111, B11110000, B00000011, B10000000, B00111000, B00000011, B10000000, B00111111, B11110000,
-                                   B00111111, B11110000, B11000000, B11000011, B00000011, B00001100, B00001100, B00111111, B11110000,
-                                   B00110000, B00110000, B11111111, B11000011, B00110011, B00000000, B11001100, B00000011, B11110000,
-                                   B00111111, B11110000, B11000000, B11000011, B11000011, B00001111, B11111100, B11110000, B00000000,
-                                   B00111111, B11110000, B00001100, B11000000, B00110011, B00000011, B11001100, B00111001, B11100000,
-                                   B00110001, B11100000, B11001100, B11000011, B00110011, B00001100, B11001100, B00011110, B00110000,
-                                   B00000000, B00110000, B00000000, B11000011, B11111111, B00000000, B00001100, B00000000, B00110000,
-                                   B00111111, B11110000, B11000000, B00000011, B00000000, B00001100, B00000000, B00111111, B11110000,
-                                   B00111111, B11110000, B01110000, B00000000, B01110000, B00000000, B01110000, B00000000, B01110000,
-                                   B00011111, B11110000, B11000000, B00000001, B11110000, B00001100, B00000000, B00011111, B11110000,
-                                   B00111000, B01110000, B00110011, B00000000, B01111000, B00000011, B00110000, B00111000, B01110000,
-                                   B00000000, B01110000, B00000111, B00000011, B11110000, B00000000, B01110000, B00000000, B01110000,
-                                   B00111000, B00110000, B11111000, B11000011, B00110011, B00001100, B01111100, B00110000, B01110000};   // Z
-
-prog_uchar hell_font2[] __attribute__((section(".progmem.data"))) = {B00011111, B11100000, B11000000, B11000011, B00000011, B00001100, B00001100, B00011111, B11100000,   // 0
-                                   B00000000, B00000000, B00000011, B00000000, B00000110, B00001111, B11111100, B00000000, B00000000,
-                                   B00111000, B01100000, B11110000, B11000011, B00110011, B00001100, B01111000, B00110000, B00000000,
-                                   B11000000, B00000011, B00000000, B11000110, B00110011, B00001100, B11111100, B00011110, B00000000,
-                                   B00000111, B11111000, B00011000, B00000000, B01100000, B00001111, B11111100, B00000110, B00000000,
-                                   B00110000, B00000000, B11000000, B00000011, B00011111, B10000110, B01100110, B00001111, B00011000,
-                                   B00011111, B11110000, B11001100, B01100011, B00011000, B11001100, B01100000, B00011111, B00000000,
-                                   B01110000, B00110000, B01110000, B11000000, B01110011, B00000000, B01111100, B00000000, B01110000,
-                                   B00111100, B11110001, B10011110, B01100110, B00110001, B10011001, B11100110, B00111100, B11110000,
-                                   B00000011, B11100011, B00011000, B11000110, B01100011, B00001100, B00001100, B00011111, B11100000};  // 9
-
-prog_uchar hell_font3[] __attribute__((section(".progmem.data"))) = {B00000011, B00000000, B00001100, B00000001, B11111110, B00000000, B11000000, B00000011, B00000000,
-                                   B00000011, B00000000, B00001100, B00000000, B00110000, B00000000, B11000000, B00000011, B00000000,
-                                   B00000000, B00110000, B00000000, B11001110, B01110011, B00000000, B01111100, B00000000, B00000000,
-                                   B01110000, B00000000, B01110000, B00000000, B01110000, B00000000, B01110000, B00000000, B01110000,
-                                   B00111000, B00000000, B11100000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000,
-                                   B00001100, B00000001, B11110000, B00000000, B00000000, B00000000, B00000000, B00000000, B00000000,
-                                   B00000000, B00111000, B00000011, B10000000, B00000000, B00000000, B00000000, B00000000, B00000000,
-                                   B00001100, B11000000, B00110011, B00000000, B11001100, B00000011, B00110000, B00001100, B11000000,
-                                   B01110000, B00111000, B01110011, B10000000, B01111000, B00000000, B00000000, B00000000, B00000000,
-                                   B00000000, B00000000, B00000000, B00000000, B01111000, B00000111, B00111000, B01110000, B00111000,
-                                   B00000000, B00000000, B01110011, B10000001, B11001110, B00000000, B00000000, B00000000, B00000000,
-                                   0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-#endif //FEATURE_HELL
-
 #ifdef FEATURE_SERIAL_HELP
 #ifdef FEATURE_SERIAL
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
@@ -653,16 +590,10 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
   "\\#\t\t: play memory # x\n\r"
   "\\A\t\t: Iambic A\n\r"
   "\\B\t\t: Iambic B\n\r"
-  #ifdef FEATURE_HELL
-  "\\C\t\t: switch to CW (from Hell mode)\n\r"
-  #endif
   "\\D\t\t: Ultimatic\n\r"
   "\\E####\t\t: Set serial number to ####\n\r"
   "\\F####\t\t: Set sidetone to #### hz\n\r"
   "\\G\t\t: switch to Bug mode\n\r"
-  #ifdef FEATURE_HELL
-  "\\H\t\t: Switch to Hell mode\n\r"
-  #endif
   "\\I\t\t: TX line disable/enable\n\r"
   "\\J###\t\t: Set Dah to Dit Ratio\n\r"
   #ifdef FEATURE_CALLSIGN_RECEIVE_PRACTICE
@@ -692,15 +623,9 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
   "\\\\\t\t: Empty keyboard send buffer\n\r"
   "\nMemory Macros:\n\r"
   "\\#\t\t: Jump to memory #\n\r"
-  #ifdef FEATURE_HELL
-  "\\C\t\t: Switch to CW (from Hell mode)\n\r"
-  #endif
   "\\D###\t\t: Delay for ### seconds\n\r"
   "\\E\t\t: Send serial number\n\r"
   "\\F####\t\t: Set sidetone to #### hz\n\r"
-  #ifdef FEATURE_HELL
-  "\\H\t\t: Switch to Hell mode\n\r"
-  #endif
   "\\N\t\t: Decrement serial number\n\r"
   "\\Q##\t\t: Switch to QRSS with ## second dit length\n\r"
   "\\R\t\t: Switch to regular speed mode\n\r"
@@ -783,7 +708,6 @@ void setup()
   paddle_mode = PADDLE_NORMAL;
   keyer_mode = IAMBIC_B;
   sidetone_mode = SIDETONE_ON;
-  char_send_mode = CW;
 
   delay(250);  // wait a little bit for the caps to charge up on the paddle lines
 
@@ -822,10 +746,6 @@ void setup()
   #ifdef DEBUG_CAPTURE_COM_PORT
   Serial.begin(serial_baud_rate);
   debug_capture();
-  #endif
-
-  #ifdef DEBUG_HELL_TEST
-  hell_test();
   #endif
 
   #ifdef FEATURE_COMMAND_BUTTONS
@@ -1339,121 +1259,6 @@ byte pot_value_wpm()
   byte return_value = map(pot_read, 0, pot_full_scale_reading, pot_wpm_low_value, pot_wpm_high_value);
   return return_value;
 
-}
-
-#endif
-
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_HELL
-void hell_test ()
-{
-  for (byte h = 65; h < 91; h++) {
-    transmit_hell_char(h);
-  }
-  transmit_hell_char('0');
-  transmit_hell_char('1');
-  transmit_hell_char('2');
-  transmit_hell_char('3');
-  transmit_hell_char('4');
-  transmit_hell_char('5');
-  transmit_hell_char('6');
-  transmit_hell_char('7');
-  transmit_hell_char('8');
-  transmit_hell_char('9');
-  transmit_hell_char('+');
-  transmit_hell_char('-');
-  transmit_hell_char('?');
-  transmit_hell_char('/');
-  transmit_hell_char('.');
-  transmit_hell_char(',');
-//  transmit_hell_char('‘');  // this causes compiler warning; unicode character or something?
-  transmit_hell_char('=');
-  transmit_hell_char(')');
-  transmit_hell_char('(');
-  transmit_hell_char(':');
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_HELL
-void transmit_hell_char (byte hellchar)
-{
-
-  // blank column
-  for (byte w = 0; w < 14; w++) {
-    transmit_hell_pixel(0);
-  }
-
-  if ((hellchar > 64) && (hellchar < 91)) {    // A - Z
-    hellchar = ((hellchar - 65) * 9);
-    transmit_hell_pixels(hell_font1, hellchar);
-  } else {
-    if ((hellchar > 47) && (hellchar < 58)) {  // 0 - 9
-      hellchar = ((hellchar - 48) * 9);
-      transmit_hell_pixels(hell_font2, hellchar);
-    } else {
-      switch (hellchar) {
-        case '+': hellchar = 0; break;
-        case '-': hellchar = 1; break;
-        case '?': hellchar = 2; break;
-        case '/': hellchar = 3; break;
-        case '.': hellchar = 4; break;
-        case ',': hellchar = 5; break;
-//        case '‘': hellchar = 6; break;  // this causes compiler warning; unicode character or something?
-        case '=': hellchar = 7; break;
-        case ')': hellchar = 8; break;
-        case '(': hellchar = 9; break;
-        case ':': hellchar = 10; break;
-        default : hellchar = 11; break;
-      }
-      hellchar = hellchar * 9;
-      transmit_hell_pixels(hell_font3, hellchar);
-
-    }
-  }
-
-  // blank column
-  for (byte w = 0; w < 14; w++) {
-    transmit_hell_pixel(0);
-  }
-
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_HELL
-void transmit_hell_pixels (prog_uchar* hell_pixels, byte hellchar)
-{
-
-  for (byte x = 0; x < 9; x++) {
-    for (int y = 7; y > -1; y--) {
-      if ((x < 8) || ((x == 8) && (y > 1))) {  // drop the last 2 bits in byte 9
-        if (bitRead(pgm_read_byte(hell_pixels + hellchar + x ),y)) {
-          transmit_hell_pixel(1);
-        } else {
-          transmit_hell_pixel(0);
-        }
-      }
-    }
-  }
-
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_HELL
-void transmit_hell_pixel (byte hellbit)
-{
-  if (hellbit) {
-    tx_and_sidetone_key(1,AUTOMATIC_SENDING);
-  } else {
-    tx_and_sidetone_key(0,AUTOMATIC_SENDING);
-  }
-  delayMicroseconds(hell_pixel_microseconds);
 }
 #endif
 
@@ -3098,103 +2903,96 @@ void send_char(char cw_char, byte omit_letterspace)
   #endif
 
   if ((cw_char == 10) || (cw_char == 13)) { return; }  // don't attempt to send carriage return or line feed
+  switch (cw_char) {
+    case 'A': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
+    case 'B': send_dah(AUTOMATIC_SENDING); send_dits(3); break;
+    case 'C': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
+    case 'D': send_dah(AUTOMATIC_SENDING); send_dits(2); break;
+    case 'E': send_dit(AUTOMATIC_SENDING); break;
+    case 'F': send_dits(2); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
+    case 'G': send_dahs(2); send_dit(AUTOMATIC_SENDING); break;
+    case 'H': send_dits(4); break;
+    case 'I': send_dits(2); break;
+    case 'J': send_dit(AUTOMATIC_SENDING); send_dahs(3); break;
+    case 'K': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
+    case 'L': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(2); break;
+    case 'M': send_dahs(2); break;
+    case 'N': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
+    case 'O': send_dahs(3); break;
+    case 'P': send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); break;
+    case 'Q': send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
+    case 'R': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
+    case 'S': send_dits(3); break;
+    case 'T': send_dah(AUTOMATIC_SENDING); break;
+    case 'U': send_dits(2); send_dah(AUTOMATIC_SENDING); break;
+    case 'V': send_dits(3); send_dah(AUTOMATIC_SENDING); break;
+    case 'W': send_dit(AUTOMATIC_SENDING); send_dahs(2); break;
+    case 'X': send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); break;
+    case 'Y': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); break;
+    case 'Z': send_dahs(2); send_dits(2); break;
 
-  if (char_send_mode == CW) {
-    switch (cw_char) {
-      case 'A': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-      case 'B': send_dah(AUTOMATIC_SENDING); send_dits(3); break;
-      case 'C': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-      case 'D': send_dah(AUTOMATIC_SENDING); send_dits(2); break;
-      case 'E': send_dit(AUTOMATIC_SENDING); break;
-      case 'F': send_dits(2); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-      case 'G': send_dahs(2); send_dit(AUTOMATIC_SENDING); break;
-      case 'H': send_dits(4); break;
-      case 'I': send_dits(2); break;
-      case 'J': send_dit(AUTOMATIC_SENDING); send_dahs(3); break;
-      case 'K': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-      case 'L': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(2); break;
-      case 'M': send_dahs(2); break;
-      case 'N': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-      case 'O': send_dahs(3); break;
-      case 'P': send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); break;
-      case 'Q': send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-      case 'R': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-      case 'S': send_dits(3); break;
-      case 'T': send_dah(AUTOMATIC_SENDING); break;
-      case 'U': send_dits(2); send_dah(AUTOMATIC_SENDING); break;
-      case 'V': send_dits(3); send_dah(AUTOMATIC_SENDING); break;
-      case 'W': send_dit(AUTOMATIC_SENDING); send_dahs(2); break;
-      case 'X': send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); break;
-      case 'Y': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); break;
-      case 'Z': send_dahs(2); send_dits(2); break;
+    case '0': send_dahs(5); break;
+    case '1': send_dit(AUTOMATIC_SENDING); send_dahs(4); break;
+    case '2': send_dits(2); send_dahs(3); break;
+    case '3': send_dits(3); send_dahs(2); break;
+    case '4': send_dits(4); send_dah(AUTOMATIC_SENDING); break;
+    case '5': send_dits(5); break;
+    case '6': send_dah(AUTOMATIC_SENDING); send_dits(4); break;
+    case '7': send_dahs(2); send_dits(3); break;
+    case '8': send_dahs(3); send_dits(2); break;
+    case '9': send_dahs(4); send_dit(AUTOMATIC_SENDING); break;
 
-      case '0': send_dahs(5); break;
-      case '1': send_dit(AUTOMATIC_SENDING); send_dahs(4); break;
-      case '2': send_dits(2); send_dahs(3); break;
-      case '3': send_dits(3); send_dahs(2); break;
-      case '4': send_dits(4); send_dah(AUTOMATIC_SENDING); break;
-      case '5': send_dits(5); break;
-      case '6': send_dah(AUTOMATIC_SENDING); send_dits(4); break;
-      case '7': send_dahs(2); send_dits(3); break;
-      case '8': send_dahs(3); send_dits(2); break;
-      case '9': send_dahs(4); send_dit(AUTOMATIC_SENDING); break;
-
-      case '=': send_dah(AUTOMATIC_SENDING); send_dits(3); send_dah(AUTOMATIC_SENDING); break;
-      case '/': send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-      case ' ': loop_element_lengths((length_wordspace-length_letterspace-2),0,wpm,AUTOMATIC_SENDING); break;
-      case '*': send_dah(AUTOMATIC_SENDING); send_dits(3); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;    // using asterisk for BK
-      //case '&': send_dit(AUTOMATIC_SENDING); loop_element_lengths(3); send_dits(3); break;
-      case '.': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-      case ',': send_dahs(2); send_dits(2); send_dahs(2); break;
-      case '\'': send_dit(AUTOMATIC_SENDING); send_dahs(4); send_dit(AUTOMATIC_SENDING); break;                   // apostrophe
-      case '!': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); break;
-      case '(': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); break;
-      case ')': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-      case '&': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(3); break;
-      case ':': send_dahs(3); send_dits(3); break;
-      case ';': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-      case '+': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-      case '-': send_dah(AUTOMATIC_SENDING); send_dits(4); send_dah(AUTOMATIC_SENDING); break;
-      case '_': send_dits(2); send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-      case '"': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-      case '$': send_dits(3); send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); break;
-      case '@': send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-      case '<': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;     // AR
-      case '>': send_dits(3); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;               // SK
-      case '\n': break;
-      case '\r': break;
+    case '=': send_dah(AUTOMATIC_SENDING); send_dits(3); send_dah(AUTOMATIC_SENDING); break;
+    case '/': send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
+    case ' ': loop_element_lengths((length_wordspace-length_letterspace-2),0,wpm,AUTOMATIC_SENDING); break;
+    case '*': send_dah(AUTOMATIC_SENDING); send_dits(3); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;    // using asterisk for BK
+    //case '&': send_dit(AUTOMATIC_SENDING); loop_element_lengths(3); send_dits(3); break;
+    case '.': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
+    case ',': send_dahs(2); send_dits(2); send_dahs(2); break;
+    case '\'': send_dit(AUTOMATIC_SENDING); send_dahs(4); send_dit(AUTOMATIC_SENDING); break;                   // apostrophe
+    case '!': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); break;
+    case '(': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); break;
+    case ')': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
+    case '&': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(3); break;
+    case ':': send_dahs(3); send_dits(3); break;
+    case ';': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
+    case '+': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
+    case '-': send_dah(AUTOMATIC_SENDING); send_dits(4); send_dah(AUTOMATIC_SENDING); break;
+    case '_': send_dits(2); send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
+    case '"': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
+    case '$': send_dits(3); send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); break;
+    case '@': send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
+    case '<': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;     // AR
+    case '>': send_dits(3); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;               // SK
+    case '\n': break;
+    case '\r': break;
       
-      #ifdef OPTION_NON_ENGLISH_EXTENSIONS
-      case 192: send_dit(AUTOMATIC_SENDING);send_dahs(2);send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); break; // 'À'
-      case 194: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break; // 'Â'
-      case 197: send_dit(AUTOMATIC_SENDING);send_dahs(2);send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); break; // 'Å' / 
-      case 196: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break; // 'Ä'
-      case 198: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break; // 'Æ'
-      case 199: send_dah(AUTOMATIC_SENDING);send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(2); break;  // 'Ç'
-      case 208: send_dits(2);send_dahs(2);send_dit(AUTOMATIC_SENDING);break;  // 'Ð'
-      case 138: send_dahs(4);break; // 'Š'
-      case 200: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING);send_dits(2);send_dah(AUTOMATIC_SENDING); break; // 'È'
-      case 201: send_dits(2);send_dah(AUTOMATIC_SENDING);send_dits(2);break; // 'É'
-      case 142: send_dahs(2);send_dits(2);send_dah(AUTOMATIC_SENDING);send_dit(AUTOMATIC_SENDING);break; // 'Ž'
-      case 209: send_dahs(2);send_dit(AUTOMATIC_SENDING);send_dahs(2);break; // 'Ñ'
-      case 214: send_dahs(3);send_dit(AUTOMATIC_SENDING);break; // 'Ö'
-      case 216: send_dahs(3);send_dit(AUTOMATIC_SENDING);break; // 'Ø'
-      case 211: send_dahs(3);send_dit(AUTOMATIC_SENDING);break; // 'Ó'
-      case 220: send_dits(2);send_dahs(2);break; // 'Ü'
-      case 223: send_dits(6);break; // 'ß'
-      #endif //OPTION_NON_ENGLISH_EXTENSIONS      
-      
-      case '|': loop_element_lengths(0.5,0,wpm,AUTOMATIC_SENDING); return; break;
-      default: send_dits(2); send_dahs(2); send_dits(2); break;
-      
-    }
+    #ifdef OPTION_NON_ENGLISH_EXTENSIONS
+    case 192: send_dit(AUTOMATIC_SENDING);send_dahs(2);send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); break; // 'À'
+    case 194: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break; // 'Â'
+    case 197: send_dit(AUTOMATIC_SENDING);send_dahs(2);send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); break; // 'Å' / 
+    case 196: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break; // 'Ä'
+    case 198: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break; // 'Æ'
+    case 199: send_dah(AUTOMATIC_SENDING);send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(2); break;  // 'Ç'
+    case 208: send_dits(2);send_dahs(2);send_dit(AUTOMATIC_SENDING);break;  // 'Ð'
+    case 138: send_dahs(4);break; // 'Š'
+    case 200: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING);send_dits(2);send_dah(AUTOMATIC_SENDING); break; // 'È'
+    case 201: send_dits(2);send_dah(AUTOMATIC_SENDING);send_dits(2);break; // 'É'
+    case 142: send_dahs(2);send_dits(2);send_dah(AUTOMATIC_SENDING);send_dit(AUTOMATIC_SENDING);break; // 'Ž'
+    case 209: send_dahs(2);send_dit(AUTOMATIC_SENDING);send_dahs(2);break; // 'Ñ'
+    case 214: send_dahs(3);send_dit(AUTOMATIC_SENDING);break; // 'Ö'
+    case 216: send_dahs(3);send_dit(AUTOMATIC_SENDING);break; // 'Ø'
+    case 211: send_dahs(3);send_dit(AUTOMATIC_SENDING);break; // 'Ó'
+    case 220: send_dits(2);send_dahs(2);break; // 'Ü'
+    case 223: send_dits(6);break; // 'ß'
+    #endif //OPTION_NON_ENGLISH_EXTENSIONS      
+    
+    case '|': loop_element_lengths(0.5,0,wpm,AUTOMATIC_SENDING); return; break;
+    default: send_dits(2); send_dahs(2); send_dits(2); break;  
+ 
     if (omit_letterspace != OMIT_LETTERSPACE) {
       loop_element_lengths((length_letterspace-1),0,wpm,AUTOMATIC_SENDING); //this is minus one because send_dit and send_dah have a trailing element space
     }
-  } else {
-    #ifdef FEATURE_HELL
-      transmit_hell_char(cw_char);
-    #endif
   }
 
 }
@@ -4851,14 +4649,10 @@ void process_serial_command() {
     #endif //FEATURE_SERIAL_HELP
     case 65: keyer_mode = IAMBIC_A; config_dirty = 1; Serial.println(F("Iambic A")); break;    // A - Iambic A mode
     case 66: keyer_mode = IAMBIC_B; config_dirty = 1; Serial.println(F("Iambic B")); break;    // B - Iambic B mode
-    case 67: char_send_mode = CW; Serial.write("CW mode\n\r"); break;             // C - CW mode
     case 68: keyer_mode = ULTIMATIC; config_dirty = 1; Serial.println(F("Ultimatic")); break;  // D - Ultimatic mode
     case 69: serial_set_serial_number(); break;                                   // E - set serial number
     case 70: serial_set_sidetone_freq(); break;                                   // F - set sidetone frequency
     case 71: keyer_mode = BUG; config_dirty = 1; Serial.println(F("Bug")); break;              // G - Bug mode
-    #ifdef FEATURE_HELL
-    case 72: char_send_mode = HELL; Serial.println(F("Hell mode")); break;         // H - Hell mode
-    #endif //FEATURE_HELL
     case 73:                                                                      // I - transmit line on/off
       Serial.print(F("TX o"));
       if (key_tx) {
@@ -6127,15 +5921,6 @@ void play_memory(byte memory_number)
                 }
                 break;
 
-
-              case 72:                       // H - Switch to Hell
-                char_send_mode = HELL;
-                break;
-
-              case 76:                       // L - Switch to CW
-                char_send_mode = CW;
-                break;
-
               case 78:                       // N - decrement serial number (do not play)
                 serial_number--;
                 break;
@@ -6587,9 +6372,6 @@ void initialize_debug_startup(){
   #endif
   #ifdef FEATURE_SERIAL_HELP
   Serial.println(F("FEATURE_SERIAL_HELP"));
-  #endif
-  #ifdef FEATURE_HELL
-  Serial.println(F("FEATURE_HELL"));
   #endif
   #ifdef FEATURE_DEAD_OP_WATCHDOG
   Serial.println(F("FEATURE_DEAD_OP_WATCHDOG"));
