@@ -41,7 +41,7 @@
 //Major changes in functionality versus the K3NG CW Keyer:
 // Features removed entirely:
 // * PS2 keyboard
-// * 
+// * Hellscreiber
 
 
 
