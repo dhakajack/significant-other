@@ -43,6 +43,7 @@
 // * PS2 keyboard
 // * Hellscreiber
 // * Disable potentiometer - The potentiometer is an integral part of SO and the only way to set speed
+// * 
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
 //    CW Keyboard: type what you want the keyer to send (all commands are preceded with a backslash ( \ )
@@ -68,7 +69,6 @@
 //    \t     Tune mode
 //    \u     Manual PTT toggle
 //    \w###  Set speed in WPM
-//    \x#    Switch to transmitter #
 //    \y#    Change wordspace to # elements (# = 1 to 9)
 //    \z     Autospace on/off
 //    \+     Create prosign
@@ -83,7 +83,6 @@
 //    button 0 + left paddle:  increase cw speed
 //    button 0 + right paddle: decrease cw speed
 //    button 1 - 12 hold + left paddle: repeat memory
-//    button 1 - 6 half second hold: switch to TX # 1 - 6
 
 // Command Mode (press button0 to enter command mode and press again to exit)
 //    A  Switch to Iambic A mode
@@ -116,7 +115,6 @@
 //    \u     Activate PTT
 //    \v     Deactivate PTT
 //    \w###  Set regular mode speed to ### WPM (must be three digits, use leading zeros if necessary)
-//    \x#    Switch to transmitter # (1, 2, or 3)
 //    \y#    Increase speed # WPM
 //    \z#    Decrease speed # WPM
 //    \+     Prosign the next two characters
@@ -195,12 +193,7 @@
 
 #define paddle_left 7
 #define paddle_right 8
-#define tx_key_line_1 6       // (high = key down/tx on)
-#define tx_key_line_2 0//12
-#define tx_key_line_3 0
-#define tx_key_line_4 0
-#define tx_key_line_5 0
-#define tx_key_line_6 0
+#define tx_key_line 6       // (high = key down/tx on)
 #define sidetone_line 9         // connect a speaker for sidetone
 #define potentiometer A0        // Speed potentiometer (0 to 5 V) Use pot from 1k to 10k
 #define ptt_tx_1 0              // PTT ("push to talk") lines
@@ -422,8 +415,6 @@ byte command_mode_disable_tx = 0;
 unsigned int hz_sidetone = initial_sidetone_freq;
 unsigned int dah_to_dit_ratio = initial_dah_to_dit_ratio;
 byte current_ptt_line = ptt_tx_1;
-byte current_tx_key_line = tx_key_line_1;
-byte current_tx = 1;
 unsigned int ptt_tail_time = initial_ptt_tail_time;
 unsigned int ptt_lead_time = initial_ptt_lead_time;
 byte manual_ptt_invoke = 0;
@@ -548,7 +539,6 @@ prog_uchar string_k3ng_keyer[] __attribute__((section(".progmem.data"))) = {"\n\
 prog_uchar string_enter_help[] __attribute__((section(".progmem.data"))) = {"\n\rEnter \\? for help\n\n\r"};
 #endif
 prog_uchar string_qrss_mode[] __attribute__((section(".progmem.data"))) = {"Setting keyer to QRSS Mode. Dit length: "};
-prog_uchar string_tx[] __attribute__((section(".progmem.data"))) = {"Switching to TX #"};
 prog_uchar string_setting_serial_number[] __attribute__((section(".progmem.data"))) = {"Setting serial number to "};
 prog_uchar string_setting_dah_to_dit_ratio[] __attribute__((section(".progmem.data"))) = {"Setting dah to dit ratio to "};
 #ifdef FEATURE_CALLSIGN_RECEIVE_PRACTICE
@@ -603,7 +593,6 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
   "\\T\t\t: Tune mode\n\r"
   "\\U\t\t: PTT toggle\n\r"
   "\\W#[#][#]\t: Change WPM to ###\n\r"
-  "\\X#\t\t: Switch to transmitter #\n\r"
   "\\Y#\t\t: Change wordspace to #\n\r"
   #ifdef FEATURE_AUTOSPACE
   "\\Z\t\t: Autospace on/off\n\r"
@@ -622,7 +611,6 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
   "\\U\t\t: key PTT\n\r"
   "\\V\t\t: unkey PTT\n\r"
   "\\W###\t\t: Change WPM to ###\n\r"
-  "\\X#\t\t: Switch to transmitter #\n\r"
   "\\Y#\t\t: Increase speed # WPM\n\r"
   "\\Z#\t\t: Decrease speed # WPM\n\r"
   "\\^\t\t: Toggle send CW immediately\n\r"
@@ -646,7 +634,7 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
 #ifdef FEATURE_AUTOSPACE
 #define EEPROM_autospace_active 12
 #endif //FEATURE_AUTOSPACE
-#define EEPROM_current_tx 13
+// eprom location 13 available
 #define EEPROM_memory_repeat_time_high 14
 #define EEPROM_memory_repeat_time_low 15
 
@@ -1486,7 +1474,6 @@ void write_settings_to_eeprom(int initialize_eeprom) {
   #ifdef FEATURE_AUTOSPACE
   EEPROM.write(EEPROM_autospace_active,autospace_active);
   #endif //FEATURE_AUTOSPACE
-  EEPROM.write(EEPROM_current_tx,current_tx);
   #ifdef FEATURE_MEMORIES
   EEPROM.write(EEPROM_memory_repeat_time_low,lowByte(memory_repeat_time));
   EEPROM.write(EEPROM_memory_repeat_time_high,highByte(memory_repeat_time));  
@@ -1512,13 +1499,11 @@ int read_settings_from_eeprom() {
     #ifdef FEATURE_AUTOSPACE
     autospace_active = EEPROM.read(EEPROM_autospace_active);
     #endif //FEATURE_AUTOSPACE
-    current_tx = EEPROM.read(EEPROM_current_tx);
     #ifdef FEATURE_MEMORIES
     if (EEPROM.read(EEPROM_memory_repeat_time_high) != 255 ) {
       memory_repeat_time=word(EEPROM.read(EEPROM_memory_repeat_time_high),EEPROM.read(EEPROM_memory_repeat_time_low));
     }
     #endif //FEATURE_MEMORIES
-    switch_to_tx_silent(current_tx);
     config_dirty = 0;
     return 0;
   } else {
@@ -1761,12 +1746,7 @@ void tx_and_sidetone_key (int state, byte sending_type)
     if (key_tx) {
       byte previous_ptt_line_activated = ptt_line_activated;
       ptt_key();
-      digitalWrite (current_tx_key_line, HIGH);
-      #ifdef OPTION_WINKEY_2_SUPPORT
-      if ((wk2_both_tx_activated) && (tx_key_line_2)) {
-        digitalWrite (tx_key_line_2, HIGH);
-      }
-      #endif
+      digitalWrite (tx_key_line, HIGH);
       if ((first_extension_time) && (previous_ptt_line_activated == 0)) {
         delay(first_extension_time);
       }
@@ -1778,12 +1758,7 @@ void tx_and_sidetone_key (int state, byte sending_type)
   } else {
     if ((state == 0) && (key_state)) {
       if (key_tx) {
-        digitalWrite (current_tx_key_line, LOW);
-        #ifdef OPTION_WINKEY_2_SUPPORT
-        if ((wk2_both_tx_activated) && (tx_key_line_2)) {
-          digitalWrite (tx_key_line_2, LOW);
-        }
-        #endif        
+        digitalWrite (tx_key_line, LOW);       
         ptt_key();
       }
       if ((sidetone_mode == SIDETONE_ON) || (machine_mode == COMMAND) || ((sidetone_mode == SIDETONE_PADDLE_ONLY) && (sending_type == MANUAL_SENDING))) {
@@ -2375,59 +2350,6 @@ void command_speed_mode()
 }
 #endif //FEATURE_COMMAND_BUTTONS
 //------------------------------------------------------------------
-#ifndef FEATURE_DISPLAY
-void send_tx() {
-
-  send_char('T',NORMAL);
-  send_char('X',NORMAL);
-}
-#endif
-
-//------------------------------------------------------------------
-
-void switch_to_tx_silent(byte tx) {
-
-  switch (tx) {
-   case 1: if ((ptt_tx_1) || (tx_key_line_1)) { current_ptt_line = ptt_tx_1; current_tx_key_line = tx_key_line_1; current_tx = 1; config_dirty = 1; } break;
-   case 2: if ((ptt_tx_2) || (tx_key_line_2)) { current_ptt_line = ptt_tx_2; current_tx_key_line = tx_key_line_2; current_tx = 2; config_dirty = 1; } break;
-   case 3: if ((ptt_tx_3) || (tx_key_line_3)) { current_ptt_line = ptt_tx_3; current_tx_key_line = tx_key_line_3; current_tx = 3; config_dirty = 1; } break;
-   case 4: if ((ptt_tx_4) || (tx_key_line_4)) { current_ptt_line = ptt_tx_4; current_tx_key_line = tx_key_line_4; current_tx = 4; config_dirty = 1; } break;
-   case 5: if ((ptt_tx_5) || (tx_key_line_5)) { current_ptt_line = ptt_tx_5; current_tx_key_line = tx_key_line_5; current_tx = 5; config_dirty = 1; } break;
-   case 6: if ((ptt_tx_6) || (tx_key_line_6)) { current_ptt_line = ptt_tx_6; current_tx_key_line = tx_key_line_6; current_tx = 6; config_dirty = 1; } break;
-  }
-  
-}
-
-//------------------------------------------------------------------
-void switch_to_tx(byte tx)
-{
-
-  #ifdef FEATURE_MEMORIES
-  repeat_memory = 255;
-  #endif
-
-  #ifdef FEATURE_DISPLAY        
-  switch (tx) {
-   case 1: if ((ptt_tx_1) || (tx_key_line_1)) { switch_to_tx_silent(1); lcd_center_print_timed("TX 1", 0, default_display_msg_delay); } break;
-   case 2: if ((ptt_tx_2) || (tx_key_line_2)) { switch_to_tx_silent(2); lcd_center_print_timed("TX 2", 0, default_display_msg_delay); } break;
-   case 3: if ((ptt_tx_3) || (tx_key_line_3)) { switch_to_tx_silent(3); lcd_center_print_timed("TX 3", 0, default_display_msg_delay); } break;
-   case 4: if ((ptt_tx_4) || (tx_key_line_4)) { switch_to_tx_silent(4); lcd_center_print_timed("TX 4", 0, default_display_msg_delay); } break;
-   case 5: if ((ptt_tx_5) || (tx_key_line_5)) { switch_to_tx_silent(5); lcd_center_print_timed("TX 5", 0, default_display_msg_delay); } break;
-   case 6: if ((ptt_tx_6) || (tx_key_line_6)) { switch_to_tx_silent(6); lcd_center_print_timed("TX 6", 0, default_display_msg_delay); } break;
-  }
-  #else
-  switch (tx) {
-   case 1: if ((ptt_tx_1) || (tx_key_line_1)) { switch_to_tx_silent(1); send_tx(); send_char('1',NORMAL); } break;
-   case 2: if ((ptt_tx_2) || (tx_key_line_2)) { switch_to_tx_silent(2); send_tx(); send_char('2',NORMAL); } break;
-   case 3: if ((ptt_tx_3) || (tx_key_line_3)) { switch_to_tx_silent(3); send_tx(); send_char('3',NORMAL); } break;
-   case 4: if ((ptt_tx_4) || (tx_key_line_4)) { switch_to_tx_silent(4); send_tx(); send_char('4',NORMAL); } break;
-   case 5: if ((ptt_tx_5) || (tx_key_line_5)) { switch_to_tx_silent(5); send_tx(); send_char('5',NORMAL); } break;
-   case 6: if ((ptt_tx_6) || (tx_key_line_6)) { switch_to_tx_silent(6); send_tx(); send_char('6',NORMAL); } break;
-  }
-  #endif
-}
-
-//------------------------------------------------------------------
 
 #ifdef FEATURE_MEMORIES
 #ifdef FEATURE_COMMAND_BUTTONS
@@ -2643,13 +2565,6 @@ void check_command_buttons()
       }
       #endif
     } else {
-//      if ((millis() - button_depress_time) < 1000) {
-//        if ((analogbuttontemp > 0) && (analogbuttontemp < 7)) {
-//          key_tx = 0;
-//          switch_to_tx(analogbuttontemp);
-//          key_tx = 1;
-//        }
-//      } else {  // we got a button hold
         if (analogbuttontemp == 0) {
           key_tx = 0;
           // do stuff if this is a command button hold down
@@ -2705,19 +2620,9 @@ void check_command_buttons()
               repeat_memory = analogbuttontemp - 1;
               last_memory_repeat_time = 0;
               #endif
-              paddle_was_hit = 1;
             }
          }
-         if (!paddle_was_hit) {  // if no paddle was hit, this was a button hold to change transmitters
-             key_tx = 0;
-             previous_sidetone_mode = sidetone_mode;
-             sidetone_mode = SIDETONE_ON;
-             switch_to_tx(analogbuttontemp);
-             key_tx = 1;
-             sidetone_mode = previous_sidetone_mode;
-         }
        }
-     //} // button hold
     }
     last_button_action = millis();
   }
@@ -3544,8 +3449,6 @@ void winkey_set_pinconfig_command(byte incoming_serial_byte) {
     case 4: 
       key_tx = 1;
       current_ptt_line = ptt_tx_1; 
-      current_tx_key_line = tx_key_line_1;
-      current_tx = 1;
       #ifdef OPTION_WINKEY_2_SUPPORT
       wk2_both_tx_activated = 0;
       #endif
@@ -3557,11 +3460,6 @@ void winkey_set_pinconfig_command(byte incoming_serial_byte) {
       } else {
         current_ptt_line = ptt_tx_1;
       }
-      if (tx_key_line_2) {
-        current_tx_key_line = tx_key_line_2;
-      } else {
-        current_tx_key_line = tx_key_line_1;
-      }
       #ifdef OPTION_WINKEY_2_SUPPORT
       wk2_both_tx_activated = 0;
       #endif
@@ -3569,8 +3467,6 @@ void winkey_set_pinconfig_command(byte incoming_serial_byte) {
     case 12:
       key_tx = 1;
       current_ptt_line = ptt_tx_1;
-      current_tx_key_line = tx_key_line_1; 
-      current_tx = 1;
       #ifdef OPTION_WINKEY_2_SUPPORT
       wk2_both_tx_activated = 1;
       #endif
@@ -3738,8 +3634,7 @@ void winkey_admin_get_values_command() {
   byte_to_send = 0;
   if (current_ptt_line != 0) {byte_to_send = byte_to_send | 1;}
   if ((sidetone_mode == SIDETONE_ON) || (sidetone_mode == SIDETONE_PADDLE_ONLY)) {byte_to_send | 2;}
-  if (current_tx_key_line == tx_key_line_1) {byte_to_send = byte_to_send | 4;}
-  if (current_tx_key_line == tx_key_line_2) {byte_to_send = byte_to_send | 8;}
+  byte_to_send = byte_to_send | 4;
   if (wk2_both_tx_activated) {byte_to_send = byte_to_send | 12;}
   if (ultimatic_mode == ULTIMATIC_DIT_PRIORITY) {byte_to_send = byte_to_send | 128;}
   if (ultimatic_mode == ULTIMATIC_DAH_PRIORITY) {byte_to_send = byte_to_send | 64;}  
@@ -4650,7 +4545,6 @@ void process_serial_command() {
       break;
 
     case 87: serial_wpm_set();break;                                        // W - set WPM
-    case 88: serial_switch_tx();break;                                      // X - switch transmitter
     case 89: serial_change_wordspace(); break;
     #ifdef FEATURE_AUTOSPACE
     case 90:
@@ -4848,26 +4742,7 @@ void serial_change_wordspace()
 #endif
 
 //---------------------------------------------------------------------
-#ifdef FEATURE_SERIAL
-#ifdef FEATURE_COMMAND_LINE_INTERFACE
-void serial_switch_tx()
-{
-  int set_tx_to = serial_get_number_input(1,0,7);
-  if (set_tx_to > 0) {
-    switch (set_tx_to){
-      case 1: switch_to_tx_silent(1); serial_print(string_tx); Serial.println(F("1")); break;
-      case 2: if ((ptt_tx_2) || (tx_key_line_2)) {switch_to_tx_silent(2); serial_print(string_tx);} Serial.println(F("2")); break;
-      case 3: if ((ptt_tx_3) || (tx_key_line_3)) {switch_to_tx_silent(3); serial_print(string_tx);} Serial.println(F("3")); break;
-      case 4: if ((ptt_tx_4) || (tx_key_line_4)) {switch_to_tx_silent(4); serial_print(string_tx);} Serial.println(F("4")); break;
-      case 5: if ((ptt_tx_5) || (tx_key_line_5)) {switch_to_tx_silent(5); serial_print(string_tx);} Serial.println(F("5")); break;
-      case 6: if ((ptt_tx_6) || (tx_key_line_6)) {switch_to_tx_silent(6); serial_print(string_tx);} Serial.println(F("6")); break;
-    }
-  }
-}
-#endif
-#endif
 
-//---------------------------------------------------------------------
 #ifdef FEATURE_SERIAL
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
 void serial_set_dit_to_dah_ratio()
@@ -5713,24 +5588,6 @@ void play_memory(byte memory_number)
                 }
                 break;
 
-              case 88:                         // X - switch transmitter
-                y++;
-                if (y < (memory_end(memory_number)+1)) {
-                  eeprom_byte_read2 = EEPROM.read(y);
-                  if ((eeprom_byte_read2 > 48) && (eeprom_byte_read2 < 52)) {
-                     switch (eeprom_byte_read2) {
-                       case 49: switch_to_tx_silent(1); break;
-                       case 50: if ((ptt_tx_2) || (tx_key_line_2)) {switch_to_tx_silent(2); } break;
-                       case 51: if ((ptt_tx_3) || (tx_key_line_3)) {switch_to_tx_silent(3); } break;
-                       case 52: if ((ptt_tx_4) || (tx_key_line_4)) {switch_to_tx_silent(4); } break;
-                       case 53: if ((ptt_tx_5) || (tx_key_line_5)) {switch_to_tx_silent(5); } break;
-                       case 54: if ((ptt_tx_6) || (tx_key_line_6)) {switch_to_tx_silent(6); } break;
-                     }
-                  }
-
-                }
-                break;  // case 84
-
               case 67:                       // C - play serial number with cut numbers T and N, then increment
                   serial_number_string = String(serial_number, DEC);
                   if (serial_number_string.length() < 3 ) {
@@ -6170,31 +6027,8 @@ void initialize_pins() {
   pinMode (paddle_right, INPUT);
   digitalWrite (paddle_right, HIGH);
   
-  if (tx_key_line_1) {
-    pinMode (tx_key_line_1, OUTPUT);
-    digitalWrite (tx_key_line_1, LOW);
-  }
-  if (tx_key_line_2) {
-    pinMode (tx_key_line_2, OUTPUT);
-    digitalWrite (tx_key_line_2, LOW);
-  }
-  if (tx_key_line_3) {
-    pinMode (tx_key_line_3, OUTPUT);
-    digitalWrite (tx_key_line_3, LOW);
-  }
-  if (tx_key_line_4) {
-    pinMode (tx_key_line_4, OUTPUT);
-    digitalWrite (tx_key_line_4, LOW);
-  }
-  if (tx_key_line_5) {
-    pinMode (tx_key_line_5, OUTPUT);
-    digitalWrite (tx_key_line_5, LOW);
-  }
-  if (tx_key_line_6) {
-    pinMode (tx_key_line_6, OUTPUT);
-    digitalWrite (tx_key_line_6, LOW);
-  }
-    
+  pinMode (tx_key_line, OUTPUT);
+  digitalWrite (tx_key_line, LOW);
   
   if (ptt_tx_1) {
     pinMode (ptt_tx_1, OUTPUT);
