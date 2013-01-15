@@ -42,8 +42,7 @@
 // Features removed entirely:
 // * PS2 keyboard
 // * Hellscreiber
-
-
+// * Disable potentiometer - The potentiometer is an integral part of SO and the only way to set speed
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
 //    CW Keyboard: type what you want the keyer to send (all commands are preceded with a backslash ( \ )
@@ -68,7 +67,6 @@
 //    \s     Status
 //    \t     Tune mode
 //    \u     Manual PTT toggle
-//    \v     Toggle potentiometer active / inactive   (requires FEATURE_POTENTIOMETER)
 //    \w###  Set speed in WPM
 //    \x#    Switch to transmitter #
 //    \y#    Change wordspace to # elements (# = 1 to 9)
@@ -99,7 +97,6 @@
 //    O  Toggle sidetone on / off
 //    P#(#) Program a memory
 //    T  Tune mode
-//    V  Toggle potentiometer active / inactive
 //    W  Change speed
 //    X  Exit command mode (you can also press the command button (button0) to exit)
 //    Y#### Change memory repeat delay to #### mS
@@ -141,7 +138,6 @@
 //#define OPTION_WINKEY_2_SUPPORT     // requires FEATURE_WINKEY_EMULATION
 //#define FEATURE_BEACON
 //#define FEATURE_CALLSIGN_RECEIVE_PRACTICE
-#define FEATURE_POTENTIOMETER         // do not enable unless you have a potentiometer connected, otherwise noise will falsely trigger wpm changes
 //#define FEATURE_SERIAL_HELP
 //#define FEATURE_DEAD_OP_WATCHDOG
 //#define FEATURE_AUTOSPACE
@@ -207,7 +203,6 @@
 #define tx_key_line_6 0
 #define sidetone_line 9         // connect a speaker for sidetone
 #define potentiometer A0        // Speed potentiometer (0 to 5 V) Use pot from 1k to 10k
-//#define potentiometer A7 //Rev A & B nanokeyer
 #define ptt_tx_1 0              // PTT ("push to talk") lines
 //#define ptt_tx_1 13  // nanokeyer
 #define ptt_tx_2 0              //   Can be used for keying fox transmitter, T/R switch, or keying slow boatanchors
@@ -516,12 +511,9 @@ unsigned int wpm_farnsworth = 0;  // 0 = disabled
 #endif
 
 byte pot_wpm_low_value;
-#ifdef FEATURE_POTENTIOMETER
 byte pot_wpm_high_value;
 byte last_pot_wpm_read;
-byte pot_activated;
 int pot_full_scale_reading = default_pot_full_scale_reading;
-#endif
 
 #ifdef FEATURE_SERIAL
 byte incoming_serial_byte;
@@ -610,9 +602,6 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
   "\\S\t\t: status report\n\r"
   "\\T\t\t: Tune mode\n\r"
   "\\U\t\t: PTT toggle\n\r"
-  #ifdef FEATURE_POTENTIOMETER
-  "\\V\t\t: Potentiometer activate/deactivate\n\r"
-  #endif
   "\\W#[#][#]\t: Change WPM to ###\n\r"
   "\\X#\t\t: Switch to transmitter #\n\r"
   "\\Y#\t\t: Change wordspace to #\n\r"
@@ -652,9 +641,7 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
 #define EEPROM_hz_sidetone_high 7
 #define EEPROM_dah_to_dit_ratio_low 8
 #define EEPROM_dah_to_dit_ratio_high 9
-#ifdef FEATURE_POTENTIOMETER
-#define EEPROM_potentiometer_activated 10
-#endif //FEATURE_POTENTIOMETER
+//eprom location 10 available
 #define EEPROM_length_wordspace 11
 #ifdef FEATURE_AUTOSPACE
 #define EEPROM_autospace_active 12
@@ -696,12 +683,9 @@ void setup()
 
   pot_wpm_low_value = initial_pot_wpm_low_value;
 
-  #ifdef FEATURE_POTENTIOMETER
   pinMode(potentiometer,INPUT);
   pot_wpm_high_value = initial_pot_wpm_high_value;
   last_pot_wpm_read = pot_value_wpm();
-  pot_activated = 1;
-  #endif
 
   // setup default modes
   machine_mode = NORMAL;
@@ -908,9 +892,7 @@ void loop()
     service_send_buffer();
     check_ptt_tail();
 
-    #ifdef FEATURE_POTENTIOMETER
     check_potentiometer();
-    #endif
 
     check_for_dirty_configuration();
 
@@ -1222,37 +1204,33 @@ void debug_capture_dump()
 
 //-------------------------------------------------------------------------------------------------------
 
-#ifdef FEATURE_POTENTIOMETER
 void check_potentiometer()
 {
   #ifdef DEBUG_LOOP
   Serial.println(F("loop: entering check_potentiometer")); 
   #endif        
     
-  if (pot_activated) {
-    byte pot_value_wpm_read = pot_value_wpm();
-    if ((abs(pot_value_wpm_read - last_pot_wpm_read) > potentiometer_change_threshold)) {
-      #ifdef DEBUG_POTENTIOMETER
-      Serial.print(F("check_potentiometer: speed change: "));
-      Serial.print(pot_value_wpm_read);
-      Serial.print(F(" analog read: "));
-      Serial.println(analogRead(potentiometer));
-      #endif
-      speed_set(pot_value_wpm_read);
-      last_pot_wpm_read = pot_value_wpm_read;
-      #ifdef FEATURE_WINKEY_EMULATION
-      if ((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_host_open)) {
-        Serial.write(((pot_value_wpm_read-pot_wpm_low_value)|128));
-        winkey_last_unbuffered_speed_wpm = wpm;
-      }
-      #endif
+  byte pot_value_wpm_read = pot_value_wpm();
+  if ((abs(pot_value_wpm_read - last_pot_wpm_read) > potentiometer_change_threshold)) {
+    #ifdef DEBUG_POTENTIOMETER
+    Serial.print(F("check_potentiometer: speed change: "));
+    Serial.print(pot_value_wpm_read);
+    Serial.print(F(" analog read: "));
+    Serial.println(analogRead(potentiometer));
+    #endif
+    speed_set(pot_value_wpm_read);
+    last_pot_wpm_read = pot_value_wpm_read;
+    #ifdef FEATURE_WINKEY_EMULATION
+    if ((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_host_open)) {
+      Serial.write(((pot_value_wpm_read-pot_wpm_low_value)|128));
+      winkey_last_unbuffered_speed_wpm = wpm;
     }
+    #endif
   }
 }
 
-#endif
 //-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_POTENTIOMETER
+
 byte pot_value_wpm()
 {
   int pot_read = analogRead(potentiometer);
@@ -1260,7 +1238,6 @@ byte pot_value_wpm()
   return return_value;
 
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -1505,9 +1482,7 @@ void write_settings_to_eeprom(int initialize_eeprom) {
   EEPROM.write(EEPROM_dah_to_dit_ratio_low,lowByte(dah_to_dit_ratio));
   EEPROM.write(EEPROM_dah_to_dit_ratio_high,highByte(dah_to_dit_ratio));
   EEPROM.write(EEPROM_length_wordspace,length_wordspace);
-  #ifdef FEATURE_POTENTIOMETER
-  EEPROM.write(EEPROM_potentiometer_activated,pot_activated);
-  #endif //FEATURE_POTENTIOMETER
+ 
   #ifdef FEATURE_AUTOSPACE
   EEPROM.write(EEPROM_autospace_active,autospace_active);
   #endif //FEATURE_AUTOSPACE
@@ -1533,9 +1508,7 @@ int read_settings_from_eeprom() {
     hz_sidetone = word(EEPROM.read(EEPROM_hz_sidetone_high),EEPROM.read(EEPROM_hz_sidetone_low));
     dah_to_dit_ratio = word(EEPROM.read(EEPROM_dah_to_dit_ratio_high),EEPROM.read(EEPROM_dah_to_dit_ratio_low));
     length_wordspace = EEPROM.read(EEPROM_length_wordspace);
-    #ifdef FEATURE_POTENTIOMETER
-    pot_activated = EEPROM.read(EEPROM_potentiometer_activated);
-    #endif //FEATURE_POTENTIOMETER
+
     #ifdef FEATURE_AUTOSPACE
     autospace_active = EEPROM.read(EEPROM_autospace_active);
     #endif //FEATURE_AUTOSPACE
@@ -1923,12 +1896,8 @@ int get_cw_input_from_user(unsigned int exit_time_seconds) {
   unsigned long entry_time = millis();
 
   while (looping) {
-    #ifdef FEATURE_POTENTIOMETER
-    if (pot_activated) {
-      check_potentiometer();
-    }
-    #endif
-
+    check_potentiometer();
+   
     check_paddles();
 
     if (dit_buffer) {
@@ -2106,23 +2075,6 @@ void command_mode ()
            send_dit(AUTOMATIC_SENDING);
            break; 
         case 2: command_tuning_mode(); break;                             // T - tuning mode
-        #ifdef FEATURE_POTENTIOMETER
-        case 1112:  // V - toggle pot active
-          if (pot_activated) {
-            pot_activated = 0; 
-            #ifdef FEATURE_DISPLAY
-            lcd_center_print_timed("Pot Deactivated", 0, default_display_msg_delay);
-            #endif             
-          } else {
-            pot_activated = 1;
-            #ifdef FEATURE_DISPLAY
-            lcd_center_print_timed("Pot Activated", 0, default_display_msg_delay);
-            #endif 
-          }
-          config_dirty = 1;
-          send_dit(AUTOMATIC_SENDING);
-          break; 
-        #endif
         case 122: command_speed_mode(); break;                            // W - change wpm
         #ifdef FEATURE_MEMORIES
         case 2122: command_set_mem_repeat_delay(); break; // Y - set memory repeat delay
@@ -2716,12 +2668,10 @@ void check_command_buttons()
               #endif //DEBUG_BUTTONS            
 
               #ifdef FEATURE_WINKEY_EMULATION
-              #ifdef FEATURE_POTENTIOMETER
               if ((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_host_open)) {
                 Serial.write(((wpm-pot_wpm_low_value)|128));
                 winkey_last_unbuffered_speed_wpm = wpm;
               }
-              #endif
               #endif
 
             }
@@ -2739,12 +2689,10 @@ void check_command_buttons()
               #endif //DEBUG_BUTTONS            
 
               #ifdef FEATURE_WINKEY_EMULATION
-              #ifdef FEATURE_POTENTIOMETER
               if ((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_host_open)) {
                 Serial.write(((wpm-pot_wpm_low_value)|128));
                 winkey_last_unbuffered_speed_wpm = wpm;
               }
-              #endif
               #endif
             }
          }
@@ -3325,11 +3273,7 @@ void add_to_send_buffer(byte incoming_serial_byte)
 #ifdef FEATURE_WINKEY_EMULATION
 void winkey_unbuffered_speed_command(byte incoming_serial_byte) {
 
-  if (incoming_serial_byte == 0) {
-    #ifdef FEATURE_POTENTIOMETER
-      pot_activated = 1;
-    #endif
-  } else {
+  if (incoming_serial_byte != 0) {
     wpm = incoming_serial_byte;
     winkey_last_unbuffered_speed_wpm = wpm;
     //calculate_element_length();
@@ -3429,16 +3373,13 @@ void winkey_set_pot_parm1_command(byte incoming_serial_byte) {
 //-------------------------------------------------------------------------------------------------------
 #ifdef FEATURE_WINKEY_EMULATION
 void winkey_set_pot_parm2_command(byte incoming_serial_byte) {
-  #ifdef FEATURE_POTENTIOMETER
   pot_wpm_high_value = (pot_wpm_low_value + incoming_serial_byte);
-  #endif
 }
 #endif //FEATURE_WINKEY_EMULATION
 //-------------------------------------------------------------------------------------------------------
 #ifdef FEATURE_WINKEY_EMULATION
 void winkey_set_pot_parm3_command (byte incoming_serial_byte) {
 
-  #ifdef FEATURE_POTENTIOMETER
   #ifdef OPTION_WINKEY_2_SUPPORT
   pot_full_scale_reading = 1031;
   #else //OPTION_WINKEY_2_SUPPORT
@@ -3450,8 +3391,6 @@ void winkey_set_pot_parm3_command (byte incoming_serial_byte) {
     }
   }
   #endif //OPTION_WINKEY_2_SUPPORT
-  pot_activated = 1;
-  #endif
 }
 #endif //FEATURE_WINKEY_EMULATION
 
@@ -3767,21 +3706,11 @@ void winkey_admin_get_values_command() {
   Serial.write(zero);   // TODO - backwards calculate this
 
   // 7 - pot min wpm
-  #ifdef FEATURE_POTENTIOMETER
   Serial.write(pot_wpm_low_value);
-  #endif
-  #ifndef FEATURE_POTENTIOMETER
-  Serial.write(15);
-  #endif
 
   // 8 - pot wpm range
-  #ifdef FEATURE_POTENTIOMETER
   byte_to_send = pot_wpm_high_value - pot_wpm_low_value;
   Serial.write(byte_to_send);
-  #endif
-  #ifndef FEATURE_POTENTIOMETER
-  Serial.write(20);
-  #endif
 
   // 9 - 1st extension
   Serial.write(first_extension_time);
@@ -4042,12 +3971,7 @@ void service_winkey(byte action) {
             winkey_status = WINKEY_PAUSE_COMMAND;
             break;
           case 0x07:
-            #ifdef FEATURE_POTENTIOMETER
             Serial.write(((pot_value_wpm()-pot_wpm_low_value)|128));
-            #endif
-            #ifndef FEATURE_POTENTIOMETER
-            Serial.write((byte(wpm-pot_wpm_low_value)|128));
-            #endif
             break;
           case 0x08:    // backspace command
             if (send_buffer_bytes > 0) {
@@ -4197,11 +4121,7 @@ void service_winkey(byte action) {
       }
 
       if (winkey_status ==  WINKEY_HSCW_COMMAND) {
-        if (incoming_serial_byte == 0) {
-          #ifdef FEATURE_POTENTIOMETER
-            pot_activated = 1;
-          #endif
-        } else {
+        if (incoming_serial_byte != 0) {
           wpm = ((incoming_serial_byte*100)/5);
           winkey_last_unbuffered_speed_wpm = wpm;
           #ifdef OPTION_WINKEY_STRICT_EEPROM_WRITES_MAY_WEAR_OUT_EEPROM
@@ -4728,19 +4648,7 @@ void process_serial_command() {
         Serial.println(F("n"));
       }
       break;
-    #ifdef FEATURE_POTENTIOMETER
-    case 86:                // V - toggle pot activation
-      Serial.print(F("Potentiometer "));
-      pot_activated = !pot_activated;
-      if (pot_activated) {
-        Serial.print(F("A"));
-      } else {
-        Serial.print(F("Dea"));
-      }
-      Serial.println(F("ctivated"));
-      config_dirty = 1;
-      break;
-    #endif
+
     case 87: serial_wpm_set();break;                                        // W - set WPM
     case 88: serial_switch_tx();break;                                      // X - switch transmitter
     case 89: serial_change_wordspace(); break;
@@ -4878,11 +4786,7 @@ int serial_get_number_input(byte places,int lower_limit, int upper_limit)
         service_send_buffer();
 
         check_ptt_tail();
-        #ifdef FEATURE_POTENTIOMETER
-        if (pot_activated) {
-          check_potentiometer();
-        }
-        #endif
+        check_potentiometer();
       }
     } else {
       incoming_serial_byte = Serial.read();
@@ -5255,15 +5159,8 @@ void serial_status() {
   Serial.println(weighting,DEC);
   Serial.print(F("Serial Number: "));
   Serial.println(serial_number,DEC);
-  #ifdef FEATURE_POTENTIOMETER
   Serial.print(F("Potentiometer WPM: "));
-  Serial.print(pot_value_wpm(),DEC);
-  Serial.print(F(" ("));
-  if (pot_activated != 1) {
-    Serial.write("not ");
-  }
-  Serial.write("activated)\n\r");
-  #endif
+  Serial.println(pot_value_wpm(),DEC);
   #ifdef FEATURE_AUTOSPACE
   Serial.write("Autospace: ");
   if (autospace_active) {
@@ -5669,9 +5566,7 @@ void play_memory(byte memory_number)
   for (int y = (memory_start(memory_number)); (y < (memory_end(memory_number)+1)); y++) {
 
     if (machine_mode == NORMAL) {
-      #ifdef FEATURE_POTENTIOMETER
       check_potentiometer();
-      #endif
       check_button0();
       #ifdef FEATURE_DISPLAY
       service_display();
@@ -6366,9 +6261,6 @@ void initialize_debug_startup(){
   #endif
   #ifdef FEATURE_CALLSIGN_RECEIVE_PRACTICE
   Serial.println(F("FEATURE_CALLSIGN_RECEIVE_PRACTICE"));
-  #endif
-  #ifdef FEATURE_POTENTIOMETER
-  Serial.println(F("FEATURE_POTENTIOMETER"));
   #endif
   #ifdef FEATURE_SERIAL_HELP
   Serial.println(F("FEATURE_SERIAL_HELP"));
