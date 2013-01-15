@@ -8,9 +8,9 @@
 //#include <Adafruit_RGBLCDShield.h>   // uncomment for FEATURE_DISPLAY in combination with FEATURE_LCD_I2C and Adafruit_RGBLCDShield lines below
 
 
-// This project started with code from the K3NG cw keyer by Anthony Good, K3NG. Large chunks of that code have been/will be 
-// deleted, with consequent loss of that functionality. The current K3NG code can be found at a repository at SourceForge:
-// http://sourceforge.net/projects/k3ngarduinocwke
+// This project started with code from the K3NG cw keyer (version 2012101701) by Anthony Good, K3NG. Large chunks of that code have
+// been/will be deleted, with consequent loss of that functionality. The current K3NG code can be found at a repository at 
+// SourceForge: http://sourceforge.net/projects/k3ngarduinocwke
 
 // Copyright 2012 Anthony Good, K3NG
 // modified by Jack Welch, AI4SV
@@ -36,11 +36,12 @@
 
 
 //based on ...
-#define CODE_VERSION "2012101701"
+#define CODE_VERSION "1"
 
 //Major changes in functionality versus the K3NG CW Keyer:
-//
-//
+// Features removed entirely:
+// * PS2 keyboard
+// * 
 
 
 
