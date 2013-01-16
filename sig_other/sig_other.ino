@@ -36,11 +36,13 @@
 
 //Major changes in functionality versus the K3NG CW Keyer:
 // Features removed entirely:
-// * PS2 keyboard
-// * Hellscreiber
+// * Delete PS2 keyboard
+// * Delete Hellscreiber
 // * Disable ability to not have a potentiometer - The potentiometer is an integral part of SO and the only way to set speed
 // * Disable multiple transmitters - a single keyer output remains
 // * Disable all PTT lines
+// * Delete Memory Macros
+
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
 //    CW Keyboard: type what you want the keyer to send (all commands are preceded with a backslash ( \ )
@@ -124,7 +126,6 @@
 #define FEATURE_COMMAND_BUTTONS  // this is now required for the regular buttons and command mode (added in version 2012061601)
 #define FEATURE_SAY_HI
 #define FEATURE_MEMORIES
-//#define FEATURE_MEMORY_MACROS
 //#define FEATURE_WINKEY_EMULATION    // this requires FEATURE_SERIAL - disabling Automatic Software Reset is recommended (see documentation)
 //#define OPTION_WINKEY_2_SUPPORT     // requires FEATURE_WINKEY_EMULATION
 //#define FEATURE_BEACON
@@ -5196,14 +5197,6 @@ void play_memory(byte memory_number)
   Serial.println(memory_number);
   #endif  
   
-  #ifdef FEATURE_MEMORY_MACROS
-  byte eeprom_byte_read2;
-  int z;
-  byte input_error;
-  byte delay_result = 0;
-  int int_from_macro;
-  #endif //FEATURE_MEMORY_MACROS
-
   button0_buffer = 0;
 
 //  #ifdef DEBUG_MEMORYCHECK
@@ -5250,343 +5243,31 @@ void play_memory(byte memory_number)
         Serial.println(eeprom_byte_read);
         #endif
 
-        if (eeprom_byte_read != 92) {          // do we have a backslash?
-          if (machine_mode == NORMAL) {
-            #ifdef FEATURE_SERIAL
-            #ifndef FEATURE_WINKEY_EMULATION
+        if (machine_mode == NORMAL) {
+          #ifdef FEATURE_SERIAL
+          #ifndef FEATURE_WINKEY_EMULATION
+          Serial.write(eeprom_byte_read);
+          #else  //FEATURE_WINKEY_EMULATION
+          if (((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_paddle_echo_activated) && (winkey_host_open)) || (serial_mode != SERIAL_WINKEY_EMULATION)) {
             Serial.write(eeprom_byte_read);
-            #else  //FEATURE_WINKEY_EMULATION
-            if (((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_paddle_echo_activated) && (winkey_host_open)) || (serial_mode != SERIAL_WINKEY_EMULATION)) {
-              Serial.write(eeprom_byte_read);
-            }
-            #endif //FEATURE_WINKEY_EMULATION
-            #endif //FEATURE_SERIAL
-            #ifdef FEATURE_DISPLAY
-            if (lcd_send_echo) {
-              display_scroll_print_char(eeprom_byte_read); 
-              service_display();
-            }
-            #endif            
           }
-
-          if (prosign_flag) {
-            send_char(eeprom_byte_read,OMIT_LETTERSPACE);
-            prosign_flag = 0;
-          } else {
-            send_char(eeprom_byte_read,NORMAL);         // no - play the character
+          #endif //FEATURE_WINKEY_EMULATION
+          #endif //FEATURE_SERIAL
+          #ifdef FEATURE_DISPLAY
+          if (lcd_send_echo) {
+            display_scroll_print_char(eeprom_byte_read); 
+            service_display();
           }
-        } else {                               // yes - we have a backslash command ("macro")
-          y++;                                 // get the next memory byte
-          #ifdef FEATURE_MEMORY_MACROS
-          if (y < (memory_end(memory_number)+1)) {
-            eeprom_byte_read = EEPROM.read(y);            // memory macros (backslash commands)
-            switch (eeprom_byte_read) {
-
-              case 49:                         // 1 - jump to memory 1
-                if (number_of_memories > 0) {
-                  memory_number = 0;
-                  y = ((memory_start(memory_number)) - 1);
-                  if (machine_mode == NORMAL) {
-                    Serial.println();
-                  }
-                }
-                break;
-
-              case 50:                         // 2 - jump to memory 2
-                if (number_of_memories > 1) {
-                  memory_number = 1;
-                  y = ((memory_start(memory_number)) - 1);
-                  if (machine_mode == NORMAL) {
-                    Serial.println();
-                  }
-                }
-                break;
-
-              case 51:                         // 3 - jump to memory 3
-                if (number_of_memories > 2) {
-                  memory_number = 2;
-                  y = ((memory_start(memory_number)) - 1);
-                  if (machine_mode == NORMAL) {
-                    Serial.println();
-                  }
-                }
-                break;
-
-              case 52:                         // 4 - jump to memory 4
-                if (number_of_memories > 3) {
-                  memory_number = 3;
-                  y = ((memory_start(memory_number)) - 1);
-                  if (machine_mode == NORMAL) {
-                    Serial.println();
-                  }
-                }
-                break;
-
-              case 53:                         // 5 - jump to memory 5
-                if (number_of_memories > 4) {
-                  memory_number = 4;
-                  y = ((memory_start(memory_number)) - 1);
-                  if (machine_mode == NORMAL) {
-                    Serial.println();
-                  }
-                }
-                break;
-
-              case 54:                         // 6 - jump to memory 6
-                if (number_of_memories > 5) {
-                  memory_number = 5;
-                  y = ((memory_start(memory_number)) - 1);
-                  if (machine_mode == NORMAL) {
-                    Serial.println();
-                  }
-                }
-                break;
-
-              case 55:                         // 7 - jump to memory 7
-                if (number_of_memories > 6) {
-                  memory_number = 6;
-                  y = ((memory_start(memory_number)) - 1);
-                  if (machine_mode == NORMAL) {
-                    Serial.println();
-                  }
-                }
-                break;
-
-              case 56:                         // 8 - jump to memory 8
-                if (number_of_memories > 7) {
-                  memory_number = 7;
-                  y = ((memory_start(memory_number)) - 1);
-                  if (machine_mode == NORMAL) {
-                    Serial.println();
-                  }
-                }
-                break;
-
-              case 57:                         // 9 - jump to memory 9
-                if (number_of_memories > 8) {
-                  memory_number = 8;
-                  y = ((memory_start(memory_number)) - 1);
-                  if (machine_mode == NORMAL) {
-                    Serial.println();
-                  }
-                }
-                break;
-
-              case 67:                       // C - play serial number with cut numbers T and N, then increment
-                  serial_number_string = String(serial_number, DEC);
-                  if (serial_number_string.length() < 3 ) {
-                    send_char('T',NORMAL);
-                  }
-                  if (serial_number_string.length() == 1) {
-                    send_char('T',NORMAL);
-                  }
-                  for (unsigned int a = 0; a < serial_number_string.length(); a++)  {
-                    if (serial_number_string[a] == '0') {
-                      send_char('T',NORMAL);
-                    } else {
-                     if (serial_number_string[a] == '9') {
-                       send_char('N',NORMAL);
-                     } else {
-                       send_char(serial_number_string[a],NORMAL);
-                     }
-                    }
-                  }
-                  serial_number++;
-                break;
-
-              case 68:                      // D - delay for ### seconds
-                int_from_macro = 0;
-                z = 100;
-                input_error = 0;
-                for (int x = 1; x < 4; x ++) {
-                  y++;
-                  if (y < (memory_end(memory_number)+1)) {
-                    eeprom_byte_read2 = EEPROM.read(y);
-                    if ((eeprom_byte_read2 > 47) && (eeprom_byte_read2 < 58)) {    // ascii 48-57 = "0" - "9")
-                      int_from_macro = int_from_macro + ((eeprom_byte_read2 - 48) * z);
-                      z = z / 10;
-                    } else {
-                      x = 4;           // error - exit
-                      input_error = 1;
-                      y--;             // go back one so we can at least play the errant character
-                    }
-                  } else {
-                    x = 4;
-                    input_error = 1;
-                  }
-                }
-                if (input_error != 1) {   // do the delay
-                  delay_result = memory_nonblocking_delay(int_from_macro*1000);
-                }
-                if (delay_result) {   // if a paddle or button0 was hit during the delay, exit
-                  return;
-                }
-                break;  // case 68
-
-              case 69:                       // E - play serial number, then increment
-                  serial_number_string = String(serial_number, DEC);
-                  for (unsigned int a = 0; a < serial_number_string.length(); a++)  {
-                    send_char(serial_number_string[a],NORMAL);
-                  }
-                  serial_number++;
-                break;
-
-              case 70:                       // F - change sidetone frequency
-                int_from_macro = 0;
-                z = 1000;
-                input_error = 0;
-                for (int x = 1; x < 5; x ++) {
-                  y++;
-                  if (y < (memory_end(memory_number)+1)) {
-                    eeprom_byte_read2 = EEPROM.read(y);
-                    if ((eeprom_byte_read2 > 47) && (eeprom_byte_read2 < 58)) {    // ascii 48-57 = "0" - "9")
-                      int_from_macro = int_from_macro + ((eeprom_byte_read2 - 48) * z);
-                      z = z / 10;
-                    } else {
-                      x = 5;           // error - exit
-                      input_error = 1;
-                      y--;             // go back one so we can at least play the errant character
-                    }
-                  }  else {
-                    x = 4;
-                    input_error = 1;
-                  }
-                }
-                if ((input_error != 1) && (int_from_macro > SIDETONE_HZ_LOW_LIMIT) && (int_from_macro < SIDETONE_HZ_HIGH_LIMIT)) {
-                  hz_sidetone = int_from_macro;
-                }
-                break;
-
-              case 78:                       // N - decrement serial number (do not play)
-                serial_number--;
-                break;
-
-              case 43:                       // + - Prosign
-                prosign_flag = 1;
-                break;
-
-              case 81:                       // Q - QRSS mode and set dit length to ##
-                int_from_macro = 0;
-                z = 10;
-                input_error = 0;
-                for (int x = 1; x < 3; x ++) {
-                  y++;
-                  if (y < (memory_end(memory_number)+1)) {
-                    eeprom_byte_read2 = EEPROM.read(y);
-                    if ((eeprom_byte_read2 > 47) && (eeprom_byte_read2 < 58)) {    // ascii 48-57 = "0" - "9")
-                      int_from_macro = int_from_macro + ((eeprom_byte_read2 - 48) * z);
-                      z = z / 10;
-                    } else {
-                      x = 4;           // error - exit
-                      input_error = 1;
-                      y--;             // go back one so we can at least play the errant character
-                    }
-                  } else {
-                    x = 4;
-                    input_error = 1;
-                  }
-                }
-                if (input_error == 0) {
-                  speed_mode = SPEED_QRSS;
-                  qrss_dit_length =  int_from_macro;
-                  //calculate_element_length();
-                }
-              break;  //case 81
-
-              case 82:                       // R - regular speed mode
-                speed_mode = SPEED_NORMAL;
-                //calculate_element_length();
-              break;
-
-              case 84:                      // T - transmit for ### seconds
-                int_from_macro = 0;
-                z = 100;
-                input_error = 0;
-                for (int x = 1; x < 4; x ++) {
-                  y++;
-                  if (y < (memory_end(memory_number)+1)) {
-                    eeprom_byte_read2 = EEPROM.read(y);
-                    if ((eeprom_byte_read2 > 47) && (eeprom_byte_read2 < 58)) {    // ascii 48-57 = "0" - "9")
-                      int_from_macro = int_from_macro + ((eeprom_byte_read2 - 48) * z);
-                      z = z / 10;
-                    } else {
-                      x = 4;           // error - exit
-                      input_error = 1;
-                      y--;             // go back one so we can at least play the errant character
-                    }
-                  } else {
-                    x = 4;
-                    input_error = 1;
-                  }
-                }
-                if (input_error != 1) {   // go ahead and transmit
-                  tx_and_sidetone_key(1,AUTOMATIC_SENDING);
-                  delay_result = memory_nonblocking_delay(int_from_macro*1000);
-                  tx_and_sidetone_key(0,AUTOMATIC_SENDING);
-                }
-                if (delay_result) {   // if a paddle or button0 was hit during the delay, exit
-                  return;
-                }
-                break;  // case 84
-
-              case 87:                      // W - change speed to ### WPM
-                int_from_macro = 0;
-                z = 100;
-                input_error = 0;
-                for (int x = 1; x < 4; x ++) {
-                  y++;
-                  if (y < (memory_end(memory_number)+1)) {
-                    eeprom_byte_read2 = EEPROM.read(y);
-                    if ((eeprom_byte_read2 > 47) && (eeprom_byte_read2 < 58)) {    // ascii 48-57 = "0" - "9")
-                      int_from_macro = int_from_macro + ((eeprom_byte_read2 - 48) * z);
-                      z = z / 10;
-                    } else {
-                      x = 4;           // error - exit
-                      input_error = 1;
-                      y--;             // go back one so we can at least play the errant character
-                    }
-                  }  else {
-                    x = 4;
-                    input_error = 1;
-                  }
-                }
-                if (input_error != 1) {
-                  speed_mode = SPEED_NORMAL;
-                  speed_set(int_from_macro);
-                }
-                break;  // case 87
-
-                case 89:                // Y - Relative WPM change (positive)
-                  y++;
-                  if ((y < (memory_end(memory_number)+1)) && (speed_mode == SPEED_NORMAL)) {
-                    eeprom_byte_read2 = EEPROM.read(y);
-                    if ((eeprom_byte_read2 > 47) && (eeprom_byte_read2 < 58)) {    // ascii 48-57 = "0" - "9")
-                      speed_set(wpm + eeprom_byte_read2 - 48);
-                    } else {
-                      y--;             // go back one so we can at least play the errant character
-                    }
-                  } else {
-                  }
-                  break; // case 89
-
-                case 90:                // Z - Relative WPM change (positive)
-                  y++;
-                  if ((y < (memory_end(memory_number)+1)) && (speed_mode == SPEED_NORMAL)) {
-                    eeprom_byte_read2 = EEPROM.read(y);
-                    if ((eeprom_byte_read2 > 47) && (eeprom_byte_read2 < 58)) {    // ascii 48-57 = "0" - "9")
-                      speed_set(eeprom_byte_read2 - 48);
-                    } else {
-                      y--;             // go back one so we can at least play the errant character
-                    }
-                  } else {
-                  }
-                  break; // case 90
-
-            }
-
-          }
-          #endif //FEATURE_MEMORY_MACROS
+          #endif            
         }
+
+        if (prosign_flag) {
+          send_char(eeprom_byte_read,OMIT_LETTERSPACE);
+          prosign_flag = 0;
+        } else {
+          send_char(eeprom_byte_read,NORMAL);         // no - play the character
+        }
+  
         if (machine_mode != BEACON) {
           if ((dit_buffer) || (dah_buffer) || (button0_buffer)) {   // exit if the paddle or button0 was hit
             dit_buffer = 0;
@@ -5830,9 +5511,6 @@ void initialize_debug_startup(){
   #endif
   #ifdef FEATURE_MEMORIES
   Serial.println(F("FEATURE_MEMORIES"));
-  #endif
-  #ifdef FEATURE_MEMORY_MACROS
-  Serial.println(F("FEATURE_MEMORY_MACROS"));
   #endif
   #ifdef FEATURE_WINKEY_EMULATION
   Serial.println(F("FEATURE_WINKEY_EMULATION"));
