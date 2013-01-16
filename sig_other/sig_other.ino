@@ -2841,13 +2841,11 @@ void send_char(char cw_char, byte omit_letterspace)
     #endif //OPTION_NON_ENGLISH_EXTENSIONS      
     
     case '|': loop_element_lengths(0.5,0,wpm,AUTOMATIC_SENDING); return; break;
-    default: send_dits(2); send_dahs(2); send_dits(2); break;  
- 
-    if (omit_letterspace != OMIT_LETTERSPACE) {
+    default: send_dits(2); send_dahs(2); send_dits(2); break; 
+  } 
+  if (omit_letterspace != OMIT_LETTERSPACE) {
       loop_element_lengths((length_letterspace-1),0,wpm,AUTOMATIC_SENDING); //this is minus one because send_dit and send_dah have a trailing element space
-    }
   }
-
 }
 
 //-------------------------------------------------------------------------------------------------------
