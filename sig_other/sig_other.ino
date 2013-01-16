@@ -12,8 +12,6 @@
 // been/will be deleted, with consequent loss of that functionality. The current K3NG code can be found at a repository at 
 // SourceForge: http://sourceforge.net/projects/k3ngarduinocwke
 
-// Copyright 2012 Anthony Good, K3NG
-// modified by Jack Welch, AI4SV
 // All trademarks referred to in source code and documentation are copyright their respective owners.
 
     /*
@@ -34,16 +32,15 @@
 // If you offer a hardware kit using this software, show your appreciation by sending the author a note and then forward a
 // complimentary kit or a bottle of bourbon to K3NG ;-)
 
-
-//based on ...
 #define CODE_VERSION "1"
 
 //Major changes in functionality versus the K3NG CW Keyer:
 // Features removed entirely:
 // * PS2 keyboard
 // * Hellscreiber
-// * Disable potentiometer - The potentiometer is an integral part of SO and the only way to set speed
-// * 
+// * Disable ability to not have a potentiometer - The potentiometer is an integral part of SO and the only way to set speed
+// * Disable multiple transmitters - a single keyer output remains
+// * Disable all PTT lines
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
 //    CW Keyboard: type what you want the keyer to send (all commands are preceded with a backslash ( \ )
@@ -67,8 +64,6 @@
 //    \r     Switch to regular speed mode
 //    \s     Status
 //    \t     Tune mode
-//    \u     Manual PTT toggle
-//    \w###  Set speed in WPM
 //    \y#    Change wordspace to # elements (# = 1 to 9)
 //    \z     Autospace on/off
 //    \+     Create prosign
@@ -112,8 +107,6 @@
 //    \q##   Switch to QRSS mode, dit length ## seconds
 //    \r     Switch to regular speed mode
 //    \t###  Transmit for ### seconds (must be three digits, use leading zeros if necessary)
-//    \u     Activate PTT
-//    \v     Deactivate PTT
 //    \w###  Set regular mode speed to ### WPM (must be three digits, use leading zeros if necessary)
 //    \y#    Increase speed # WPM
 //    \z#    Decrease speed # WPM
@@ -149,7 +142,6 @@
 
 
 //#define OPTION_SUPPRESS_SERIAL_BOOT_MSG
-//#define OPTION_INCLUDE_PTT_TAIL_FOR_MANUAL_SENDING
 //#define OPTION_CLI_WINKEY_AUTOSWITCH
 #define OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION  // this will make Winkey emulation be the default at boot up; hold command button down at boot up to activate CLI mode
 //#define OPTION_WINKEY_DISCARD_BYTES_AT_STARTUP     // if ASR is not disabled, you may need this to discard errant serial port bytes at startup
@@ -196,13 +188,6 @@
 #define tx_key_line 6       // (high = key down/tx on)
 #define sidetone_line 9         // connect a speaker for sidetone
 #define potentiometer A0        // Speed potentiometer (0 to 5 V) Use pot from 1k to 10k
-#define ptt_tx_1 0              // PTT ("push to talk") lines
-//#define ptt_tx_1 13  // nanokeyer
-#define ptt_tx_2 0              //   Can be used for keying fox transmitter, T/R switch, or keying slow boatanchors
-#define ptt_tx_3 0              //   These are optional - set to 0 if unused
-#define ptt_tx_4 0
-#define ptt_tx_5 0
-#define ptt_tx_6 0
 #define cw_decoder_pin A5 //A3
 
 #ifdef FEATURE_COMMAND_BUTTONS
@@ -229,8 +214,6 @@
 #define hz_high_beep 1500                // frequency in hertz of high beep
 #define hz_low_beep 400                  // frequency in hertz of low beep
 #define initial_dah_to_dit_ratio 300     // 300 = 3 / normal 3:1 ratio
-#define initial_ptt_lead_time 10          // PTT lead time in mS
-#define initial_ptt_tail_time 10         // PTT tail time in mS
 #define initial_qrss_dit_length 1        // QRSS dit length in seconds
 #define initial_pot_wpm_low_value 13     // Potentiometer WPM fully CCW
 #define initial_pot_wpm_high_value 35    // Potentiometer WPM fully CW
@@ -244,7 +227,6 @@
 #define default_first_extension_time 0   // number of milliseconds to extend first sent dit or dah
 #define default_pot_full_scale_reading 1023
 #define default_weighting 50             // 50 = weighting factor of 1 (normal)
-#define default_ptt_hang_time_wordspace_units 0.0
 #define number_of_memories byte(12)            // the number of memories (duh)
 #define memory_area_start 20             // the eeprom location where memory space starts
 #define memory_area_end 1023             // the eeprom location where memory space ends
@@ -299,8 +281,6 @@
 
 #define SERIAL_SEND_BUFFER_SPECIAL_START 13
 #define SERIAL_SEND_BUFFER_WPM_CHANGE 14        // was 200
-#define SERIAL_SEND_BUFFER_PTT_ON 15            // was 201
-#define SERIAL_SEND_BUFFER_PTT_OFF 16           // was 202
 #define SERIAL_SEND_BUFFER_TIMED_KEY_DOWN 17    // was 203
 #define SERIAL_SEND_BUFFER_TIMED_WAIT 18        // was 204
 #define SERIAL_SEND_BUFFER_NULL 19              // was 205
@@ -329,14 +309,11 @@
 #define WINKEY_DAH_TO_DIT_RATIO_COMMAND 11
 #define WINKEY_KEYING_COMPENSATION_COMMAND 12
 #define WINKEY_FIRST_EXTENSION_COMMAND 13
-#define WINKEY_PTT_TIMES_PARM1_COMMAND 14
-#define WINKEY_PTT_TIMES_PARM2_COMMAND 15
 #define WINKEY_SET_POT_PARM1_COMMAND 16
 #define WINKEY_SET_POT_PARM2_COMMAND 17
 #define WINKEY_SET_POT_PARM3_COMMAND 18
 #define WINKEY_SOFTWARE_PADDLE_COMMAND 19
 #define WINKEY_CANCEL_BUFFERED_SPEED_COMMAND 20
-#define WINKEY_BUFFFERED_PTT_COMMMAND 21
 #define WINKEY_HSCW_COMMAND 22
 #define WINKEY_BUFFERED_HSCW_COMMAND 23
 #define WINKEY_WEIGHTING_COMMAND 24
@@ -414,10 +391,6 @@ unsigned int wpm;
 byte command_mode_disable_tx = 0;
 unsigned int hz_sidetone = initial_sidetone_freq;
 unsigned int dah_to_dit_ratio = initial_dah_to_dit_ratio;
-byte current_ptt_line = ptt_tx_1;
-unsigned int ptt_tail_time = initial_ptt_tail_time;
-unsigned int ptt_lead_time = initial_ptt_lead_time;
-byte manual_ptt_invoke = 0;
 byte qrss_dit_length = initial_qrss_dit_length;
 byte machine_mode;   // NORMAL, BEACON, COMMAND
 byte paddle_mode;    // PADDLE_NORMAL, PADDLE_REVERSE
@@ -430,8 +403,6 @@ byte button0_buffer;
 byte being_sent;     // SENDING_NOTHING, SENDING_DIT, SENDING_DAH
 byte key_state;      // 0 = key up, 1 = key down
 byte config_dirty;
-unsigned long ptt_time;
-byte ptt_line_activated = 0;
 byte speed_mode = SPEED_NORMAL;
 unsigned int serial_number = 1;
 byte pause_sending_buffer = 0;
@@ -441,7 +412,6 @@ byte keying_compensation = default_keying_compensation;
 byte first_extension_time = default_first_extension_time;
 byte weighting = default_weighting;
 byte ultimatic_mode = ULTIMATIC_NORMAL;
-float ptt_hang_time_wordspace_units = default_ptt_hang_time_wordspace_units;
 byte last_sending_type = MANUAL_SENDING;
 byte zero = 0;
 byte iambic_flag = 0;
@@ -591,7 +561,6 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
   "\\R\t\t: Switch to regular speed (wpm) mode\n\r"
   "\\S\t\t: status report\n\r"
   "\\T\t\t: Tune mode\n\r"
-  "\\U\t\t: PTT toggle\n\r"
   "\\W#[#][#]\t: Change WPM to ###\n\r"
   "\\Y#\t\t: Change wordspace to #\n\r"
   #ifdef FEATURE_AUTOSPACE
@@ -608,8 +577,6 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
   "\\Q##\t\t: Switch to QRSS with ## second dit length\n\r"
   "\\R\t\t: Switch to regular speed mode\n\r"
   "\\T###\t\t: Transmit for ### seconds\n\r"
-  "\\U\t\t: key PTT\n\r"
-  "\\V\t\t: unkey PTT\n\r"
   "\\W###\t\t: Change WPM to ###\n\r"
   "\\Y#\t\t: Increase speed # WPM\n\r"
   "\\Z#\t\t: Decrease speed # WPM\n\r"
@@ -878,7 +845,6 @@ void loop()
     #endif //FEATURE_SERIAL
 
     service_send_buffer();
-    check_ptt_tail();
 
     check_potentiometer();
 
@@ -1381,72 +1347,6 @@ void check_paddles()
 }
 
 //-------------------------------------------------------------------------------------------------------
-
-void ptt_key()
-{
-  if (ptt_line_activated == 0) {   // if PTT is currently deactivated, bring it up and insert PTT lead time delay
-    if (current_ptt_line) {
-      digitalWrite (current_ptt_line, HIGH);    
-      #ifdef OPTION_WINKEY_2_SUPPORT
-      if ((wk2_both_tx_activated) && (ptt_tx_2)) {
-        digitalWrite (ptt_tx_2, HIGH);
-      }
-      #endif
-      delay(ptt_lead_time);
-    }
-    ptt_line_activated = 1;
-  }
-  ptt_time = millis();
-}
-
-//-------------------------------------------------------------------------------------------------------
-void ptt_unkey()
-{
-  if (ptt_line_activated) {
-    if (current_ptt_line) {
-      digitalWrite (current_ptt_line, LOW);
-      #ifdef OPTION_WINKEY_2_SUPPORT
-      if ((wk2_both_tx_activated) && (ptt_tx_2)) {
-        digitalWrite (ptt_tx_2, LOW);
-      }
-      #endif
-
-    }
-    ptt_line_activated = 0;
-  }
-}
-
-//-------------------------------------------------------------------------------------------------------
-void check_ptt_tail()
-{
-  #ifdef DEBUG_LOOP
-  Serial.println(F("loop: entering check_ptt_tail"));
-  #endif
-    
-  if (key_state) {
-    ptt_time = millis();
-  } else {
-    if ((ptt_line_activated) && (manual_ptt_invoke == 0)) {
-      //if ((millis() - ptt_time) > ptt_tail_time) {
-      if (last_sending_type == MANUAL_SENDING) {
-        #ifndef OPTION_INCLUDE_PTT_TAIL_FOR_MANUAL_SENDING
-        if ((millis() - ptt_time) > ((length_wordspace*ptt_hang_time_wordspace_units)*float(1200/wpm)) ) {
-        #endif
-        #ifdef OPTION_INCLUDE_PTT_TAIL_FOR_MANUAL_SENDING
-        if ((millis() - ptt_time) > (((length_wordspace*ptt_hang_time_wordspace_units)*float(1200/wpm))+ptt_tail_time)) {
-        #endif
-          ptt_unkey();
-        }
-      } else {
-        if ((millis() - ptt_time) > ptt_tail_time) {
-          ptt_unkey();
-        }
-      }
-    }
-  }
-}
-
-//-------------------------------------------------------------------------------------------------------
 void write_settings_to_eeprom(int initialize_eeprom) {
 
   if (initialize_eeprom) {
@@ -1549,7 +1449,6 @@ void check_dit_paddle()
     }
     #endif
     dit_buffer = 1;
-    manual_ptt_invoke = 0;
     #ifdef FEATURE_MEMORIES
     if (repeat_memory < 255) {
       repeat_memory = 255;
@@ -1589,9 +1488,7 @@ void check_dah_paddle()
     #ifdef FEATURE_MEMORIES
     repeat_memory = 255;
     #endif
-    manual_ptt_invoke = 0;
   }
-
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1744,10 +1641,8 @@ void tx_and_sidetone_key (int state, byte sending_type)
 {
   if ((state) && (key_state == 0)) {
     if (key_tx) {
-      byte previous_ptt_line_activated = ptt_line_activated;
-      ptt_key();
       digitalWrite (tx_key_line, HIGH);
-      if ((first_extension_time) && (previous_ptt_line_activated == 0)) {
+      if (first_extension_time) {
         delay(first_extension_time);
       }
     }
@@ -1759,7 +1654,6 @@ void tx_and_sidetone_key (int state, byte sending_type)
     if ((state == 0) && (key_state)) {
       if (key_tx) {
         digitalWrite (tx_key_line, LOW);       
-        ptt_key();
       }
       if ((sidetone_mode == SIDETONE_ON) || (machine_mode == COMMAND) || ((sidetone_mode == SIDETONE_PADDLE_ONLY) && (sending_type == MANUAL_SENDING))) {
         noTone(sidetone_line);
@@ -2212,19 +2106,16 @@ void command_tuning_mode() {
 
     if (digitalRead(paddle_left) == LOW) {
       tx_and_sidetone_key(1,MANUAL_SENDING);
-      ptt_key();
       latched = 0;
     } else {
        if (digitalRead(paddle_left) == HIGH && latched == 0) {
          tx_and_sidetone_key(0,MANUAL_SENDING);
-         ptt_unkey();
        }
     }
 
     if (digitalRead(paddle_right) == LOW && latched == 0) {
       latched = 1;
       tx_and_sidetone_key(1,MANUAL_SENDING);
-      ptt_key();
       while ((digitalRead(paddle_right) == LOW) && (digitalRead(paddle_left) == HIGH)) {
         delay(10);
       }
@@ -2232,7 +2123,6 @@ void command_tuning_mode() {
       if ((digitalRead(paddle_right) == LOW) && (latched)) {
         latched = 0;
         tx_and_sidetone_key(0,MANUAL_SENDING);
-        ptt_unkey();
         while ((digitalRead(paddle_right) == LOW) && (digitalRead(paddle_left) == HIGH)) {
           delay(10);
         }
@@ -2244,7 +2134,6 @@ void command_tuning_mode() {
    
   }
   tx_and_sidetone_key(0,MANUAL_SENDING);
-  ptt_unkey();
   while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {}  // wait for all lines to go high
   key_tx = 0;
   send_dit(AUTOMATIC_SENDING);
@@ -2949,8 +2838,6 @@ void service_send_buffer()
   // send one character out of the send buffer
   // values 200 and above do special things
   // 200 - SERIAL_SEND_BUFFER_WPM_CHANGE - next two bytes are new speed
-  // 201 - SERIAL_SEND_BUFFER_PTT_ON
-  // 202 - SERIAL_SEND_BUFFER_PTT_OFF
   // 203 - SERIAL_SEND_BUFFER_TIMED_KEY_DOWN
   // 204 - SERIAL_SEND_BUFFER_TIMED_WAIT
   // 205 - SERIAL_SEND_BUFFER_NULL
@@ -3049,19 +2936,6 @@ void service_send_buffer()
             timed_command_in_progress = SERIAL_SEND_BUFFER_TIMED_WAIT;
             remove_from_send_buffer();
           }
-        }
-
-        if (send_buffer_array[0] == SERIAL_SEND_BUFFER_PTT_ON) {
-          remove_from_send_buffer();
-          manual_ptt_invoke = 1;
-          ptt_key();
-        }
-
-        if (send_buffer_array[0] == SERIAL_SEND_BUFFER_PTT_OFF) {
-          remove_from_send_buffer();
-          manual_ptt_invoke = 0;
-
-          ptt_unkey();
         }
       } else {
         #ifdef FEATURE_WINKEY_EMULATION
@@ -3244,26 +3118,7 @@ void winkey_weighting_command(byte incoming_serial_byte) {
 
 }
 #endif //FEATURE_WINKEY_EMULATION
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_ptt_times_parm1_command(byte incoming_serial_byte) {
-  ptt_lead_time = (incoming_serial_byte*10);
-  #ifdef DEBUG_WINKEY_PROTOCOL
-  send_char('P',NORMAL);
-  send_char('1',NORMAL);
-  #endif
-}
-#endif //FEATURE_WINKEY_EMULATION
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_ptt_times_parm2_command(byte incoming_serial_byte) {
-  ptt_tail_time = (incoming_serial_byte*10);
-  #ifdef DEBUG_WINKEY_PROTOCOL
-  send_char('P',NORMAL);
-  send_char('2',NORMAL);
-  #endif
-}
-#endif //FEATURE_WINKEY_EMULATION
+
 //-------------------------------------------------------------------------------------------------------
 #ifdef FEATURE_WINKEY_EMULATION
 void winkey_set_pot_parm1_command(byte incoming_serial_byte) {
@@ -3430,13 +3285,6 @@ void winkey_set_pinconfig_command(byte incoming_serial_byte) {
     case 128: ultimatic_mode = ULTIMATIC_DIT_PRIORITY; break;
   }
 
-  switch(incoming_serial_byte & 48) {
-    case 0: ptt_hang_time_wordspace_units = 1.0; break;
-    case 16: ptt_hang_time_wordspace_units = 1.33; break;
-    case 32: ptt_hang_time_wordspace_units = 1.66; break;
-    case 48: ptt_hang_time_wordspace_units = 2.0; break;
-  }
-
   switch(incoming_serial_byte & 12) {
     case 0:
       key_tx = 0; 
@@ -3446,25 +3294,19 @@ void winkey_set_pinconfig_command(byte incoming_serial_byte) {
       break;
     case 4: 
       key_tx = 1;
-      current_ptt_line = ptt_tx_1; 
       #ifdef OPTION_WINKEY_2_SUPPORT
       wk2_both_tx_activated = 0;
       #endif
       break;
     case 8: 
       key_tx = 1;
-      if (ptt_tx_2) {
-        current_ptt_line = ptt_tx_2;
-      } else {
-        current_ptt_line = ptt_tx_1;
-      }
       #ifdef OPTION_WINKEY_2_SUPPORT
       wk2_both_tx_activated = 0;
       #endif
       break;
     case 12:
       key_tx = 1;
-      current_ptt_line = ptt_tx_1;
+ 
       #ifdef OPTION_WINKEY_2_SUPPORT
       wk2_both_tx_activated = 1;
       #endif
@@ -3491,12 +3333,6 @@ void winkey_load_settings_command(byte winkey_status,byte incoming_serial_byte) 
        break;
      case WINKEY_LOAD_SETTINGS_PARM_4_COMMAND:
        winkey_weighting_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_5_COMMAND:
-       winkey_ptt_times_parm1_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_6_COMMAND:
-       winkey_ptt_times_parm2_command(incoming_serial_byte);
        break;
      case WINKEY_LOAD_SETTINGS_PARM_7_COMMAND:
        winkey_set_pot_parm1_command(incoming_serial_byte);
@@ -3593,12 +3429,6 @@ void winkey_admin_get_values_command() {
   // 4 - weight
   Serial.write(weighting);
 
-  // 5 - ptt lead
-  Serial.write(zero);   // TODO - backwards calculate this
-
-  // 6 - ptt tail
-  Serial.write(zero);   // TODO - backwards calculate this
-
   // 7 - pot min wpm
   Serial.write(pot_wpm_low_value);
 
@@ -3630,15 +3460,11 @@ void winkey_admin_get_values_command() {
   // 14 - pin config
   #ifdef OPTION_WINKEY_2_SUPPORT
   byte_to_send = 0;
-  if (current_ptt_line != 0) {byte_to_send = byte_to_send | 1;}
   if ((sidetone_mode == SIDETONE_ON) || (sidetone_mode == SIDETONE_PADDLE_ONLY)) {byte_to_send | 2;}
   byte_to_send = byte_to_send | 4;
   if (wk2_both_tx_activated) {byte_to_send = byte_to_send | 12;}
   if (ultimatic_mode == ULTIMATIC_DIT_PRIORITY) {byte_to_send = byte_to_send | 128;}
   if (ultimatic_mode == ULTIMATIC_DAH_PRIORITY) {byte_to_send = byte_to_send | 64;}  
-  if (ptt_hang_time_wordspace_units == 1.33) {byte_to_send = byte_to_send | 16;}
-  if (ptt_hang_time_wordspace_units == 1.66) {byte_to_send = byte_to_send | 32;}
-  if (ptt_hang_time_wordspace_units == 2.0) {byte_to_send = byte_to_send | 64;}
   Serial.write(byte_to_send);
   #else
   Serial.write(5); // default value
@@ -3769,13 +3595,11 @@ void service_winkey(byte action) {
     // Winkey interface emulation housekeeping items
     // check to see if we were sending stuff and the buffer is clear
     if (winkey_interrupted) {   // if Winkey sending was interrupted by the paddle, look at PTT line rather than timing out to send 0xc0
-      if (ptt_line_activated == 0) {
-        winkey_sending = 0;
-        winkey_interrupted = 0;
-        Serial.write(0xc0);    // tell the host we've sent everything
-        winkey_buffer_counter = 0;
-        winkey_buffer_pointer = 0;
-      }
+      winkey_sending = 0;
+      winkey_interrupted = 0;
+      Serial.write(0xc0);    // tell the host we've sent everything
+      winkey_buffer_counter = 0;
+      winkey_buffer_pointer = 0;
     } else {
       //if ((winkey_host_open) && (winkey_sending) && (send_buffer_bytes < 1) && ((millis() - winkey_last_activity) > winkey_c0_wait_time)) {
       if ((Serial.available() == 0) && (winkey_host_open) && (winkey_sending) && (send_buffer_bytes < 1) && ((millis() - winkey_last_activity) > winkey_c0_wait_time)) {
@@ -3853,9 +3677,6 @@ void service_winkey(byte action) {
             break;
           case 0x03:  // weighting
             winkey_status = WINKEY_WEIGHTING_COMMAND;
-            break;
-          case 0x04: // PTT lead and tail time
-            winkey_status = WINKEY_PTT_TIMES_PARM1_COMMAND;
             break;
           case 0x05:     // speed pot set
             winkey_status = WINKEY_SET_POT_PARM1_COMMAND;
@@ -3942,9 +3763,6 @@ void service_winkey(byte action) {
             winkey_status = WINKEY_DAH_TO_DIT_RATIO_COMMAND;
             break;
           // start of buffered commands ------------------------------
-          case 0x18:   //buffer PTT on/off
-            winkey_status = WINKEY_BUFFFERED_PTT_COMMMAND;
-            break;
           case 0x19:
             winkey_status = WINKEY_KEY_BUFFERED_COMMAND;
             break;
@@ -4048,15 +3866,6 @@ void service_winkey(byte action) {
       if (winkey_status == WINKEY_WAIT_BUFFERED_COMMAND) {
         add_to_send_buffer(SERIAL_SEND_BUFFER_TIMED_WAIT);
         add_to_send_buffer(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_BUFFFERED_PTT_COMMMAND) {
-        if (incoming_serial_byte) {
-          add_to_send_buffer(SERIAL_SEND_BUFFER_PTT_ON);
-        } else {
-          add_to_send_buffer(SERIAL_SEND_BUFFER_PTT_OFF);
-        }
         winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
       }
 
@@ -4272,16 +4081,6 @@ void service_winkey(byte action) {
         winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
       }
 
-      if (winkey_status == WINKEY_PTT_TIMES_PARM1_COMMAND) {
-        winkey_ptt_times_parm1_command(incoming_serial_byte);
-        winkey_status = WINKEY_PTT_TIMES_PARM2_COMMAND;
-      } else {
-        if (winkey_status == WINKEY_PTT_TIMES_PARM2_COMMAND) {
-          winkey_ptt_times_parm2_command(incoming_serial_byte);
-          winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-        }
-      }
-
       if (winkey_status == WINKEY_SET_POT_PARM1_COMMAND) {
         winkey_set_pot_parm1_command(incoming_serial_byte);
         winkey_status = WINKEY_SET_POT_PARM2_COMMAND;
@@ -4410,7 +4209,7 @@ void check_serial()
   }
   #endif
 
-  // Reminder to Goody: multi-parameter commands must be nested in if-then-elses (see PTT command for example)
+  // Reminder to Goody: multi-parameter commands must be nested in if-then-elses
 
   while (Serial.available() > 0) {
     incoming_serial_byte = Serial.read();
@@ -4529,19 +4328,7 @@ void process_serial_command() {
       repeat_memory = 255;
       #endif
       serial_tune_command(); break;
-    case 85:
-      Serial.print(F("PTT o"));
-      if (ptt_line_activated) {
-        manual_ptt_invoke = 0;
-        ptt_unkey();
-        Serial.println(F("ff"));
-      } else {
-        manual_ptt_invoke = 1;
-        ptt_key();
-        Serial.println(F("n"));
-      }
-      break;
-
+   
     case 87: serial_wpm_set();break;                                        // W - set WPM
     case 89: serial_change_wordspace(); break;
     #ifdef FEATURE_AUTOSPACE
@@ -4676,8 +4463,7 @@ int serial_get_number_input(byte places,int lower_limit, int upper_limit)
         check_paddles();
         service_dit_dah_buffers();
         service_send_buffer();
-
-        check_ptt_tail();
+        
         check_potentiometer();
       }
     } else {
@@ -5743,16 +5529,6 @@ void play_memory(byte memory_number)
                 }
                 break;  // case 84
 
-              case 85:                      // U - turn on PTT
-                manual_ptt_invoke = 1;
-                ptt_key();
-                break;
-
-              case 86:                      // V - turn off PTT
-                manual_ptt_invoke = 0;
-                ptt_unkey();
-                break;
-
               case 87:                      // W - change speed to ### WPM
                 int_from_macro = 0;
                 z = 100;
@@ -6028,30 +5804,6 @@ void initialize_pins() {
   pinMode (tx_key_line, OUTPUT);
   digitalWrite (tx_key_line, LOW);
   
-  if (ptt_tx_1) {
-    pinMode (ptt_tx_1, OUTPUT);
-    digitalWrite (ptt_tx_1, LOW);
-  }
-  if (ptt_tx_2) {
-    pinMode (ptt_tx_2, OUTPUT);
-    digitalWrite (ptt_tx_2, LOW);
-  }
-  if (ptt_tx_3) {
-    pinMode (ptt_tx_3, OUTPUT);
-    digitalWrite (ptt_tx_3, LOW);
-  }
-  if (ptt_tx_4) {
-    pinMode (ptt_tx_4, OUTPUT);
-    digitalWrite (ptt_tx_4, LOW);
-  }
-  if (ptt_tx_5) {
-    pinMode (ptt_tx_5, OUTPUT);
-    digitalWrite (ptt_tx_5, LOW);
-  }
-  if (ptt_tx_6) {
-    pinMode (ptt_tx_6, OUTPUT);
-    digitalWrite (ptt_tx_6, LOW);
-  }
   pinMode (sidetone_line, OUTPUT);
   digitalWrite (sidetone_line, LOW);
   
