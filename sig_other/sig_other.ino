@@ -57,7 +57,6 @@
 //    \g     Bug mode
 //    \i     Transmit enable/disable
 //    \j###  Dah to dit ratio (300 = 3.00)
-//    \k     Callsign receive practice
 //    \l##   Set weighting (50 = normal)
 //    \m###  Set Farnsworth speed
 //    \n     Toggle paddle reverse
@@ -128,7 +127,6 @@
 #define FEATURE_SAY_HI
 #define FEATURE_MEMORIES
 //#define FEATURE_BEACON
-//#define FEATURE_CALLSIGN_RECEIVE_PRACTICE
 //#define FEATURE_SERIAL_HELP
 //#define FEATURE_DEAD_OP_WATCHDOG
 //#define FEATURE_AUTOSPACE
@@ -408,11 +406,6 @@ prog_uchar string_enter_help[] __attribute__((section(".progmem.data"))) = {"\n\
 prog_uchar string_qrss_mode[] __attribute__((section(".progmem.data"))) = {"Setting keyer to QRSS Mode. Dit length: "};
 prog_uchar string_setting_serial_number[] __attribute__((section(".progmem.data"))) = {"Setting serial number to "};
 prog_uchar string_setting_dah_to_dit_ratio[] __attribute__((section(".progmem.data"))) = {"Setting dah to dit ratio to "};
-#ifdef FEATURE_CALLSIGN_RECEIVE_PRACTICE
-prog_uchar string_callsign_receive_practice[] __attribute__((section(".progmem.data"))) = {"Callsign receive practice; type in callsign and hit ENTER.\n\r"
- "If you are using the Arduino serial monitor, select \"Carriage Return\" line ending.\n\r"
- "Enter a blackslash \\ to exit.\n\r"};
-#endif //FEATURE_CALLSIGN_RECEIVE_PRACTICE
 #endif //FEATURE_COMMAND_LINE_INTERFACE
 #endif //FEATURE_SERIAL
 
@@ -431,9 +424,6 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
   "\\G\t\t: switch to Bug mode\n\r"
   "\\I\t\t: TX line disable/enable\n\r"
   "\\J###\t\t: Set Dah to Dit Ratio\n\r"
-  #ifdef FEATURE_CALLSIGN_RECEIVE_PRACTICE
-  "\\K\t\t: Callsign receive practice\n\r"
-  #endif
   "\\L##\t\t: Set weighting (50 = normal)\n\r"
   #ifdef FEATURE_FARNSWORTH
   "\\M###\t\t: Set Farnsworth Speed\n\r"
@@ -2944,9 +2934,6 @@ void process_serial_command() {
     case 82: speed_mode = SPEED_NORMAL; Serial.println(F("QRSS Off")); break; // R - activate regular timing mode
     case 83: serial_status(); break;                                              // S - Status command
     case 74: serial_set_dit_to_dah_ratio(); break;                          // J - dit to dah ratio
-    #ifdef FEATURE_CALLSIGN_RECEIVE_PRACTICE
-    case 75: serial_callsign_receive_practice(); break;                     // K - callsign receive practice
-    #endif //FEATURE_CALLSIGN_RECEIVE_PRACTICE
     case 76: serial_set_weighting(); break;
     #ifdef FEATURE_FARNSWORTH
     case 77: serial_set_farnsworth(); break;                                // M - set Farnsworth speed
@@ -3296,130 +3283,6 @@ void serial_tune_command ()
   tx_and_sidetone_key(0,MANUAL_SENDING);
 
 }
-#endif
-#endif
-//---------------------------------------------------------------------
-#ifdef FEATURE_CALLSIGN_RECEIVE_PRACTICE
-
-String generate_callsign() {
-
-  String callsign(10);
-  char nextchar;
-  long random_number = 0;
-
-  switch (random(1,5)) {
-    case 1: callsign = "K"; break;
-    case 2: callsign = "W"; break;
-    case 3: callsign = "N"; break;
-    case 4: callsign = "A"; break;
-  }
-  if (callsign == "A") {                   // if the first letter is A, we definitely need a second letter before the number
-    nextchar = random(65,91);
-    callsign = callsign + nextchar;
-  } else {
-    random_number = random(0,1);           // randomly add a second letter for K, W, N prefixes
-    if (random_number) {
-      nextchar = random(65,91);
-      callsign = callsign + nextchar;
-    }
-  }
-  nextchar = random(48,58);               // generate the number
-  callsign = callsign + nextchar;
-  nextchar = random(65,91);               // generate first letter after number
-  callsign = callsign + nextchar;
-  if (random(1,5) < 4) {                  // randomly put a second character after the number
-    nextchar = random(65,91);
-    callsign = callsign + nextchar;
-    if (random_number < 3) {              // randomly put a third character after the number
-      nextchar = random(65,91);
-      callsign = callsign + nextchar;
-    }
-  }
-  if (random(1,16) == 1) {                // randomly put a slash something on the end like /QRP or /#
-    if (random(1,4) == 1) {
-      callsign = callsign + "/QRP";
-    } else {
-       nextchar = random(48,58);
-       callsign = callsign + "/" + nextchar;
-    }
-  }
-
-  return callsign;
-}
-
-#endif //FEATURE_CALLSIGN_RECEIVE_PRACTICE
-
-//---------------------------------------------------------------------
-
-#ifdef FEATURE_SERIAL
-#ifdef FEATURE_CALLSIGN_RECEIVE_PRACTICE
-#ifdef FEATURE_COMMAND_LINE_INTERFACE
-void serial_callsign_receive_practice()
-{
-
-  byte looping = 1;
-  byte serialwaitloop = 0;
-  String callsign(10);
-  char incoming_char = ' ';
-  String user_entered_callsign = "";
-
-  randomSeed(analogRead(0));
-  serial_print(string_callsign_receive_practice);
-  while (Serial.available() > 0) {  // clear out the buffer if anything is there
-    incoming_char = Serial.read();
-  }
-  Serial.print(F("Press enter to start...."));
-  while (Serial.available() == 0) {
-  }
-  while (Serial.available() > 0) {  // clear out the buffer if anything is there
-    incoming_char = Serial.read();
-  }
-
-  while (looping){
-
-    callsign = generate_callsign();
-
-    for (byte x = 0; x < (callsign.length()); x++) {
-      send_char(callsign[x],NORMAL);
-    }
-
-    serialwaitloop = 1;
-    user_entered_callsign = "";
-    while (serialwaitloop) {
-      if (Serial.available() > 0) {
-        incoming_char = Serial.read();
-        Serial.print(incoming_char);
-        if (incoming_char == 13) {
-          serialwaitloop = 0;
-        } else {
-          user_entered_callsign = user_entered_callsign + incoming_char;
-        }
-      }
-    }
-
-    if (user_entered_callsign[0] == '\\') {
-      Serial.print(F("Exiting...\n\n\r"));
-      looping = 0;
-    } else {
-      user_entered_callsign.toUpperCase();  // the toUpperCase function was modified in 1.0; now it changes string in place
-      if (callsign.compareTo(user_entered_callsign) == 0) {
-        Serial.print(F("\nCorrect!\n\r"));
-      } else {
-        Serial.print(F("\nWrong: "));
-        Serial.println(callsign);
-      }
-    }
-
-    delay(100);
-    #ifndef FEATURE_COMMAND_BUTTONS
-    while ((digitalRead(paddle_left) == LOW) || (digitalRead(paddle_right) == LOW) || (analogbuttonread(0))) {
-      looping = 0;
-    }
-    #endif
-    delay(10);
-  }
-}
-#endif
 #endif
 #endif
 //---------------------------------------------------------------------
@@ -4151,9 +4014,6 @@ void initialize_debug_startup(){
   #endif
   #ifdef FEATURE_BEACON
   Serial.println(F("FEATURE_BEACON"));
-  #endif
-  #ifdef FEATURE_CALLSIGN_RECEIVE_PRACTICE
-  Serial.println(F("FEATURE_CALLSIGN_RECEIVE_PRACTICE"));
   #endif
   #ifdef FEATURE_SERIAL_HELP
   Serial.println(F("FEATURE_SERIAL_HELP"));
