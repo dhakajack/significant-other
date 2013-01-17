@@ -126,7 +126,6 @@
 
 //#define OPTION_SUPPRESS_SERIAL_BOOT_MSG
 #define OPTION_PROG_MEM_TRIM_TRAILING_SPACES         // trim trailing spaces from memory when programming in command mode
-#define OPTION_DIT_PADDLE_NO_SEND_ON_MEM_RPT
 //#define OPTION_MORE_DISPLAY_MSGS                     // additional optional display messages - comment out to save memory
 //#define OPTION_WATCHDOG_TIMER                        // this enables a four second ATmega48/88/168/328 watchdog timer; use for unattended/remote operation
 
@@ -1194,9 +1193,6 @@ void check_dit_paddle()
 {
   byte pin_value = 0;
   byte dit_paddle = 0;
-  #ifdef OPTION_DIT_PADDLE_NO_SEND_ON_MEM_RPT
-  static byte memory_rpt_interrupt_flag = 0;
-  #endif
 
   if (paddle_mode == PADDLE_NORMAL) {
     dit_paddle = paddle_left;
@@ -1205,19 +1201,7 @@ void check_dit_paddle()
   }
   pin_value = digitalRead(dit_paddle);
   
-  #ifdef OPTION_DIT_PADDLE_NO_SEND_ON_MEM_RPT
-  if (pin_value && memory_rpt_interrupt_flag) {
-    memory_rpt_interrupt_flag = 0;
-    loop_element_lengths(3,0,wpm,MANUAL_SENDING);
-    dit_buffer = 0;
-  }
-  #endif
-  
-  #ifdef OPTION_DIT_PADDLE_NO_SEND_ON_MEM_RPT
-  if ((pin_value == 0) && (memory_rpt_interrupt_flag == 0)) {
-  #else
   if (pin_value == 0) {
-  #endif
     #ifdef FEATURE_DEAD_OP_WATCHDOG
     if (dit_buffer == 0) {
       dit_counter++;
@@ -1229,11 +1213,6 @@ void check_dit_paddle()
     if (repeat_memory < 255) {
       repeat_memory = 255;
       send_buffer_bytes = 0;
-      #ifdef OPTION_DIT_PADDLE_NO_SEND_ON_MEM_RPT
-      dit_buffer = 0;
-      while (!digitalRead(dit_paddle)) {};
-      memory_rpt_interrupt_flag = 1;
-      #endif
     }
     #endif
   }
