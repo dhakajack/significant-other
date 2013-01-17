@@ -2,11 +2,8 @@
 #include <EEPROM.h>
 #include <avr/pgmspace.h>
 #include <avr/wdt.h>
-//#include <LiquidCrystal.h>      // uncomment for FEATURE_DISPLAY in combination with FEATURE_LCD_4BIT and LiquidCrystal lines below
-//#include <Wire.h>               // uncomment for any I2C feature
-//#include <Adafruit_MCP23017.h>       // uncomment for FEATURE_DISPLAY in combination with FEATURE_LCD_I2C and Adafruit_RGBLCDShield lines below
-//#include <Adafruit_RGBLCDShield.h>   // uncomment for FEATURE_DISPLAY in combination with FEATURE_LCD_I2C and Adafruit_RGBLCDShield lines below
-
+#include <LiquidCrystal.h>
+#include <Wire.h>
 
 // This project started with code from the K3NG cw keyer (version 2012101701) by Anthony Good, K3NG. Large chunks of that code have
 // been/will be deleted, with consequent loss of that functionality. The current K3NG code can be found at a repository at 
@@ -47,6 +44,9 @@
 // * Removed the DL2SBA bankswitch and reverse button options
 // * Removed memory repeat with button + dit hit
 // * Removed memory repeat command (if you want a memory repeated, just hit the button again)
+//
+// SO incorporates a 16 x 2  HD4480-based LCD: 16x2 display with LED backlight (Adafruit #181) with I2C address 0h
+
 
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
@@ -116,9 +116,6 @@
 //#define FEATURE_DEAD_OP_WATCHDOG
 //#define FEATURE_AUTOSPACE
 //#define FEATURE_FARNSWORTH
-//#define FEATURE_DISPLAY            // LCD display support (include one of the hardware options below)
-//#define FEATURE_LCD_4BIT           // classic LCD display using 4 I/O lines
-//#define FEATURE_LCD_I2C            // I2C LCD display using MCP23017 at addr 0x20 (Adafruit)
 //#define OPTION_NON_ENGLISH_EXTENSIONS  // add support for additional CW characters (i.e. À, Å, Þ, etc.)
 
 
@@ -174,7 +171,7 @@
 #endif //FEATURE_LCD_4BIT
 
 //LiquidCrystal lcd(lcd_rs, lcd_enable, lcd_d4, lcd_d5, lcd_d6, lcd_d7);  // uncomment this if FEATURE_LCD_4BIT is enabled above
-//Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();      // uncomment this for FEATURE_LCD_I2C
+
 
 // Initial and hardcoded settings
 #define initial_speed_wpm 26             // "factory default" keyer speed setting
@@ -292,23 +289,9 @@ byte last_sending_type = MANUAL_SENDING;
 byte zero = 0;
 byte iambic_flag = 0;
 
-#ifdef FEATURE_DISPLAY
 enum lcd_statuses {LCD_CLEAR, LCD_REVERT, LCD_TIMED_MESSAGE, LCD_SCROLL_MSG};
 #define default_display_msg_delay 1000
-#endif //FEATURE_DISPLAY
 
-#ifdef FEATURE_LCD_I2C
-#define RED 0x1
-#define YELLOW 0x3
-#define GREEN 0x2
-#define TEAL 0x6
-#define BLUE 0x4
-#define VIOLET 0x5
-#define WHITE 0x7
-byte lcdcolor = GREEN;  // default color for RGB LCD display
-#endif //FEATURE_LCD_I2C
-
-#ifdef FEATURE_DISPLAY
 byte lcd_status = LCD_CLEAR;
 unsigned long lcd_timed_message_clear_time = 0;
 byte lcd_previous_status = LCD_CLEAR;
@@ -319,8 +302,6 @@ byte lcd_paddle_echo = 1;
 byte lcd_send_echo = 1;
 long lcd_paddle_echo_buffer = 0;
 unsigned long lcd_paddle_echo_buffer_decode_time = 0;
-
-#endif
 
 #ifdef DEBUG_VARIABLE_DUMP
 long dit_start_time;
@@ -549,13 +530,9 @@ void setup()
   #endif //ifndef OPTION_SUPPRESS_SERIAL_BOOT_MSG
   #endif //FEATURE_SERIAL
 
-  #ifdef FEATURE_DISPLAY
   lcd.begin(lcd_columns, lcd_rows);
-  #ifdef FEATURE_LCD_I2C
-  lcd.setBacklight(lcdcolor);
-  #endif //FEATURE_LCD_I2C
-  lcd_center_print_timed("K3NG Keyer",0,4000);
-  #endif //FEATURE_DISPLAY
+  lcd.setBacklight(HIGH);
+  lcd_center_print_timed("Testing",0,4000);
 
   if (machine_mode != BEACON) {
     #ifdef FEATURE_SAY_HI
@@ -567,15 +544,11 @@ void setup()
     sidetone_mode = SIDETONE_ON;     
     
     //delay(201);
-    #ifdef FEATURE_DISPLAY
     lcd_center_print_timed("h",1,4000);
-    #endif
     send_char('H',NORMAL);
-    #ifdef FEATURE_DISPLAY
     lcd_center_print_timed("hi",1,4000);
-    #endif
     send_char('I',NORMAL);
-    
+
     sidetone_mode = oldSideTone; 
     key_tx = oldKey;     
     #endif
@@ -645,13 +618,11 @@ void loop()
     check_for_dead_op();
     #endif
 
-    #ifdef FEATURE_DISPLAY
     check_paddles();
     service_dit_dah_buffers();
     service_send_buffer();
     service_lcd_paddle_echo();
     service_display();
-    #endif
     
   }
   
@@ -661,8 +632,6 @@ void loop()
 
 
 // Are you a radio artisan ?
-
-#ifdef FEATURE_DISPLAY
 void service_display() {
 
   #ifdef DEBUG_LOOP
@@ -711,11 +680,8 @@ void service_display() {
   }
 
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_DISPLAY
 
 void service_lcd_paddle_echo()
 {
@@ -737,11 +703,9 @@ void service_lcd_paddle_echo()
     lcd_paddle_echo_space_sent = 1;
   }
 }
-#endif //FEATURE_DISPLAY
 
 //-------------------------------------------------------------------------------------------------------
 
-#ifdef FEATURE_DISPLAY
 void display_scroll_print_char(char charin){
   
  static byte column_pointer = 0;
@@ -769,11 +733,7 @@ void display_scroll_print_char(char charin){
  lcd_scroll_buffer_dirty = 1; 
 }
 
-#endif //FEATURE_DISPLAY
-
-
 //-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_DISPLAY
 void lcd_clear() {
 
 //  for (byte x = 0;x < lcd_rows;x++) {
@@ -783,9 +743,9 @@ void lcd_clear() {
   lcd_status = LCD_CLEAR;
 
 }
-#endif
+
 //-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_DISPLAY
+
 void lcd_center_print_timed(String lcd_print_string, byte row_number, unsigned int duration)
 {
   if (lcd_status != LCD_TIMED_MESSAGE) {
@@ -799,11 +759,9 @@ void lcd_center_print_timed(String lcd_print_string, byte row_number, unsigned i
   lcd.print(lcd_print_string);
   lcd_timed_message_clear_time = millis() + duration;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------------
 
-#ifdef FEATURE_DISPLAY
 void clear_display_row(byte row_number)
 {
   for (byte x = 0; x < lcd_columns; x++) {
@@ -811,7 +769,6 @@ void clear_display_row(byte row_number)
     lcd.print(" ");
   }
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -1244,12 +1201,10 @@ void send_dit(byte sending_type)
   }
   #endif
 
-  #ifdef FEATURE_DISPLAY
   if ((lcd_paddle_echo) && (sending_type == MANUAL_SENDING)) {
     lcd_paddle_echo_buffer = (lcd_paddle_echo_buffer * 10) + 1;
     lcd_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
-  #endif
   
   being_sent = SENDING_NOTHING;
   last_sending_type = sending_type;
@@ -1307,12 +1262,10 @@ void send_dah(byte sending_type)
   }
   #endif
 
-  #ifdef FEATURE_DISPLAY
   if ((lcd_paddle_echo) && (sending_type == MANUAL_SENDING)) {
     lcd_paddle_echo_buffer = (lcd_paddle_echo_buffer * 10) + 2;
     lcd_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
-  #endif
 
 //  if ((keyer_mode == IAMBIC_A) && (iambic_flag)) {
 //    iambic_flag = 0;
@@ -1429,9 +1382,7 @@ void speed_change(int change)
     speed_set(wpm + change);
   }
   
-  #ifdef FEATURE_DISPLAY
   lcd_center_print_timed(String(wpm) + " wpm", 1, default_display_msg_delay);
-  #endif
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1440,9 +1391,7 @@ void speed_set(int wpm_set)
 {
     wpm = wpm_set;
     config_dirty = 1;
-    #ifdef FEATURE_DISPLAY
     lcd_center_print_timed(String(wpm) + " wpm", 0, default_display_msg_delay);
-    #endif
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1536,10 +1485,8 @@ void command_mode ()
   command_mode_disable_tx = 0;
 
   boop_beep();
-  #ifdef FEATURE_DISPLAY
   lcd.clear();
   lcd_center_print_timed("Command Mode", 0, default_display_msg_delay);
-  #endif 
 
   while (stay_in_command_mode) {
     cw_char = 0;
@@ -1554,27 +1501,21 @@ void command_mode ()
           keyer_mode = IAMBIC_A;
           keyer_mode_before = IAMBIC_A;
           config_dirty = 1;
-          #ifdef FEATURE_DISPLAY
           lcd_center_print_timed("Iambic A", 0, default_display_msg_delay);
-          #endif
           send_dit(AUTOMATIC_SENDING);
           break; 
         case 2111: // B - Iambic mode
           keyer_mode = IAMBIC_B;
           keyer_mode_before = IAMBIC_B;
           config_dirty = 1;
-          #ifdef FEATURE_DISPLAY
           lcd_center_print_timed("Iambic B", 0, default_display_msg_delay);
           #endif          
-          send_dit(AUTOMATIC_SENDING);
           break; 
         case 211: // D - Ultimatic mode
           keyer_mode = ULTIMATIC;
           keyer_mode_before = ULTIMATIC;
           config_dirty = 1;
-          #ifdef FEATURE_DISPLAY
-          lcd_center_print_timed("Ultimatic", 0, default_display_msg_delay);
-          #endif                    
+          lcd_center_print_timed("Ultimatic", 0, default_display_msg_delay);                  
           send_dit(AUTOMATIC_SENDING);
           break; 
         case 1121: command_sidetone_freq_adj(); break;                    // F - adjust sidetone frequency
@@ -1582,22 +1523,16 @@ void command_mode ()
           keyer_mode = BUG;
           keyer_mode_before = BUG;
           config_dirty = 1;
-          #ifdef FEATURE_DISPLAY
-          lcd_center_print_timed("Bug", 0, default_display_msg_delay);
-          #endif          
+          lcd_center_print_timed("Bug", 0, default_display_msg_delay);     
           send_dit(AUTOMATIC_SENDING);
           break;  
         case 11:                                                     // I - toggle TX enable / disable
           if (command_mode_disable_tx) {
             command_mode_disable_tx = 0;
-            #ifdef FEATURE_DISPLAY
-            lcd_center_print_timed("TX On", 0, default_display_msg_delay);
-            #endif            
+            lcd_center_print_timed("TX On", 0, default_display_msg_delay);        
           } else {
             command_mode_disable_tx = 1;
-            #ifdef FEATURE_DISPLAY
-            lcd_center_print_timed("TX Off", 0, default_display_msg_delay);
-            #endif            
+            lcd_center_print_timed("TX Off", 0, default_display_msg_delay);          
           }
           send_dit(AUTOMATIC_SENDING);
           break;
@@ -1607,13 +1542,9 @@ void command_mode ()
         case 21: // N - paddle mode toggle
           if (paddle_mode == PADDLE_NORMAL) {
             paddle_mode = PADDLE_REVERSE;
-            #ifdef FEATURE_DISPLAY
             lcd_center_print_timed("Paddle Reverse", 0, default_display_msg_delay);
-            #endif 
           } else {
-            #ifdef FEATURE_DISPLAY
-            lcd_center_print_timed("Paddle Normal", 0, default_display_msg_delay);
-            #endif             
+            lcd_center_print_timed("Paddle Normal", 0, default_display_msg_delay);          
             paddle_mode = PADDLE_NORMAL;
           }
           config_dirty = 1;
@@ -1622,14 +1553,10 @@ void command_mode ()
         #endif
         case 222: // O - toggle sidetone on and off
           if ((sidetone_mode == SIDETONE_ON) || (sidetone_mode == SIDETONE_PADDLE_ONLY)) {
-            #ifdef FEATURE_DISPLAY
             lcd_center_print_timed("Sidetone Off", 0, default_display_msg_delay);
-            #endif 
             sidetone_mode = SIDETONE_OFF;
            } else {
-             #ifdef FEATURE_DISPLAY
              lcd_center_print_timed("Sidetone On", 0, default_display_msg_delay);
-             #endif 
              sidetone_mode = SIDETONE_ON;
            }
            config_dirty = 1;
@@ -1643,24 +1570,13 @@ void command_mode ()
           if (autospace_active) {
             autospace_active = 0;
             config_dirty = 1;
-            #ifdef FEATURE_DISPLAY
             lcd_center_print_timed("Autospace Off", 0, default_display_msg_delay);
             send_dit(AUTOMATIC_SENDING);
-            #else
-            send_char('O',NORMAL);
-            send_char('F',NORMAL);
-            send_char('F',NORMAL);
-            #endif
           } else {
             autospace_active = 1;
             config_dirty = 1;
-            #ifdef FEATURE_DISPLAY
             lcd_center_print_timed("Autospace On", 0, default_display_msg_delay);
             send_dit(AUTOMATIC_SENDING);
-            #else            
-            send_char('O',NORMAL);
-            send_char('N',NORMAL);
-            #endif
           }
           break;
         #endif
@@ -1673,9 +1589,7 @@ void command_mode ()
         #endif
         case 9: stay_in_command_mode = 0; break;                          // button was hit - exit
         default: // unknown command, send a ?
-          #ifdef FEATURE_DISPLAY
           lcd_center_print_timed("Unknown command", 0, default_display_msg_delay);          
-          #endif
           send_char('?',NORMAL); 
           break;                                   
       }
@@ -1699,11 +1613,9 @@ void adjust_dah_to_dit_ratio(int adjustment) {
 
  if ((dah_to_dit_ratio + adjustment) > 150 && (dah_to_dit_ratio + adjustment) < 810) {
    dah_to_dit_ratio = dah_to_dit_ratio + adjustment;
-   #ifdef FEATURE_DISPLAY
    #ifdef OPTION_MORE_DISPLAY_MSGS
    lcd_center_print_timed("Dah/Dit: " + String(dah_to_dit_ratio), 0, default_display_msg_delay);
    service_display();
-   #endif
    #endif   
  }
 
@@ -1717,10 +1629,8 @@ void command_dah_to_dit_ratio_adjust () {
 
   byte looping = 1;
 
-  #ifdef FEATURE_DISPLAY
   lcd_center_print_timed("Adj dah to dit", 0, default_display_msg_delay);          
-  #endif
-
+  
   while (looping) {
    send_dit(AUTOMATIC_SENDING);
    send_dah(AUTOMATIC_SENDING);
@@ -1749,10 +1659,7 @@ void command_tuning_mode() {
   byte looping = 1;
   byte latched = 0;
   
-  
-  #ifdef FEATURE_DISPLAY
   lcd_center_print_timed("Tune Mode", 0, default_display_msg_delay);          
-  #endif  
   
   send_dit(AUTOMATIC_SENDING);
   key_tx = 1;
@@ -1802,10 +1709,8 @@ void sidetone_adj(int hz) {
   if ((hz_sidetone + hz) > SIDETONE_HZ_LOW_LIMIT && (hz_sidetone + hz) < SIDETONE_HZ_HIGH_LIMIT) {
     hz_sidetone = hz_sidetone + hz;
     config_dirty = 1;
-    #ifdef FEATURE_DISPLAY
     #ifdef OPTION_MORE_DISPLAY_MSGS
     lcd_center_print_timed("Sidetone " + String(hz_sidetone) + " Hz", 0, default_display_msg_delay);
-    #endif
     #endif   
   }
 
@@ -1817,28 +1722,18 @@ void command_sidetone_freq_adj() {
 
   byte looping = 1;
 
-  #ifdef FEATURE_DISPLAY
   lcd_center_print_timed("Sidetone " + String(hz_sidetone) + " Hz", 0, default_display_msg_delay);   
-  #endif
 
   while (looping) {
     tone(sidetone_line, hz_sidetone);
     if (digitalRead(paddle_left) == LOW) {
-      #ifdef FEATURE_DISPLAY
       sidetone_adj(5);      
       lcd_center_print_timed("Sidetone " + String(hz_sidetone) + " Hz", 0, default_display_msg_delay);        
-      #else
-      sidetone_adj(1);
-      #endif
       delay(10);
     }
     if (digitalRead(paddle_right) == LOW) {
-      #ifdef FEATURE_DISPLAY
       sidetone_adj(-5);
       lcd_center_print_timed("Sidetone " + String(hz_sidetone) + " Hz", 0, default_display_msg_delay);       
-      #else
-      sidetone_adj(-1);
-      #endif
       delay(10);
     }
     while ((digitalRead(paddle_left) == LOW && digitalRead(paddle_right) == LOW) || (analogbuttonread(0))) { // if paddles are squeezed or button0 pressed - exit
@@ -1860,10 +1755,7 @@ void command_speed_mode()
   byte looping = 1;
   String wpm_string;
   
-  #ifdef FEATURE_DISPLAY
   lcd_center_print_timed("Adjust Speed", 0, default_display_msg_delay);        
-  #endif
-  
 
   while (looping) {
     send_dit(AUTOMATIC_SENDING);
@@ -1880,12 +1772,11 @@ void command_speed_mode()
 
   }
   while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {}  // wait for all lines to go high
-  #ifndef FEATURE_DISPLAY
+
   // announce speed in CW
-  wpm_string = String(wpm, DEC);
-  send_char(wpm_string[0],NORMAL);
-  send_char(wpm_string[1],NORMAL);
-  #endif
+  //wpm_string = String(wpm, DEC);
+  //send_char(wpm_string[0],NORMAL);
+  //send_char(wpm_string[1],NORMAL);
 
   dit_buffer = 0;
   dah_buffer = 0;
@@ -2505,12 +2396,10 @@ void service_send_buffer()
           Serial.write(10);  // if we got a carriage return, also send a line feed
         }
         #endif //FEATURE_SERIAL
-        #ifdef FEATURE_DISPLAY
         if (lcd_send_echo) {
           display_scroll_print_char(send_buffer_array[0]);
           service_display();
         }
-        #endif //FEATURE_DISPLAY
         send_char(send_buffer_array[0],NORMAL);
         remove_from_send_buffer();
       }
@@ -3472,9 +3361,7 @@ void play_memory(byte memory_number)
     if (machine_mode == NORMAL) {
       check_potentiometer();
       check_button0();
-      #ifdef FEATURE_DISPLAY
       service_display();
-      #endif
     }
 
     #ifdef FEATURE_SERIAL
@@ -3499,12 +3386,10 @@ void play_memory(byte memory_number)
           #ifdef FEATURE_SERIAL
           Serial.write(eeprom_byte_read);
           #endif //FEATURE_SERIAL
-          #ifdef FEATURE_DISPLAY
           if (lcd_send_echo) {
             display_scroll_print_char(eeprom_byte_read); 
             service_display();
-          }
-          #endif            
+          }     
         }
 
         if (prosign_flag) {
@@ -3528,11 +3413,7 @@ void play_memory(byte memory_number)
 
       } else {
         if (y == (memory_start(memory_number))) {      // memory is totally empty - do a boop
-          #ifdef FEATURE_DISPLAY
           lcd_center_print_timed("Memory empty", 0, default_display_msg_delay);
-          #else
-          boop();
-          #endif
         }
         return;
       }
@@ -3559,12 +3440,10 @@ void program_memory(int memory_number)
     return;
   }
   
-  #ifdef FEATURE_DISPLAY
   String lcd_print_string;
   lcd_print_string.concat("Pgm Memory ");
   lcd_print_string.concat(memory_number+1);
   lcd_center_print_timed(lcd_print_string, 0, default_display_msg_delay);
-  #endif
 
   send_dit(AUTOMATIC_SENDING);
 
@@ -3684,9 +3563,7 @@ void program_memory(int memory_number)
   }
   #endif
 
-  #ifdef FEATURE_DISPLAY
   lcd_center_print_timed("Done", 0, default_display_msg_delay);
-  #endif
 
   play_memory(memory_number);
 
