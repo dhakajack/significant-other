@@ -58,7 +58,7 @@
 //    \d     Ultimatic mode
 //    \e#### Set serial number to ####
 //    \f#### Set sidetone frequency to #### hertz
-//    \g     Bug mode
+//    \g     Bug modehg co
 //    \i     Transmit enable/disable
 //    \j###  Dah to dit ratio (300 = 3.00)
 //    \l##   Set weighting (50 = normal)
@@ -106,9 +106,8 @@
 
 // compile time features and options - comment or uncomment to add or delete features
 // FEATURES add more bytes to the compiled binary, OPTIONS change code behavior
-#define FEATURE_SERIAL
-#define FEATURE_COMMAND_LINE_INTERFACE        // this requires FEATURE_SERIAL
-#define FEATURE_COMMAND_BUTTONS  // this is now required for the regular buttons and command mode (added in version 2012061601)
+//#define FEATURE_SERIAL
+//#define FEATURE_COMMAND_LINE_INTERFACE        // this requires FEATURE_SERIAL
 #define FEATURE_SAY_HI
 #define FEATURE_MEMORIES
 //#define FEATURE_BEACON
@@ -121,7 +120,6 @@
 
 //#define OPTION_SUPPRESS_SERIAL_BOOT_MSG
 #define OPTION_PROG_MEM_TRIM_TRAILING_SPACES         // trim trailing spaces from memory when programming in command mode
-//#define OPTION_MORE_DISPLAY_MSGS                     // additional optional display messages - comment out to save memory
 //#define OPTION_WATCHDOG_TIMER                        // this enables a four second ATmega48/88/168/328 watchdog timer; use for unattended/remote operation
 
 // don't touch these unless you know what the hell you are doing
@@ -154,24 +152,7 @@
 #define tx_key_line 6       // (high = key down/tx on)
 #define sidetone_line 9         // connect a speaker for sidetone
 #define potentiometer A0        // Speed potentiometer (0 to 5 V) Use pot from 1k to 10k
-
-#ifdef FEATURE_COMMAND_BUTTONS
 #define analog_buttons_pin A3
-//#define analog_buttons_pin A6  //Rev A & B nanokeyer
-#endif //FEATURE_COMMAND_BUTTONS
-
-#ifdef FEATURE_LCD_4BIT
-//lcd pins
-#define lcd_rs A2
-#define lcd_enable 10
-#define lcd_d4 6
-#define lcd_d5 7
-#define lcd_d6 8
-#define lcd_d7 9
-#endif //FEATURE_LCD_4BIT
-
-//LiquidCrystal lcd(lcd_rs, lcd_enable, lcd_d4, lcd_d5, lcd_d6, lcd_d7);  // uncomment this if FEATURE_LCD_4BIT is enabled above
-
 
 // Initial and hardcoded settings
 #define initial_speed_wpm 26             // "factory default" keyer speed setting
@@ -202,12 +183,7 @@
 #define serial_leading_zeros 1            // set to 1 to activate leading zeros in serial numbers (i.e. #1 = 001)
 #define serial_cut_numbers 0              // set to 1 to activate cut numbers in serial numbers (i.e. #10 = 1T, #19 = 1N)
 #define p_command_single_digit_wait_time 2
-
-#ifdef FEATURE_COMMAND_BUTTONS
-#define analog_buttons_number_of_buttons 4  //16
-#define analog_buttons_r1 10
-#define analog_buttons_r2 1
-#endif
+#define analog_buttons_number_of_buttons 4
 
 // Variable macros
 #define STRAIGHT 1
@@ -260,6 +236,8 @@
 
 
 // Variables and stuff
+LiquidCrystal lcd(0);
+
 unsigned int wpm;
 byte command_mode_disable_tx = 0;
 unsigned int hz_sidetone = initial_sidetone_freq;
@@ -310,11 +288,15 @@ long dah_start_time;
 long dah_end_time;
 #endif
 
-#ifdef FEATURE_COMMAND_BUTTONS
-int button_array_high_limit[analog_buttons_number_of_buttons];
-int button_array_low_limit[analog_buttons_number_of_buttons];
+//These values assume 4 button front panel. 
+//Voltage divided comprised of a 10k R1, and switched values of R2 which are, from switch 0 to 3:
+//0, 33, 15, and 10k.  Values are calculated such that chording 2+3 results in a unique value, allowing
+//these buttons to be used in a pinch for iambic keying...like when you forget to bring the paddles,
+//the connecting wire, the 3.5mm adapter, etc.
+//calculations are based on up to 10% tolerance resistors. http://goo.gl/pN383
+int button_array_high_limit[analog_buttons_number_of_buttons+1] = {100,819,661,562,336};
+int button_array_low_limit[analog_buttons_number_of_buttons+1] = {0,746, 563, 460,432};
 long button_last_add_to_send_buffer_time = 0;
-#endif
 
 #ifdef FEATURE_FARNSWORTH
 unsigned int wpm_farnsworth = 0;  // 0 = disabled
@@ -499,10 +481,7 @@ void setup()
   Serial.begin(serial_baud_rate);
   debug_capture();
   #endif
-
-  #ifdef FEATURE_COMMAND_BUTTONS
-  initialize_analog_button_array();
-  #endif
+  
 
   // initialize serial port
   #ifdef FEATURE_SERIAL
@@ -551,7 +530,7 @@ void setup()
 
     sidetone_mode = oldSideTone; 
     key_tx = oldKey;     
-    #endif
+    #endif //FEATURE_SAY_HI
     
   }
  
@@ -559,16 +538,12 @@ void setup()
   initialize_debug_startup();
   #endif
   
-
 }
 
 // --------------------------------------------------------------------------------------------
 
 void loop()
-{
-  
-  // this is where the magic happens
-  
+{  
   #ifdef OPTION_WATCHDOG_TIMER
   wdt_reset();
   #endif  //OPTION_WATCHDOG_TIMER
@@ -593,9 +568,7 @@ void loop()
 
 
   if (machine_mode == NORMAL) {
-    #ifdef FEATURE_COMMAND_BUTTONS
     check_command_buttons();
-    #endif
     check_paddles();
     service_dit_dah_buffers();
 
@@ -800,7 +773,6 @@ void check_for_dead_op()
   // go in and out of command mode to clear or just reset the unit
 
 {
-  
   #ifdef DEBUG_LOOP
   Serial.println(F("loop: entering check_for_dead_op"));
   #endif    
@@ -1349,16 +1321,10 @@ void loop_element_lengths(float lengths, float additional_time_ms, int speed_wpm
 
     }
     #ifdef FEATURE_MEMORIES
-    #ifdef FEATURE_COMMAND_BUTTONS
     check_the_memory_buttons();
     #endif
-    #endif
     // blow out prematurely if we're automatic sending and a paddle gets hit
-    #ifdef FEATURE_COMMAND_BUTTONS
     if (sending_type == AUTOMATIC_SENDING && (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) || dit_buffer || dah_buffer)) {
-    #else
-    if (sending_type == AUTOMATIC_SENDING && (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || dit_buffer || dah_buffer)) {
-    #endif
     if (machine_mode == NORMAL) {
       return;
     }
@@ -1435,12 +1401,10 @@ int get_cw_input_from_user(unsigned int exit_time_seconds) {
       return 0;
     }
 
-    #ifdef FEATURE_COMMAND_BUTTONS
     while (analogbuttonread(0)) {    // hit the button to get out of command mode if no paddle was hit
       looping = 0;
       button_hit = 1;
     }
-    #endif
 
     #ifdef FEATURE_SERIAL
     check_serial();
@@ -1463,7 +1427,6 @@ int get_cw_input_from_user(unsigned int exit_time_seconds) {
 
 //-------------------------------------------------------------------------------------------------------
 
-#ifdef FEATURE_COMMAND_BUTTONS
 void command_mode ()
 {
 
@@ -1508,8 +1471,7 @@ void command_mode ()
           keyer_mode = IAMBIC_B;
           keyer_mode_before = IAMBIC_B;
           config_dirty = 1;
-          lcd_center_print_timed("Iambic B", 0, default_display_msg_delay);
-          #endif          
+          lcd_center_print_timed("Iambic B", 0, default_display_msg_delay);      
           break; 
         case 211: // D - Ultimatic mode
           keyer_mode = ULTIMATIC;
@@ -1605,7 +1567,6 @@ void command_mode ()
   }
   #endif //DEBUG_COMMAND_MODE
 }
-#endif //FEATURE_COMMAND_BUTTONS
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -1613,10 +1574,6 @@ void adjust_dah_to_dit_ratio(int adjustment) {
 
  if ((dah_to_dit_ratio + adjustment) > 150 && (dah_to_dit_ratio + adjustment) < 810) {
    dah_to_dit_ratio = dah_to_dit_ratio + adjustment;
-   #ifdef OPTION_MORE_DISPLAY_MSGS
-   lcd_center_print_timed("Dah/Dit: " + String(dah_to_dit_ratio), 0, default_display_msg_delay);
-   service_display();
-   #endif   
  }
 
  config_dirty = 1;
@@ -1624,7 +1581,6 @@ void adjust_dah_to_dit_ratio(int adjustment) {
 
 //-------------------------------------------------------------------------------------------------------
 
-#ifdef FEATURE_COMMAND_BUTTONS
 void command_dah_to_dit_ratio_adjust () {
 
   byte looping = 1;
@@ -1649,11 +1605,9 @@ void command_dah_to_dit_ratio_adjust () {
   dit_buffer = 0;
   dah_buffer = 0;
 }
-#endif //FEATURE_COMMAND_BUTTONS
 
 //-------------------------------------------------------------------------------------------------------
 
-#ifdef FEATURE_COMMAND_BUTTONS
 void command_tuning_mode() {
 
   byte looping = 1;
@@ -1701,23 +1655,18 @@ void command_tuning_mode() {
   dit_buffer = 0;
   dah_buffer = 0;
 }
-#endif //FEATURE_COMMAND_BUTTONS
 //-------------------------------------------------------------------------------------------------------
 
 void sidetone_adj(int hz) {
 
   if ((hz_sidetone + hz) > SIDETONE_HZ_LOW_LIMIT && (hz_sidetone + hz) < SIDETONE_HZ_HIGH_LIMIT) {
     hz_sidetone = hz_sidetone + hz;
-    config_dirty = 1;
-    #ifdef OPTION_MORE_DISPLAY_MSGS
-    lcd_center_print_timed("Sidetone " + String(hz_sidetone) + " Hz", 0, default_display_msg_delay);
-    #endif   
+    config_dirty = 1; 
   }
-
 }
 
 //-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_COMMAND_BUTTONS
+
 void command_sidetone_freq_adj() {
 
   byte looping = 1;
@@ -1739,16 +1688,14 @@ void command_sidetone_freq_adj() {
     while ((digitalRead(paddle_left) == LOW && digitalRead(paddle_right) == LOW) || (analogbuttonread(0))) { // if paddles are squeezed or button0 pressed - exit
       looping = 0;
     }
-    
-
   }
   while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {}  // wait for all lines to go high
   noTone(sidetone_line);
 
 }
-#endif //FEATURE_COMMAND_BUTTONS
+
 //-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_COMMAND_BUTTONS
+
 void command_speed_mode()
 {
 
@@ -1782,11 +1729,10 @@ void command_speed_mode()
   dah_buffer = 0;
 
 }
-#endif //FEATURE_COMMAND_BUTTONS
+
 //------------------------------------------------------------------
 
 #ifdef FEATURE_MEMORIES
-#ifdef FEATURE_COMMAND_BUTTONS
 void check_the_memory_buttons()
 {
 
@@ -1798,30 +1744,9 @@ void check_the_memory_buttons()
   }
 }
 #endif
-#endif
 
 //------------------------------------------------------------------
 
-#ifdef FEATURE_COMMAND_BUTTONS
-void initialize_analog_button_array() {
-  
-  int button_value;
-  int lower_button_value;
-  int higher_button_value;
-
-  for (int x = 0;x < analog_buttons_number_of_buttons;x++) {
-    button_value = int(1023 * (float(x * analog_buttons_r2)/float((x * analog_buttons_r2) + analog_buttons_r1)));
-    lower_button_value = int(1023 * (float((x-1) * analog_buttons_r2)/float(((x-1) * analog_buttons_r2) + analog_buttons_r1)));
-    higher_button_value = int(1023 * (float((x+1) * analog_buttons_r2)/float(((x+1) * analog_buttons_r2) + analog_buttons_r1)));
-    button_array_low_limit[x] = (button_value - ((button_value - lower_button_value)/2));
-    button_array_high_limit[x] = (button_value + ((higher_button_value - button_value)/2));
-  }
-}
-#endif
-
-//------------------------------------------------------------------
-
-#ifdef FEATURE_COMMAND_BUTTONS
 byte analogbuttonpressed() {
 
   int analog_line_read = analogRead(analog_buttons_pin);
@@ -1857,10 +1782,8 @@ byte analogbuttonpressed() {
   return 255; 
 }
   
-#endif
 
 //------------------------------------------------------------------
-#ifdef FEATURE_COMMAND_BUTTONS
 byte analogbuttonread(byte button_number) {
  
   // button numbers start with 0
@@ -1890,11 +1813,9 @@ byte analogbuttonread(byte button_number) {
   #endif  
   return 0;
 }
-#endif
 
 //------------------------------------------------------------------
 
-#ifdef FEATURE_COMMAND_BUTTONS
 void check_command_buttons()
 {
 
@@ -1974,7 +1895,6 @@ void check_command_buttons()
     last_button_action = millis();
   }
 }
-#endif //FEATURE_COMMAND_BUTTONS
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -2911,9 +2831,7 @@ void serial_tune_command ()
 
   tx_and_sidetone_key(1,MANUAL_SENDING);
   Serial.write("Keying transmitter - press a key to unkey...\n\r");
-  #ifdef FEATURE_COMMAND_BUTTONS
   while ((Serial.available() == 0) && (!analogbuttonread(0))) {}  // keystroke or button0 hit gets us out of here
-  #endif
   while (Serial.available() > 0) {  // clear out the buffer if anything is there
     incoming = Serial.read();
   }
@@ -3244,7 +3162,6 @@ void serial_program_memory()
 //---------------------------------------------------------------------
 
 #ifdef FEATURE_MEMORIES
-#ifdef FEATURE_COMMAND_BUTTONS
 void command_program_memory()
 {
   int cw_char;
@@ -3284,7 +3201,6 @@ void command_program_memory()
     }
   }
 }
-#endif //FEATURE_COMMAND_BUTTONS
 #endif
 
 //---------------------------------------------------------------------
@@ -3297,16 +3213,10 @@ byte memory_nonblocking_delay(unsigned long delaytime)
 
   while ((millis() - starttime) < delaytime) {
     check_paddles();
-    #ifdef FEATURE_COMMAND_BUTTONS
     if (((dit_buffer) || (dah_buffer) || (analogbuttonread(0))) && (machine_mode != BEACON)) {   // exit if the paddle or button0 was hit
-    #else
-    if (((dit_buffer) || (dah_buffer)) && (machine_mode != BEACON)) {   // exit if the paddle or button0 was hit
-    #endif
       dit_buffer = 0;
       dah_buffer = 0;
-      #ifdef FEATURE_COMMAND_BUTTONS
       while (analogbuttonread(0)) {}
-      #endif
       return 1;
     }
   }
@@ -3318,9 +3228,7 @@ byte memory_nonblocking_delay(unsigned long delaytime)
 //---------------------------------------------------------------------
 void check_button0()
 {
-  #ifdef FEATURE_COMMAND_BUTTONS
   if (analogbuttonread(0)) {button0_buffer = 1;}
-  #endif
 }
 
 //---------------------------------------------------------------------
@@ -3404,9 +3312,7 @@ void play_memory(byte memory_number)
             dit_buffer = 0;
             dah_buffer = 0;
             button0_buffer = 0;
-            #ifdef FEATURE_COMMAND_BUTTONS
             while (analogbuttonread(0)) {}
-            #endif  
             return;
           }
         }
@@ -3457,9 +3363,7 @@ void program_memory(int memory_number)
 
   dit_buffer = 0;
   dah_buffer = 0;
-  #ifdef FEATURE_COMMAND_BUTTONS
   while ((digitalRead(paddle_left) == HIGH) && (digitalRead(paddle_right) == HIGH) && (!analogbuttonread(0))) { }  // loop until user starts sending or hits the button
-  #endif
 
   while (loop2) {
 
@@ -3503,12 +3407,10 @@ void program_memory(int memory_number)
          space_count++;
        }
 
-       #ifdef FEATURE_COMMAND_BUTTONS
        while (analogbuttonread(0)) {    // hit the button to get out of command mode if no paddle was hit
          loop1 = 0;
          loop2 = 0;
        }
-       #endif
     }  //loop1
 
     if (cwchar != 9) {
@@ -3638,12 +3540,6 @@ void initialize_debug_startup(){
   #ifdef FEATURE_FARNSWORTH
   Serial.println(F("FEATURE_FARNSWORTH"));
   #endif
-  #ifdef FEATURE_COMMAND_BUTTONS
-  Serial.println(F("FEATURE_COMMAND_BUTTONS"));
-  #endif
-  #ifdef FEATURE_LCD_4BIT
-  Serial.println(F("FEATURE_LCD_4BIT"));
-  #endif  
   Serial.println(F("setup: exiting, going into loop"));
 }
 #endif //DEBUG_STARTUP
