@@ -42,6 +42,7 @@
 // * Disable multiple transmitters - a single keyer output remains
 // * Disable all PTT lines
 // * Delete Memory Macros
+// * Removed Winkey functions
 
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
@@ -126,8 +127,6 @@
 #define FEATURE_COMMAND_BUTTONS  // this is now required for the regular buttons and command mode (added in version 2012061601)
 #define FEATURE_SAY_HI
 #define FEATURE_MEMORIES
-//#define FEATURE_WINKEY_EMULATION    // this requires FEATURE_SERIAL - disabling Automatic Software Reset is recommended (see documentation)
-//#define OPTION_WINKEY_2_SUPPORT     // requires FEATURE_WINKEY_EMULATION
 //#define FEATURE_BEACON
 //#define FEATURE_CALLSIGN_RECEIVE_PRACTICE
 //#define FEATURE_SERIAL_HELP
@@ -143,17 +142,10 @@
 
 
 //#define OPTION_SUPPRESS_SERIAL_BOOT_MSG
-//#define OPTION_CLI_WINKEY_AUTOSWITCH
-#define OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION  // this will make Winkey emulation be the default at boot up; hold command button down at boot up to activate CLI mode
-//#define OPTION_WINKEY_DISCARD_BYTES_AT_STARTUP     // if ASR is not disabled, you may need this to discard errant serial port bytes at startup
-//#define OPTION_WINKEY_STRICT_EEPROM_WRITES_MAY_WEAR_OUT_EEPROM // with this activated the unit will write non-volatile settings to EEPROM when set by Winkey commands
-//#define OPTION_WINKEY_SEND_WORDSPACE_AT_END_OF_BUFFER
-//#define OPTION_WINKEY_EXTENDED_COMMANDS            // in development
 //#define OPTION_REVERSE_BUTTON_ORDER                // This is mainly for the DJ0MY NanoKeyer http://nanokeyer.wordpress.com/
 #define OPTION_PROG_MEM_TRIM_TRAILING_SPACES         // trim trailing spaces from memory when programming in command mode
 #define OPTION_DIT_PADDLE_NO_SEND_ON_MEM_RPT
 //#define OPTION_MORE_DISPLAY_MSGS                     // additional optional display messages - comment out to save memory
-//#define OPTION_N1MM_WINKEY_TAB_BUG_WORKAROUND        // enable this to ignore the TAB key in the Send CW window (this breaks SO2R functionality in N1MM)
 //#define OPTION_WATCHDOG_TIMER                        // this enables a four second ATmega48/88/168/328 watchdog timer; use for unattended/remote operation
 
 // don't touch these unless you know what the hell you are doing
@@ -166,7 +158,6 @@
 //#define DEBUG_MEMORY_WRITE
 //#define DEBUG_MEMORYCHECK
 //#define DEBUG_CAPTURE_COM_PORT
-//#define DEBUG_WINKEY_PROTOCOL
 //#define DEBUG_CHECK_SERIAL
 //#define FEATURE_FREQ_COUNTER                 // not implemented yet
 //#define DEBUG_VARIABLE_DUMP
@@ -231,8 +222,6 @@
 #define number_of_memories byte(12)            // the number of memories (duh)
 #define memory_area_start 20             // the eeprom location where memory space starts
 #define memory_area_end 1023             // the eeprom location where memory space ends
-#define winkey_c0_wait_time 1 //2000         // the number of milliseconds to wait to send 0xc0 byte after send buffer has been sent
-#define winkey_discard_bytes_startup 3   // this is used if OPTION_WINKEY_DISCARD_BYTES_AT_STARTUP is enabled above
 #define default_memory_repeat_time 3000  // time in milliseconds
 #define lcd_columns 16
 #define lcd_rows 2
@@ -278,7 +267,6 @@
 #define CW 0
 
 #define SERIAL_NORMAL 0
-#define SERIAL_WINKEY_EMULATION 1
 
 #define SERIAL_SEND_BUFFER_SPECIAL_START 13
 #define SERIAL_SEND_BUFFER_WPM_CHANGE 14        // was 200
@@ -295,96 +283,12 @@
 #define SERIAL_SEND_BUFFER_TIMED_COMMAND 1
 #define SERIAL_SEND_BUFFER_HOLD 2
 
-#ifdef FEATURE_WINKEY_EMULATION
-#define WINKEY_NO_COMMAND_IN_PROGRESS 0
-#define WINKEY_UNBUFFERED_SPEED_COMMAND 1
-#define WINKEY_UNSUPPORTED_COMMAND 2
-#define WINKEY_POINTER_COMMAND 3
-#define WINKEY_ADMIN_COMMAND 4
-#define WINKEY_PAUSE_COMMAND 5
-#define WINKEY_KEY_COMMAND 6
-#define WINKEY_SETMODE_COMMAND 7
-#define WINKEY_SIDETONE_FREQ_COMMAND 8
-#define WINKEY_ADMIN_COMMAND_ECHO 9
-#define WINKEY_BUFFERED_SPEED_COMMAND 10
-#define WINKEY_DAH_TO_DIT_RATIO_COMMAND 11
-#define WINKEY_KEYING_COMPENSATION_COMMAND 12
-#define WINKEY_FIRST_EXTENSION_COMMAND 13
-#define WINKEY_SET_POT_PARM1_COMMAND 16
-#define WINKEY_SET_POT_PARM2_COMMAND 17
-#define WINKEY_SET_POT_PARM3_COMMAND 18
-#define WINKEY_SOFTWARE_PADDLE_COMMAND 19
-#define WINKEY_CANCEL_BUFFERED_SPEED_COMMAND 20
-#define WINKEY_HSCW_COMMAND 22
-#define WINKEY_BUFFERED_HSCW_COMMAND 23
-#define WINKEY_WEIGHTING_COMMAND 24
-#define WINKEY_KEY_BUFFERED_COMMAND 25
-#define WINKEY_WAIT_BUFFERED_COMMAND 26
-#define WINKEY_POINTER_01_COMMAND 27
-#define WINKEY_POINTER_02_COMMAND 28
-#define WINKEY_POINTER_03_COMMAND 29
-#define WINKEY_FARNSWORTH_COMMAND 30
-#define WINKEY_MERGE_COMMAND 31
-#define WINKEY_MERGE_PARM_2_COMMAND 32
-#define WINKEY_SET_PINCONFIG_COMMAND 33
-#define WINKEY_EXTENDED_COMMAND 34
-#ifdef OPTION_WINKEY_2_SUPPORT
-#define WINKEY_SEND_MSG 35
-#endif //OPTION_WINKEY_2_SUPPORT
-#define WINKEY_LOAD_SETTINGS_PARM_1_COMMAND 101
-#define WINKEY_LOAD_SETTINGS_PARM_2_COMMAND 102
-#define WINKEY_LOAD_SETTINGS_PARM_3_COMMAND 103
-#define WINKEY_LOAD_SETTINGS_PARM_4_COMMAND 104
-#define WINKEY_LOAD_SETTINGS_PARM_5_COMMAND 105
-#define WINKEY_LOAD_SETTINGS_PARM_6_COMMAND 106
-#define WINKEY_LOAD_SETTINGS_PARM_7_COMMAND 107
-#define WINKEY_LOAD_SETTINGS_PARM_8_COMMAND 108
-#define WINKEY_LOAD_SETTINGS_PARM_9_COMMAND 109
-#define WINKEY_LOAD_SETTINGS_PARM_10_COMMAND 110
-#define WINKEY_LOAD_SETTINGS_PARM_11_COMMAND 111
-#define WINKEY_LOAD_SETTINGS_PARM_12_COMMAND 112
-#define WINKEY_LOAD_SETTINGS_PARM_13_COMMAND 113
-#define WINKEY_LOAD_SETTINGS_PARM_14_COMMAND 114
-#define WINKEY_LOAD_SETTINGS_PARM_15_COMMAND 115
-
-#define HOUSEKEEPING 0
-#define SERVICE_SERIAL_BYTE 1
-#endif //FEATURE_WINKEY_EMULATION
-
 #define AUTOMATIC_SENDING 0
 #define MANUAL_SENDING 1
 
 #define ULTIMATIC_NORMAL 0
 #define ULTIMATIC_DIT_PRIORITY 1
 #define ULTIMATIC_DAH_PRIORITY 2
-
-#ifdef FEATURE_WINKEY_EMULATION
-// alter these below to map alternate sidetones for Winkey emulation
-#ifdef OPTION_WINKEY_2_SUPPORT
-#define WINKEY_SIDETONE_1 3759
-#define WINKEY_SIDETONE_2 1879
-#define WINKEY_SIDETONE_3 1252
-#define WINKEY_SIDETONE_4 940
-#define WINKEY_SIDETONE_5 752
-#define WINKEY_SIDETONE_6 625
-#define WINKEY_SIDETONE_7 535
-#define WINKEY_SIDETONE_8 469
-#define WINKEY_SIDETONE_9 417
-#define WINKEY_SIDETONE_10 375
-#else //OPTION_WINKEY_2_SUPPORT
-#define WINKEY_SIDETONE_1 4000
-#define WINKEY_SIDETONE_2 2000
-#define WINKEY_SIDETONE_3 1333
-#define WINKEY_SIDETONE_4 1000
-#define WINKEY_SIDETONE_5 800
-#define WINKEY_SIDETONE_6 666
-#define WINKEY_SIDETONE_7 571
-#define WINKEY_SIDETONE_8 500
-#define WINKEY_SIDETONE_9 444
-#define WINKEY_SIDETONE_10 400
-#endif //OPTION_WINKEY_2_SUPPORT
-#endif //FEATURE_WINKEY_EMULATION
-
 
 
 // Variables and stuff
@@ -433,14 +337,6 @@ enum lcd_statuses {LCD_CLEAR, LCD_REVERT, LCD_TIMED_MESSAGE, LCD_SCROLL_MSG};
 byte lcdcolor = GREEN;  // default color for RGB LCD display
 #endif //FEATURE_LCD_I2C
 
-
-#ifdef OPTION_WINKEY_2_SUPPORT
-byte wk2_mode = 1;
-byte wk2_both_tx_activated = 0;
-byte wk2_paddle_only_sidetone = 0;
-#endif //OPTION_WINKEY_2_SUPPORT
-
-//bbbbb
 #ifdef FEATURE_DISPLAY
 byte lcd_status = LCD_CLEAR;
 unsigned long lcd_timed_message_clear_time = 0;
@@ -520,20 +416,6 @@ prog_uchar string_callsign_receive_practice[] __attribute__((section(".progmem.d
 #endif //FEATURE_COMMAND_LINE_INTERFACE
 #endif //FEATURE_SERIAL
 
-#ifdef FEATURE_WINKEY_EMULATION
-byte winkey_serial_echo = 1;
-byte winkey_host_open = 0;
-unsigned int winkey_last_unbuffered_speed_wpm = 0;
-byte winkey_buffer_counter = 0;
-byte winkey_buffer_pointer = 0;
-byte winkey_dit_invoke = 0;
-byte winkey_dah_invoke = 0;
-long winkey_paddle_echo_buffer = 0;
-byte winkey_paddle_echo_activated = 0;
-unsigned long winkey_paddle_echo_buffer_decode_time = 0;
-byte winkey_sending = 0;
-byte winkey_interrupted = 0;
-#endif //FEATURE_WINKEY_EMULATION
 
 #ifdef FEATURE_SERIAL_HELP
 #ifdef FEATURE_SERIAL
@@ -694,48 +576,10 @@ void setup()
 
   // initialize serial port
   #ifdef FEATURE_SERIAL
-  #ifdef FEATURE_WINKEY_EMULATION
-  #ifdef FEATURE_COMMAND_LINE_INTERFACE
-  #ifdef FEATURE_COMMAND_BUTTONS
-  if (analogbuttonread(0)) {
-  #endif
-    #ifdef OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION
-    serial_mode = SERIAL_NORMAL;
-    serial_baud_rate = default_serial_baud_rate;
-    #endif //OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION
-    #ifndef OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION
-    serial_mode = SERIAL_WINKEY_EMULATION;
-    serial_baud_rate = 1200;
-    #endif  //ifndef OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION
-  } else {
-    #ifdef OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION
-    serial_mode = SERIAL_WINKEY_EMULATION;
-    serial_baud_rate = 1200;
-    #endif //OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION
-    #ifndef OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION
-    serial_mode = SERIAL_NORMAL;
-    serial_baud_rate = default_serial_baud_rate;
-    #endif  //ifndef OPTION_SERIAL_PORT_DEFAULT_WINKEY_EMULATION
-  }
-  #ifdef FEATURE_COMMAND_BUTTONS
-  while (analogbuttonread(0)) {}
-  #endif //FEATURE_COMMAND_BUTTONS
-  #endif //FEATURE_WINKEY_EMULATION
-  #endif //FEATURE_COMMAND_LINE_INTERFACE
-
-  #ifndef FEATURE_WINKEY_EMULATION
   #ifdef FEATURE_COMMAND_LINE_INTERFACE
   serial_mode = SERIAL_NORMAL;
   serial_baud_rate = default_serial_baud_rate;
   #endif // FEATURE_COMMAND_LINE_INTERFACE
-  #endif  //ifndef FEATURE_WINKEY_EMULATION
-
-  #ifdef FEATURE_WINKEY_EMULATION
-  #ifndef FEATURE_COMMAND_LINE_INTERFACE
-  serial_mode = SERIAL_WINKEY_EMULATION;
-  serial_baud_rate = 1200;
-  #endif // FEATURE_COMMAND_LINE_INTERFACE
-  #endif  //ifndef FEATURE_WINKEY_EMULATION
 
   Serial.begin(serial_baud_rate);
   
@@ -1175,12 +1019,6 @@ void check_potentiometer()
     #endif
     speed_set(pot_value_wpm_read);
     last_pot_wpm_read = pot_value_wpm_read;
-    #ifdef FEATURE_WINKEY_EMULATION
-    if ((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_host_open)) {
-      Serial.write(((pot_value_wpm_read-pot_wpm_low_value)|128));
-      winkey_last_unbuffered_speed_wpm = wpm;
-    }
-    #endif
   }
 }
 
@@ -1207,13 +1045,6 @@ void put_memory_button_in_buffer(byte memory_number_to_put_in_buffer)
     #endif
     repeat_memory = 255;
     if ((millis() - last_memory_button_buffer_insert) > 400) {    // don't do another buffer insert if we just did one - button debounce
-      #ifdef FEATURE_WINKEY_EMULATION
-      if (winkey_sending && winkey_host_open) {
-        Serial.write(0xc2);
-        winkey_interrupted = 1;
-      }
-      #endif
-
       add_to_send_buffer(SERIAL_SEND_BUFFER_MEMORY_NUMBER);
       add_to_send_buffer(memory_number_to_put_in_buffer);
       last_memory_button_buffer_insert = millis();
@@ -1245,15 +1076,6 @@ void check_paddles()
 
   check_dit_paddle();
   check_dah_paddle();
-
-  #ifdef FEATURE_WINKEY_EMULATION
-  if (winkey_dit_invoke) {
-    dit_buffer = 1;
-  }
-  if (winkey_dah_invoke) {
-    dah_buffer = 1;
-  }
-  #endif //FEATURE_WINKEY_EMULATION
 
   if (keyer_mode == ULTIMATIC) {
     if (ultimatic_mode == ULTIMATIC_NORMAL) {
@@ -1532,13 +1354,6 @@ void send_dit(byte sending_type)
   }
   #endif
 
-  #ifdef FEATURE_WINKEY_EMULATION
-  if ((winkey_host_open) && (winkey_paddle_echo_activated) && (sending_type == MANUAL_SENDING)) {
-    winkey_paddle_echo_buffer = (winkey_paddle_echo_buffer * 10) + 1;
-    winkey_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
-  }
-  #endif
-
   #ifdef FEATURE_COMMAND_LINE_INTERFACE
   if ((cli_paddle_echo) && (sending_type == MANUAL_SENDING)) {
     cli_paddle_echo_buffer = (cli_paddle_echo_buffer * 10) + 1;
@@ -1599,13 +1414,6 @@ void send_dah(byte sending_type)
   }
   if ((sending_type == MANUAL_SENDING) && (autospace_active) && (dit_buffer == 0) && (dah_buffer == 0)) {
     loop_element_lengths(2,0,wpm,sending_type);
-  }
-  #endif
-
-  #ifdef FEATURE_WINKEY_EMULATION
-  if ((winkey_host_open) && (winkey_paddle_echo_activated) && (sending_type == MANUAL_SENDING)) {
-    winkey_paddle_echo_buffer = (winkey_paddle_echo_buffer * 10) + 2;
-    winkey_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
   #endif
 
@@ -2428,25 +2236,8 @@ void check_command_buttons()
       }
       #ifdef FEATURE_MEMORIES
       if ((analogbuttontemp > 0) && (analogbuttontemp < (number_of_memories + 1)) && ((millis() - button_last_add_to_send_buffer_time) > 400)) {
-        #ifndef OPTION_WINKEY_2_SUPPORT
         add_to_send_buffer(SERIAL_SEND_BUFFER_MEMORY_NUMBER);
         add_to_send_buffer(analogbuttontemp - 1);
-        #else //OPTION_WINKEY_2_SUPPORT
-        if ((winkey_host_open) && (wk2_mode == 2)) {   // if winkey is open and in wk2 mode, tell it about the button press
-          byte winkey_byte_to_send = 0xc8;
-          switch(analogbuttontemp) {
-            case 1: winkey_byte_to_send = winkey_byte_to_send | 1; break;
-            case 2: winkey_byte_to_send = winkey_byte_to_send | 2; break;
-            case 3: winkey_byte_to_send = winkey_byte_to_send | 4; break;
-            case 4: winkey_byte_to_send = winkey_byte_to_send | 16; break;            
-          } 
-          Serial.write(winkey_byte_to_send);
-          Serial.write(0xc8); // tell it that the button is unpressed
-        } else {  // otherwise, have the buttons act as normal
-          add_to_send_buffer(SERIAL_SEND_BUFFER_MEMORY_NUMBER);
-          add_to_send_buffer(analogbuttontemp - 1);
-        }  
-        #endif //OPTION_WINKEY_2_SUPPORT
         button_last_add_to_send_buffer_time = millis();
         #ifdef DEBUG_BUTTONS
         Serial.print(F("\ncheck_buttons: add_to_send_buffer: "));
@@ -2471,14 +2262,6 @@ void check_command_buttons()
               #ifdef DEBUG_BUTTONS
               Serial.println(F("\ncheck_buttons: speed_change(1)"));
               #endif //DEBUG_BUTTONS            
-
-              #ifdef FEATURE_WINKEY_EMULATION
-              if ((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_host_open)) {
-                Serial.write(((wpm-pot_wpm_low_value)|128));
-                winkey_last_unbuffered_speed_wpm = wpm;
-              }
-              #endif
-
             }
             if (digitalRead(paddle_right) == LOW) {                    // right paddle decreases speed
               speed_change(-1);
@@ -2492,13 +2275,6 @@ void check_command_buttons()
               #ifdef DEBUG_BUTTONS
               Serial.println(F("\ncheck_buttons: speed_change(-1)"));
               #endif //DEBUG_BUTTONS            
-
-              #ifdef FEATURE_WINKEY_EMULATION
-              if ((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_host_open)) {
-                Serial.write(((wpm-pot_wpm_low_value)|128));
-                winkey_last_unbuffered_speed_wpm = wpm;
-              }
-              #endif
             }
          }
          key_tx = 1;
@@ -2875,12 +2651,6 @@ void service_send_buffer()
           #ifdef DEBUG_SEND_BUFFER
           Serial.println(F("service_send_buffer: SERIAL_SEND_BUFFER_MEMORY_NUMBER"));
           #endif
-          #ifdef FEATURE_WINKEY_EMULATION
-          if (winkey_sending && winkey_host_open) {
-            Serial.write(0xc2);
-            winkey_interrupted = 1;
-           }
-          #endif
           remove_from_send_buffer();
           if (send_buffer_bytes > 0) {
             if (send_buffer_array[0] < number_of_memories) {
@@ -2939,18 +2709,12 @@ void service_send_buffer()
           }
         }
       } else {
-        #ifdef FEATURE_WINKEY_EMULATION
-        if (((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_serial_echo) && (winkey_host_open)) || (serial_mode != SERIAL_WINKEY_EMULATION)) {
-        #endif //FEATURE_WINKEY_EMULATION
         #ifdef FEATURE_SERIAL
         Serial.write(send_buffer_array[0]);
         if (send_buffer_array[0] == 13) {
           Serial.write(10);  // if we got a carriage return, also send a line feed
         }
         #endif //FEATURE_SERIAL
-        #ifdef FEATURE_WINKEY_EMULATION
-        }
-        #endif //FEATURE_WINKEY_EMULATION
         #ifdef FEATURE_DISPLAY
         if (lcd_send_echo) {
           display_scroll_print_char(send_buffer_array[0]);
@@ -3004,12 +2768,6 @@ void service_send_buffer()
     #ifdef FEATURE_MEMORIES
     repeat_memory = 255;
     #endif
-    #ifdef FEATURE_WINKEY_EMULATION
-    if (winkey_sending && winkey_host_open) {
-      Serial.write(0xc2);
-      winkey_interrupted = 1;
-    }
-    #endif
   }
 
 }
@@ -3048,1098 +2806,6 @@ void add_to_send_buffer(byte incoming_serial_byte)
 
 //-------------------------------------------------------------------------------------------------------
 
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_unbuffered_speed_command(byte incoming_serial_byte) {
-
-  if (incoming_serial_byte != 0) {
-    wpm = incoming_serial_byte;
-    winkey_last_unbuffered_speed_wpm = wpm;
-    //calculate_element_length();
-    #ifdef OPTION_WINKEY_STRICT_EEPROM_WRITES_MAY_WEAR_OUT_EEPROM
-    config_dirty = 1;
-    #endif
-  }
-
-}
-#endif //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_farnsworth_command(byte incoming_serial_byte) {
-
-  #ifdef FEATURE_FARNSWORTH
-  if ((incoming_serial_byte > 9) && (incoming_serial_byte < 100)) {
-    wpm_farnsworth = incoming_serial_byte;
-  }
-  #endif //FEATURE_FFARNSWORTH
-
-}
-#endif //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_keying_compensation_command(byte incoming_serial_byte) {
-
-  keying_compensation = incoming_serial_byte;
-}
-#endif //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_first_extension_command(byte incoming_serial_byte) {
-
-  first_extension_time = incoming_serial_byte;
-  #ifdef DEBUG_WINKEY_PROTOCOL
-  send_char('X',NORMAL);
-  #endif
-}
-#endif //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_dah_to_dit_ratio_command(byte incoming_serial_byte) {
-
-  if ((incoming_serial_byte > 32) && (incoming_serial_byte < 67)) {
-    dah_to_dit_ratio = (300*(float(incoming_serial_byte)/50));
-    #ifdef OPTION_WINKEY_STRICT_EEPROM_WRITES_MAY_WEAR_OUT_EEPROM
-    config_dirty = 1;
-    #endif
-  }
-
-}
-#endif //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_weighting_command(byte incoming_serial_byte) {
-
-  if ((incoming_serial_byte > 9) && (incoming_serial_byte < 91)) {
-    weighting = incoming_serial_byte;
-  }
-
-}
-#endif //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_set_pot_parm1_command(byte incoming_serial_byte) {
-
-  //#ifdef FEATURE_POTENTIOMETER
-  pot_wpm_low_value = incoming_serial_byte;
-  //#endif
-}
-#endif //FEATURE_WINKEY_EMULATION
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_set_pot_parm2_command(byte incoming_serial_byte) {
-  pot_wpm_high_value = (pot_wpm_low_value + incoming_serial_byte);
-}
-#endif //FEATURE_WINKEY_EMULATION
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_set_pot_parm3_command (byte incoming_serial_byte) {
-
-  #ifdef OPTION_WINKEY_2_SUPPORT
-  pot_full_scale_reading = 1031;
-  #else //OPTION_WINKEY_2_SUPPORT
-  if (incoming_serial_byte == 255) {
-    pot_full_scale_reading = 1031;
-  } else {
-    if (incoming_serial_byte == 127) {
-      pot_full_scale_reading = 515;
-    }
-  }
-  #endif //OPTION_WINKEY_2_SUPPORT
-}
-#endif //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_setmode_command(byte incoming_serial_byte) {
-
-  #ifdef OPTION_WINKEY_STRICT_EEPROM_WRITES_MAY_WEAR_OUT_EEPROM
-  config_dirty = 1;
-  #endif
-  if (incoming_serial_byte & 4) {  //serial echo enable
-    #ifdef DEBUG_WINKEY_PROTOCOL
-    send_char('S',NORMAL);
-    #endif
-    winkey_serial_echo = 1;
-  } else {
-    winkey_serial_echo = 0;
-  }
-  if (incoming_serial_byte & 8) {  //paddle_swap
-     paddle_mode = PADDLE_REVERSE;
-  } else {
-     paddle_mode = PADDLE_NORMAL;
-  }
-  switch (incoming_serial_byte & 48) {
-    case 0: keyer_mode = IAMBIC_B;
-      #ifdef DEBUG_WINKEY_PROTOCOL
-      send_char('B',NORMAL);
-      #endif
-      break;
-    case 16: keyer_mode = IAMBIC_A;
-      #ifdef DEBUG_WINKEY_PROTOCOL
-      send_char('A',NORMAL);
-      #endif
-      break;
-    case 32: keyer_mode = ULTIMATIC;
-      #ifdef DEBUG_WINKEY_PROTOCOL
-      send_char('U',NORMAL);
-      #endif
-      break;
-    case 48: keyer_mode = BUG;
-      #ifdef DEBUG_WINKEY_PROTOCOL
-      send_char('G',NORMAL);
-      #endif
-      break;
-  }
-  #ifdef FEATURE_DEAD_OP_WATCHDOG
-  if ((incoming_serial_byte & 128) == 128) {  //1xxxxxxx = paddle watchdog
-     dead_op_watchdog_active = 1;
-  } else {
-     dead_op_watchdog_active = 0;
-  }
-  #endif
-  #ifdef FEATURE_AUTOSPACE
-  if ((incoming_serial_byte & 2) == 2) {  //xxxxxx1x = autospace
-     autospace_active = 1;
-     #ifdef DEBUG_WINKEY_PROTOCOL
-     send_char('T',NORMAL);
-     #endif
-  } else {
-     autospace_active = 0;
-  }
-  #endif
-  if ((incoming_serial_byte & 128) == 128) {  //xxxxxxx1 = contest wordspace
-     length_wordspace = 6;
-  } else {
-     length_wordspace = 7;
-  }
-
-  if ((incoming_serial_byte & 64) == 64) {  //x1xxxxxx = paddle echo
-     winkey_paddle_echo_activated = 1;
-  } else {
-     winkey_paddle_echo_activated = 0;
-  }
-
-}
-
-#endif //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_sidetone_freq_command(byte incoming_serial_byte) {
-  
-  #ifdef OPTION_WINKEY_2_SUPPORT
-  if (incoming_serial_byte & 128) {
-    if (sidetone_mode == SIDETONE_ON) {sidetone_mode = SIDETONE_PADDLE_ONLY;}
-    wk2_paddle_only_sidetone = 1;
-  } else {
-    if (sidetone_mode == SIDETONE_PADDLE_ONLY) {sidetone_mode = SIDETONE_ON;}
-    wk2_paddle_only_sidetone = 0;
-  }
-  #endif
-  
-  switch (incoming_serial_byte & 15) {
-    case 1: hz_sidetone = WINKEY_SIDETONE_1; break;
-    case 2: hz_sidetone = WINKEY_SIDETONE_2; break;
-    case 3: hz_sidetone = WINKEY_SIDETONE_3; break;
-    case 4: hz_sidetone = WINKEY_SIDETONE_4; break;
-    case 5: hz_sidetone = WINKEY_SIDETONE_5; break;
-    case 6: hz_sidetone = WINKEY_SIDETONE_6; break;
-    case 7: hz_sidetone = WINKEY_SIDETONE_7; break;
-    case 8: hz_sidetone = WINKEY_SIDETONE_8; break;
-    case 9: hz_sidetone = WINKEY_SIDETONE_9; break;
-    case 10: hz_sidetone = WINKEY_SIDETONE_10; break;
-  }
-  #ifdef OPTION_WINKEY_STRICT_EEPROM_WRITES_MAY_WEAR_OUT_EEPROM
-  config_dirty = 1;
-  #endif
-
-}
-#endif //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_set_pinconfig_command(byte incoming_serial_byte) {
-  
-  if (incoming_serial_byte & 2) {
-    #ifdef OPTION_WINKEY_2_SUPPORT
-    if (wk2_paddle_only_sidetone) {
-      sidetone_mode = SIDETONE_PADDLE_ONLY;
-    } else {
-    #endif
-      sidetone_mode = SIDETONE_ON;
-    #ifdef OPTION_WINKEY_2_SUPPORT
-    }
-    #endif
-  } else {
-    sidetone_mode = SIDETONE_OFF;
-  }
-  
-  switch (incoming_serial_byte & 192) {
-    case 0:  ultimatic_mode = ULTIMATIC_NORMAL; break;
-    case 64: ultimatic_mode = ULTIMATIC_DAH_PRIORITY; break;
-    case 128: ultimatic_mode = ULTIMATIC_DIT_PRIORITY; break;
-  }
-
-  switch(incoming_serial_byte & 12) {
-    case 0:
-      key_tx = 0; 
-      #ifdef OPTION_WINKEY_2_SUPPORT
-      wk2_both_tx_activated = 0;
-      #endif
-      break;
-    case 4: 
-      key_tx = 1;
-      #ifdef OPTION_WINKEY_2_SUPPORT
-      wk2_both_tx_activated = 0;
-      #endif
-      break;
-    case 8: 
-      key_tx = 1;
-      #ifdef OPTION_WINKEY_2_SUPPORT
-      wk2_both_tx_activated = 0;
-      #endif
-      break;
-    case 12:
-      key_tx = 1;
- 
-      #ifdef OPTION_WINKEY_2_SUPPORT
-      wk2_both_tx_activated = 1;
-      #endif
-      break;
-    }
-
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_load_settings_command(byte winkey_status,byte incoming_serial_byte) {
-
-  switch(winkey_status) {
-     case WINKEY_LOAD_SETTINGS_PARM_1_COMMAND:
-       winkey_setmode_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_2_COMMAND:
-       winkey_unbuffered_speed_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_3_COMMAND:
-       winkey_sidetone_freq_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_4_COMMAND:
-       winkey_weighting_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_7_COMMAND:
-       winkey_set_pot_parm1_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_8_COMMAND:
-       winkey_set_pot_parm2_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_9_COMMAND:
-       winkey_first_extension_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_10_COMMAND:
-       winkey_keying_compensation_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_11_COMMAND:
-       winkey_farnsworth_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_12_COMMAND:  // paddle switchpoint - don't need to support
-
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_13_COMMAND:
-       winkey_dah_to_dit_ratio_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_14_COMMAND:
-       winkey_set_pinconfig_command(incoming_serial_byte);
-       break;
-     case WINKEY_LOAD_SETTINGS_PARM_15_COMMAND:
-       winkey_set_pot_parm3_command(incoming_serial_byte);
-       break;
-  }
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_WINKEY_EMULATION
-void winkey_admin_get_values_command() {
-
-  byte byte_to_send;
-
-  // 1 - mode register
-  byte_to_send = 0;
-  if (length_wordspace != default_length_wordspace) {
-    byte_to_send = byte_to_send | 1;
-  }
-  #ifdef FEATURE_AUTOSPACE
-  if (autospace_active) {
-    byte_to_send = byte_to_send | 2;
-  }
-  #endif
-  if (winkey_serial_echo) {
-    byte_to_send = byte_to_send | 4;
-  }
-  if (paddle_mode == PADDLE_REVERSE) {
-    byte_to_send = byte_to_send | 8;
-  }
-  switch (keyer_mode) {
-    case IAMBIC_A: byte_to_send = byte_to_send | 16; break;
-    case ULTIMATIC: byte_to_send = byte_to_send | 32; break;
-    case BUG: byte_to_send = byte_to_send | 48; break;
-  }
-  if (winkey_paddle_echo_activated) {
-    byte_to_send = byte_to_send | 64;
-  }
-  #ifdef FEATURE_DEAD_OP_WATCHDOG
-  if (dead_op_watchdog_active) {
-    byte_to_send = byte_to_send | 128;
-  }
-  #endif //FEATURE_DEAD_OP_WATCHDOG
-  Serial.write(byte_to_send);
-
-  // 2 - speed
-  if (wpm > 99) {
-    Serial.write(99);
-  } else {
-    byte_to_send = wpm;
-    Serial.write(byte_to_send);
-  }
-
-  // 3 - sidetone
-  switch(hz_sidetone) {
-    case WINKEY_SIDETONE_1 : Serial.write(1); break;
-    case WINKEY_SIDETONE_2 : Serial.write(2); break;
-    case WINKEY_SIDETONE_3 : Serial.write(3); break;
-    case WINKEY_SIDETONE_4 : Serial.write(4); break;
-    case WINKEY_SIDETONE_5 : Serial.write(5); break;
-    case WINKEY_SIDETONE_6 : Serial.write(6); break;
-    case WINKEY_SIDETONE_7 : Serial.write(7); break;
-    case WINKEY_SIDETONE_8 : Serial.write(8); break;
-    case WINKEY_SIDETONE_9 : Serial.write(9); break;
-    case WINKEY_SIDETONE_10 : Serial.write(10); break;
-    default: Serial.write(5); break;
-  }
-
-  // 4 - weight
-  Serial.write(weighting);
-
-  // 7 - pot min wpm
-  Serial.write(pot_wpm_low_value);
-
-  // 8 - pot wpm range
-  byte_to_send = pot_wpm_high_value - pot_wpm_low_value;
-  Serial.write(byte_to_send);
-
-  // 9 - 1st extension
-  Serial.write(first_extension_time);
-
-  // 10 - compensation
-  Serial.write(keying_compensation);
-
-  // 11 - farnsworth wpm
-  #ifdef FEATURE_FARNSWORTH
-  byte_to_send = wpm_farnsworth;
-  Serial.write(byte_to_send);
-  #endif
-  #ifndef FEATURE_FARNSWORTH
-  Serial.write(zero);
-  #endif
-
-  // 12 - paddle setpoint
-  Serial.write(50);  // default value
-
-  // 13 - dah to dit ratio
-  Serial.write(50);  // TODO -backwards calculate
-
-  // 14 - pin config
-  #ifdef OPTION_WINKEY_2_SUPPORT
-  byte_to_send = 0;
-  if ((sidetone_mode == SIDETONE_ON) || (sidetone_mode == SIDETONE_PADDLE_ONLY)) {byte_to_send | 2;}
-  byte_to_send = byte_to_send | 4;
-  if (wk2_both_tx_activated) {byte_to_send = byte_to_send | 12;}
-  if (ultimatic_mode == ULTIMATIC_DIT_PRIORITY) {byte_to_send = byte_to_send | 128;}
-  if (ultimatic_mode == ULTIMATIC_DAH_PRIORITY) {byte_to_send = byte_to_send | 64;}  
-  Serial.write(byte_to_send);
-  #else
-  Serial.write(5); // default value
-  #endif
-
-  // 15 - pot range
-  #ifdef OPTION_WINKEY_2_SUPPORT
-  Serial.write(zero);
-  #else
-  Serial.write(0xFF);
-  #endif
-
-}
-#endif
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_SERIAL
-#ifdef FEATURE_WINKEY_EMULATION
-#ifdef OPTION_WINKEY_2_SUPPORT
-void winkey_eeprom_download() {
-  
-  byte zero = 0;
-  unsigned int x = 0;
-  //unsigned int y = 0;
-  unsigned int bytes_sent = 0;
-//  byte byte_read_from_eeprom = 0;
-//  byte read_memory_number = 0;
-//  byte memory_byte_counter = 0;
-//  byte memory_sizes[5];
-//  byte total_memory_sizes = 0;
-//  byte previous_memories = 0;
-  
-  Serial.write(0xa5); // 01 magic byte
-  winkey_admin_get_values_command(); // 02-16
-  
-  Serial.write(byte(wpm)); // 17 cmdwpm
-  bytes_sent = 17;
-  
-  // This is a real PITA.  The K1EL Winkey 2 doesn't store memories in ASCII, so a lookup table is required
-  
-  // produce memory pointers
-//  for (read_memory_number = 0; read_memory_number < 6; read_memory_number++) {
-//    memory_byte_counter = 0;
-//    for (y = (memory_start(read_memory_number)); (y < (memory_end(read_memory_number)+1)); y++) {
-//      byte_read_from_eeprom = EEPROM.read(y);
-//      if (byte_read_from_eeprom == 255) { // have we found the end of the memory?
-//        y = (memory_end(read_memory_number)+1); // exit the loop
-//      } else { 
-//        memory_byte_counter++;  // count another byte
-//      }
-//    }
-//    memory_sizes[read_memory_number] = memory_byte_counter;
-//    total_memory_sizes = total_memory_sizes + memory_byte_counter;
-//  }
-//  
-//  Serial.write((total_memory_sizes+24));  // freeptr
-//  for (x = 0; x < 6; x++) { // send memory pointers
-//    if (memory_sizes[x] > 0) {
-//      Serial.write((memory_sizes[x]+23+previous_memories));
-//      previous_memories = previous_memories + memory_sizes[x];
-//    } else {
-//      Serial.write(0x10);
-//    }
-//  }
-//  
-//  bytes_sent = 24;
-  
-
-  
-  // dump memories
-//  for (read_memory_number = 0; read_memory_number < 6; read_memory_number++) {
-//    for (y = (memory_start(read_memory_number)); (y < (memory_end(read_memory_number)+1)); y++) {
-//      byte_read_from_eeprom = EEPROM.read(y);
-//      if (byte_read_from_eeprom == 255) {
-//        y = (memory_end(read_memory_number)+1);
-//      } else {
-//        if ((EEPROM.read(Y+1) == 255)) {
-//          Serial.write(byte_read_from_eeprom|128);  // if this is the last byte, set bit 8
-//        } else {
-//          Serial.write(byte_read_from_eeprom);
-//        }
-//        bytes_sent++;
-//      }
-//    }
-//  }
-  
-  //pad the rest with zeros    
-  for (x = 0;x < (256-bytes_sent); x++) {
-    Serial.write(zero);
-  }  
-}
-#endif
-#endif
-#endif
-
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_WINKEY_EMULATION
-void service_winkey(byte action) {
-   
-  static byte winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-  static int winkey_parmcount = 0;
-  static unsigned long winkey_last_activity;
-  byte status_byte_to_send;
-  static byte winkey_paddle_echo_space_sent = 1;
-  #ifdef OPTION_N1MM_WINKEY_TAB_BUG_WORKAROUND
-  static unsigned long winkey_connect_time = 0;
-  #endif //OPTION_N1MM_WINKEY_TAB_BUG_WORKAROUND
-  #ifdef OPTION_WINKEY_DISCARD_BYTES_AT_STARTUP
-  static byte winkey_discard_bytes_init_done = 0;  
-  if (!winkey_discard_bytes_init_done) {
-    if (Serial.available()) {
-      for (int z = winkey_discard_bytes_startup;z > 0;z--) {
-        while (Serial.available() == 0) {}
-        Serial.read();
-      }
-      winkey_discard_bytes_init_done = 1;
-    }
-  }
-  #endif //OPTION_WINKEY_DISCARD_BYTES_AT_STARTUP
-  
-  
-  
-  if (action == HOUSEKEEPING) {
-    if (winkey_last_unbuffered_speed_wpm == 0) {
-      winkey_last_unbuffered_speed_wpm = wpm;
-    }
-    // Winkey interface emulation housekeeping items
-    // check to see if we were sending stuff and the buffer is clear
-    if (winkey_interrupted) {   // if Winkey sending was interrupted by the paddle, look at PTT line rather than timing out to send 0xc0
-      winkey_sending = 0;
-      winkey_interrupted = 0;
-      Serial.write(0xc0);    // tell the host we've sent everything
-      winkey_buffer_counter = 0;
-      winkey_buffer_pointer = 0;
-    } else {
-      //if ((winkey_host_open) && (winkey_sending) && (send_buffer_bytes < 1) && ((millis() - winkey_last_activity) > winkey_c0_wait_time)) {
-      if ((Serial.available() == 0) && (winkey_host_open) && (winkey_sending) && (send_buffer_bytes < 1) && ((millis() - winkey_last_activity) > winkey_c0_wait_time)) {
-        #ifdef OPTION_WINKEY_SEND_WORDSPACE_AT_END_OF_BUFFER
-        send_char(' ',NORMAL);
-        #endif
-        //add_to_send_buffer(' ');    // this causes a 0x20 to get echoed back to host - doesn't seem to effect N1MM program
-        winkey_sending = 0;
-        Serial.write(0xc0);    // tell the host we've sent everything
-        winkey_buffer_counter = 0;
-        winkey_buffer_pointer = 0;
-      }
-    }
-    // failsafe check - if we've been in some command status for awhile waiting for something, clear things out
-    if ((winkey_status != WINKEY_NO_COMMAND_IN_PROGRESS) && ((millis() - winkey_last_activity) > 5000)) {
-      winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      winkey_buffer_counter = 0;
-      winkey_buffer_pointer = 0;
-      Serial.write(0xc0);   //send a C0 back for giggles
-    }  
-    if ((winkey_host_open) && (winkey_paddle_echo_buffer) && (winkey_paddle_echo_activated) && (millis() > winkey_paddle_echo_buffer_decode_time)) {
-      Serial.write(byte(convert_cw_number_to_ascii(winkey_paddle_echo_buffer)));
-      winkey_paddle_echo_buffer = 0;
-      winkey_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
-      winkey_paddle_echo_space_sent = 0;
-    }
-    if ((winkey_host_open) && (winkey_paddle_echo_buffer == 0) && (winkey_paddle_echo_activated) && (millis() > (winkey_paddle_echo_buffer_decode_time + (float(1200/wpm)*(length_wordspace-length_letterspace)))) && (!winkey_paddle_echo_space_sent)) {
-      Serial.write(" ");
-      winkey_paddle_echo_space_sent = 1;
-    }
-  }  // if (action == HOUSEKEEPING)
-
-  if (action == SERVICE_SERIAL_BYTE) {
-    //incoming_serial_byte = Serial.read();
-    winkey_last_activity = millis();
-    if (winkey_status == WINKEY_NO_COMMAND_IN_PROGRESS) {
-      if (incoming_serial_byte > 31) {
-        byte serial_buffer_position_to_overwrite;
-        if (winkey_buffer_pointer > 0) {
-          serial_buffer_position_to_overwrite = send_buffer_bytes - (winkey_buffer_counter - winkey_buffer_pointer) - 1;
-          if ((send_buffer_bytes > 0) && (serial_buffer_position_to_overwrite < send_buffer_bytes )) {
-            send_buffer_array[serial_buffer_position_to_overwrite] = incoming_serial_byte;
-          }
-          winkey_buffer_pointer++;
-        } else {
-            #ifdef OPTION_WINKEY_EXTENDED_COMMANDS
-            if (incoming_serial_byte == 36) {         // Use the $ sign to escape command
-              winkey_status = WINKEY_EXTENDED_COMMAND;
-            } else {
-            #endif //OPTION_WINKEY_EXTENDED_COMMANDS
-              add_to_send_buffer(incoming_serial_byte);
-              winkey_buffer_counter++;
-            #ifdef OPTION_WINKEY_EXTENDED_COMMANDS
-            }
-            #endif //OPTION_WINKEY_EXTENDED_COMMANDS
-        }
-
-        if (winkey_sending != 1) {
-          Serial.write(0xc4);  // tell the client we're starting to send
-          winkey_sending = 1;
-          #ifdef FEATURE_MEMORIES
-          repeat_memory = 255;
-          #endif
-        }
-      } else {
-        switch (incoming_serial_byte) {
-          case 0x00:
-            winkey_status = WINKEY_ADMIN_COMMAND;
-            break;
-          case 0x01:
-            winkey_status = WINKEY_SIDETONE_FREQ_COMMAND;
-            break;
-          case 0x02:  // speed command - unbuffered
-            winkey_status = WINKEY_UNBUFFERED_SPEED_COMMAND;
-            break;
-          case 0x03:  // weighting
-            winkey_status = WINKEY_WEIGHTING_COMMAND;
-            break;
-          case 0x05:     // speed pot set
-            winkey_status = WINKEY_SET_POT_PARM1_COMMAND;
-            break;
-          case 0x06:
-            winkey_status = WINKEY_PAUSE_COMMAND;
-            break;
-          case 0x07:
-            Serial.write(((pot_value_wpm()-pot_wpm_low_value)|128));
-            break;
-          case 0x08:    // backspace command
-            if (send_buffer_bytes > 0) {
-              send_buffer_bytes--;
-            }
-            break;
-          case 0x09:
-          //fffff
-            #ifdef OPTION_N1MM_WINKEY_TAB_BUG_WORKAROUND     // this is a hack; if someone hits TAB in the send CW Window in N1MM, it sends a 0x09
-            if ((millis() - winkey_connect_time) < 10000) {  // which according to the standard should be interpreted as a pinconfig command
-              winkey_status = WINKEY_SET_PINCONFIG_COMMAND;  // if we've been connected for more than 10 seconds, ignore the 0x09 byte
-            }
-            #else
-            winkey_status = WINKEY_SET_PINCONFIG_COMMAND;
-            #endif
-            break;
-          case 0x0a:                 // 0A - clear buffer - no parms
-            if (winkey_sending) {
-              send_buffer_bytes = 0;
-              winkey_sending = 0;
-              Serial.write(0xc0);
-            }
-            winkey_buffer_counter = 0;
-            winkey_buffer_pointer = 0;
-            #ifdef FEATURE_MEMORIES
-            repeat_memory = 255;
-            #endif
-            tx_and_sidetone_key(0,AUTOMATIC_SENDING);  // N1MM program needs this for the CTRL-T tune command to work right since it issues a 0x0a
-                                     // rather than 0x0b 0x00 to clear a key down - doesn't follow protocol spec
-            break;
-          case 0x0b:
-            winkey_status = WINKEY_KEY_COMMAND;
-            break;
-          case 0x0c:
-            winkey_status = WINKEY_HSCW_COMMAND;
-            break;
-          case 0x0d:
-            winkey_status = WINKEY_FARNSWORTH_COMMAND;
-            break;
-          case 0x0e:
-            winkey_status = WINKEY_SETMODE_COMMAND;
-            break;
-          case 0x0f:  // bulk load of defaults
-            winkey_status = WINKEY_LOAD_SETTINGS_PARM_1_COMMAND;
-            break;
-          case 0x10:
-            winkey_status = WINKEY_FIRST_EXTENSION_COMMAND;
-            break;
-          case 0x11:
-            winkey_status = WINKEY_KEYING_COMPENSATION_COMMAND;
-            break;
-          case 0x12:
-            winkey_status = WINKEY_UNSUPPORTED_COMMAND;
-            winkey_parmcount = 1;
-            break;
-          case 0x13:  // NULL command
-            break;
-          case 0x14:
-            winkey_status = WINKEY_SOFTWARE_PADDLE_COMMAND;
-            break;
-          case 0x15:  // report status
-            status_byte_to_send = 0xc0;
-            if (winkey_sending) {
-              status_byte_to_send = status_byte_to_send | 4;
-            }
-            if (send_buffer_status == SERIAL_SEND_BUFFER_TIMED_COMMAND) {
-              status_byte_to_send = status_byte_to_send | 16;
-            }
-            Serial.write(status_byte_to_send);
-            break;
-          case 0x16:  // Pointer operation
-            winkey_status = WINKEY_POINTER_COMMAND;
-            break;
-          case 0x17:  // dit to dah ratio
-            winkey_status = WINKEY_DAH_TO_DIT_RATIO_COMMAND;
-            break;
-          // start of buffered commands ------------------------------
-          case 0x19:
-            winkey_status = WINKEY_KEY_BUFFERED_COMMAND;
-            break;
-          case 0x1a:
-            winkey_status = WINKEY_WAIT_BUFFERED_COMMAND;
-            break;
-          case 0x1b:
-            winkey_status = WINKEY_MERGE_COMMAND;
-            break;
-          case 0x1c:      // speed command - buffered
-             winkey_status = WINKEY_BUFFERED_SPEED_COMMAND;
-            break;
-          case 0x1d:
-            winkey_status = WINKEY_BUFFERED_HSCW_COMMAND;
-            break;
-          case 0x1e:  // cancel buffered speed command - buffered
-            winkey_status = WINKEY_CANCEL_BUFFERED_SPEED_COMMAND;
-            break;
-          case 0x1f:  // buffered NOP - no need to do anything
-            break;
-        } //switch (incoming_serial_byte)
-      }
-    } else {
-
-      //WINKEY_LOAD_SETTINGS_PARM_1_COMMAND IS 101
-      if ((winkey_status > 100) && (winkey_status < 116)) {   // Load Settings Command - this has 15 parameters, so we handle it a bit differently
-        winkey_load_settings_command(winkey_status,incoming_serial_byte);
-        winkey_status++;
-        if (winkey_status > 115) {
-          winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-        }
-      }
-
-      #ifdef OPTION_WINKEY_EXTENDED_COMMANDS
-      if (winkey_status == WINKEY_EXTENDED_COMMAND) {  // this is for command extensions - not part of Winkey protocol
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-
-      }
-      #endif //OPTION_WINKEY_EXTENDED_COMMANDS
-
-      if (winkey_status == WINKEY_SET_PINCONFIG_COMMAND) {
-        winkey_set_pinconfig_command(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_MERGE_COMMAND) {
-        #ifdef FEATURE_MEMORIES
-        repeat_memory = 255;
-        #endif
-        add_to_send_buffer(SERIAL_SEND_BUFFER_PROSIGN);
-        add_to_send_buffer(incoming_serial_byte);
-        winkey_status = WINKEY_MERGE_PARM_2_COMMAND;
-      } else {
-        if (winkey_status == WINKEY_MERGE_PARM_2_COMMAND) {
-          add_to_send_buffer(incoming_serial_byte);
-          winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-        }
-      }
-      if (winkey_status == WINKEY_UNBUFFERED_SPEED_COMMAND) {
-        winkey_unbuffered_speed_command(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_FARNSWORTH_COMMAND) {
-        winkey_farnsworth_command(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status ==  WINKEY_HSCW_COMMAND) {
-        if (incoming_serial_byte != 0) {
-          wpm = ((incoming_serial_byte*100)/5);
-          winkey_last_unbuffered_speed_wpm = wpm;
-          #ifdef OPTION_WINKEY_STRICT_EEPROM_WRITES_MAY_WEAR_OUT_EEPROM
-          config_dirty = 1;
-          #endif
-        }
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_BUFFERED_SPEED_COMMAND) {
-        add_to_send_buffer(SERIAL_SEND_BUFFER_WPM_CHANGE);
-        add_to_send_buffer(0);
-        add_to_send_buffer(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_BUFFERED_HSCW_COMMAND) {
-        add_to_send_buffer(SERIAL_SEND_BUFFER_WPM_CHANGE);
-        unsigned int send_buffer_wpm = ((incoming_serial_byte*100)/5);
-        add_to_send_buffer(highByte(send_buffer_wpm));
-        add_to_send_buffer(lowByte(send_buffer_wpm));
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_KEY_BUFFERED_COMMAND) {
-        add_to_send_buffer(SERIAL_SEND_BUFFER_TIMED_KEY_DOWN);
-        add_to_send_buffer(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_WAIT_BUFFERED_COMMAND) {
-        add_to_send_buffer(SERIAL_SEND_BUFFER_TIMED_WAIT);
-        add_to_send_buffer(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_CANCEL_BUFFERED_SPEED_COMMAND) {
-        add_to_send_buffer(SERIAL_SEND_BUFFER_WPM_CHANGE);
-        add_to_send_buffer(winkey_last_unbuffered_speed_wpm);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_POINTER_01_COMMAND) { // move input pointer to new positon in overwrite mode
-        winkey_buffer_pointer = incoming_serial_byte;
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_POINTER_02_COMMAND) { // move input pointer to new position in append mode
-        winkey_buffer_pointer = 0;
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_POINTER_03_COMMAND) { // add multiple nulls to buffer
-        byte serial_buffer_position_to_overwrite;
-        for (byte x = incoming_serial_byte; x > 0; x--) {
-          if (winkey_buffer_pointer > 0) {
-            serial_buffer_position_to_overwrite = send_buffer_bytes - (winkey_buffer_counter - winkey_buffer_pointer) - 1;
-            if ((send_buffer_bytes > 0) && (serial_buffer_position_to_overwrite < send_buffer_bytes )) {
-              send_buffer_array[serial_buffer_position_to_overwrite] = SERIAL_SEND_BUFFER_NULL;
-            }
-            winkey_buffer_pointer++;
-          } else {
-              add_to_send_buffer(SERIAL_SEND_BUFFER_NULL);
-              winkey_buffer_counter++;
-          }
-        }
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_POINTER_COMMAND) {
-        switch (incoming_serial_byte) {
-          case 0x00:
-            winkey_buffer_counter = 0;
-            winkey_buffer_pointer = 0;
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          case 0x01:
-            winkey_status = WINKEY_POINTER_01_COMMAND;
-            break;
-          case 0x02:
-            winkey_status = WINKEY_POINTER_02_COMMAND;  // move to new position in append mode
-            break;
-          case 0x03:
-            winkey_status = WINKEY_POINTER_03_COMMAND;
-            break;
-          default:
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-        }
-      }
-
-      #ifdef OPTION_WINKEY_2_SUPPORT
-      if (winkey_status == WINKEY_SEND_MSG) {
-        if ((incoming_serial_byte > 0) && (incoming_serial_byte < 7)) {
-          add_to_send_buffer(SERIAL_SEND_BUFFER_MEMORY_NUMBER);
-          add_to_send_buffer(incoming_serial_byte - 1);
-          #ifdef FEATURE_MEMORIES
-          repeat_memory = 255;
-          #endif
-        }
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;  
-      }
-      #endif //OPTION_WINKEY_2_SUPPORT
-
-      if (winkey_status == WINKEY_ADMIN_COMMAND) {
-        switch (incoming_serial_byte) {
-          case 0x00: winkey_status = WINKEY_UNSUPPORTED_COMMAND; winkey_parmcount = 1; break;  // calibrate command
-          case 0x01: wdt_enable(WDTO_30MS); while(1) {}; break;  // reset command
-          case 0x02:  // host open command - send version back to host
-            #ifdef OPTION_WINKEY_2_SUPPORT
-            Serial.write(23);
-            #else //OPTION_WINKEY_2_SUPPORT
-            Serial.write(10);
-            #endif //OPTION_WINKEY_2_SUPPORT
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            winkey_host_open = 1;
-            #ifdef OPTION_N1MM_WINKEY_TAB_BUG_WORKAROUND
-            winkey_connect_time = millis();
-            #endif
-            boop_beep();
-            break;
-          case 0x03: // host close command
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            winkey_host_open = 0;
-            beep_boop();
-            #ifdef OPTION_WINKEY_2_SUPPORT
-            Serial.end();
-            Serial.begin(1200);
-            #endif
-            break;
-          case 0x04:  // echo command
-            winkey_status = WINKEY_ADMIN_COMMAND_ECHO;
-            break;
-          case 0x05: // paddle A2D
-            Serial.write(zero);
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          case 0x06: // speed A2D
-            Serial.write(zero);
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          case 0x07: // Get values
-            winkey_admin_get_values_command();
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          case 0x08: // reserved
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;  
-          case 0x09: // get cal
-            Serial.write(zero);
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          #ifdef OPTION_WINKEY_2_SUPPORT
-          case 0x0a: // set wk1 mode
-            wk2_mode = 1;
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          case 0x0b: // set wk2 mode
-            beep();
-            beep();
-            wk2_mode = 2;
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;            
-          case 0x0c: // download EEPPROM 256 bytes
-            winkey_eeprom_download();
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;  
-          case 0x0d:
-            winkey_status = WINKEY_UNSUPPORTED_COMMAND;  // upload EEPROM 256 bytes
-            winkey_parmcount = 256;
-            break;       
-          case 0x0e:
-            winkey_status = WINKEY_SEND_MSG;
-            break;
-          case 0x0f: // load xmode
-            winkey_status = WINKEY_UNSUPPORTED_COMMAND;
-            winkey_parmcount = 1;
-            break;            
-          case 0x10: // reserved
-            Serial.write(zero);
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          case 0x11: // set high baud rate
-            Serial.end();
-            Serial.begin(9600);
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          case 0x12: // set low baud rate
-            Serial.end();
-            Serial.begin(1200);
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          #endif //OPTION_WINKEY_2_SUPPORT  
-          default:
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-            break;
-          }
-      } else {
-        if (winkey_status == WINKEY_ADMIN_COMMAND_ECHO) {
-          Serial.write(incoming_serial_byte);
-          winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-        }
-      }
-
-      if (winkey_status == WINKEY_KEYING_COMPENSATION_COMMAND) {
-        keying_compensation = incoming_serial_byte;
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_FIRST_EXTENSION_COMMAND) {
-        first_extension_time = incoming_serial_byte;
-        #ifdef DEBUG_WINKEY_PROTOCOL
-        send_char('X',NORMAL);
-        #endif
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_PAUSE_COMMAND) {
-        if (incoming_serial_byte) {
-          pause_sending_buffer = 1;
-        } else {
-          pause_sending_buffer = 0;
-        }
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status ==  WINKEY_KEY_COMMAND) {
-        #ifdef FEATURE_MEMORIES
-        repeat_memory = 255;
-        #endif
-        if (incoming_serial_byte) {
-          tx_and_sidetone_key(1,AUTOMATIC_SENDING);
-        } else {
-          tx_and_sidetone_key(0,AUTOMATIC_SENDING);
-        }
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status ==  WINKEY_DAH_TO_DIT_RATIO_COMMAND) {
-        winkey_dah_to_dit_ratio_command(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_WEIGHTING_COMMAND) {
-        winkey_weighting_command(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_SET_POT_PARM1_COMMAND) {
-        winkey_set_pot_parm1_command(incoming_serial_byte);
-        winkey_status = WINKEY_SET_POT_PARM2_COMMAND;
-      } else {
-        if (winkey_status == WINKEY_SET_POT_PARM2_COMMAND) {
-          winkey_set_pot_parm2_command(incoming_serial_byte);
-          winkey_status = WINKEY_SET_POT_PARM3_COMMAND;
-        } else {
-          if (winkey_status == WINKEY_SET_POT_PARM3_COMMAND) {  // third parm is max read value from pot, depending on wiring
-            winkey_set_pot_parm3_command(incoming_serial_byte); // WK2 protocol just ignores this third parm
-            winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;      // this is taken care of in winkey_set_pot_parm3()
-          }
-        }
-      }
-
-      if (winkey_status ==  WINKEY_SETMODE_COMMAND) {
-        winkey_setmode_command(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status ==  WINKEY_SOFTWARE_PADDLE_COMMAND) {
-        #ifdef FEATURE_MEMORIES
-        repeat_memory = 255;
-        #endif
-        switch (incoming_serial_byte) {
-          case 0: winkey_dit_invoke = 0; winkey_dah_invoke = 0; break;
-          case 1: winkey_dit_invoke = 1; winkey_dah_invoke = 0; break;
-          case 2: winkey_dit_invoke = 0; winkey_dah_invoke = 1; break;
-          case 3: winkey_dah_invoke = 1; winkey_dit_invoke = 1; break;
-        }
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status ==  WINKEY_SIDETONE_FREQ_COMMAND) {
-        winkey_sidetone_freq_command(incoming_serial_byte);
-        winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-      }
-
-      if (winkey_status == WINKEY_UNSUPPORTED_COMMAND) {
-        winkey_parmcount--;
-        if (winkey_parmcount == 0) {
-          if (winkey_sending) {
-            Serial.write(0xc4);
-          } else {
-            Serial.write(0xc0);
-          }
-          winkey_status = WINKEY_NO_COMMAND_IN_PROGRESS;
-        }
-
-      }
-    } // else (winkey_status == WINKEY_NO_COMMAND_IN_PROGRESS)
-  }  // if (action == SERVICE_SERIAL_BYTE
-
-  
-}
-#endif  //FEATURE_WINKEY_EMULATION
-
-//-------------------------------------------------------------------------------------------------------
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
 void service_command_line_interface() {
  
@@ -4202,40 +2868,23 @@ void check_serial()
   #ifdef DEBUG_LOOP
   Serial.println(F("loop: entering check_serial")); 
   #endif 
-    
-
-  #ifdef FEATURE_WINKEY_EMULATION
-  if (serial_mode == SERIAL_WINKEY_EMULATION) {
-    service_winkey(HOUSEKEEPING);
-  }
-  #endif
+  
 
   // Reminder to Goody: multi-parameter commands must be nested in if-then-elses
 
   while (Serial.available() > 0) {
     incoming_serial_byte = Serial.read();
-    #ifndef FEATURE_WINKEY_EMULATION
     #ifndef FEATURE_COMMAND_LINE_INTERFACE
     //incoming_serial_byte = Serial.read();
     Serial.println(F("No serial features enabled..."));
     #endif
-    #endif
 
     // yea, this is a bit funky below
-
-    #ifdef FEATURE_WINKEY_EMULATION
-    if (serial_mode == SERIAL_WINKEY_EMULATION) {
-      service_winkey(SERVICE_SERIAL_BYTE);
-    } else {
-    #endif //FEATURE_WINKEY_EMULATION
     
     #ifdef FEATURE_COMMAND_LINE_INTERFACE    
     service_command_line_interface();
     #endif //FEATURE_COMMAND_LINE_INTERFACE
     
-    #ifdef FEATURE_WINKEY_EMULATION
-    } // if (serial_mode == SERIAL_WINKEY_EMULATION)
-    #endif //FEATURE_WINKEY_EMULATION
   }  //while (Serial.available() > 0)
 }
 #endif
@@ -5205,13 +3854,7 @@ void play_memory(byte memory_number)
 
   if (machine_mode == NORMAL) {
     #ifdef FEATURE_SERIAL
-    #ifdef FEATURE_WINKEY_EMULATION
-    if (serial_mode != SERIAL_WINKEY_EMULATION) {
-      Serial.println();
-    }
-    #else
     Serial.println();
-    #endif
     #endif
   }
   
@@ -5245,13 +3888,7 @@ void play_memory(byte memory_number)
 
         if (machine_mode == NORMAL) {
           #ifdef FEATURE_SERIAL
-          #ifndef FEATURE_WINKEY_EMULATION
           Serial.write(eeprom_byte_read);
-          #else  //FEATURE_WINKEY_EMULATION
-          if (((serial_mode == SERIAL_WINKEY_EMULATION) && (winkey_paddle_echo_activated) && (winkey_host_open)) || (serial_mode != SERIAL_WINKEY_EMULATION)) {
-            Serial.write(eeprom_byte_read);
-          }
-          #endif //FEATURE_WINKEY_EMULATION
           #endif //FEATURE_SERIAL
           #ifdef FEATURE_DISPLAY
           if (lcd_send_echo) {
@@ -5511,12 +4148,6 @@ void initialize_debug_startup(){
   #endif
   #ifdef FEATURE_MEMORIES
   Serial.println(F("FEATURE_MEMORIES"));
-  #endif
-  #ifdef FEATURE_WINKEY_EMULATION
-  Serial.println(F("FEATURE_WINKEY_EMULATION"));
-  #endif
-  #ifdef OPTION_WINKEY_2_SUPPORT
-  Serial.println(F("OPTION_WINKEY_2_SUPPORT"));
   #endif
   #ifdef FEATURE_BEACON
   Serial.println(F("FEATURE_BEACON"));
