@@ -45,6 +45,8 @@
 // * Removed Winkey functions
 // * Removed call sign practice
 // * Removed the DL2SBA bankswitch and reverse button options
+// * Removed memory repeat with button + dit hit
+// * Removed memory repeat command (if you want a memory repeated, just hit the button again)
 
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
@@ -65,14 +67,12 @@
 //    \o     Toggle sidetone on/off
 //    \p#    Program memory #
 //    \q##   Switch to QRSS mode, dit length ## seconds
-//    \r     Switch to regular speed mode
+//    \r     Switch to regular speed mode\\
 //    \s     Status
 //    \t     Tune mode
 //    \y#    Change wordspace to # elements (# = 1 to 9)
 //    \z     Autospace on/off
 //    \+     Create prosign
-//    \!##   Repeat play memory
-//    \|#### Set memory repeat (milliseconds)
 //    \*     Toggle paddle echo
 //    \^     Toggle wait for carriage return to send CW / send CW immediately
 //    \~     Reset unit
@@ -81,7 +81,6 @@
 //    button 0: command mode / command mode exit
 //    button 0 + left paddle:  increase cw speed
 //    button 0 + right paddle: decrease cw speed
-//    button 1 - 12 hold + left paddle: repeat memory
 
 // Command Mode (press button0 to enter command mode and press again to exit)
 //    A  Switch to Iambic A mode
@@ -97,7 +96,6 @@
 //    T  Tune mode
 //    W  Change speed
 //    X  Exit command mode (you can also press the command button (button0) to exit)
-//    Y#### Change memory repeat delay to #### mS
 //    Z  Autospace On/Off
 //    #  Play a memory without transmitting
 
@@ -200,7 +198,6 @@
 #define number_of_memories byte(12)            // the number of memories (duh)
 #define memory_area_start 20             // the eeprom location where memory space starts
 #define memory_area_end 1023             // the eeprom location where memory space ends
-#define default_memory_repeat_time 3000  // time in milliseconds
 #define lcd_columns 16
 #define lcd_rows 2
 #define eeprom_magic_number 73
@@ -367,9 +364,6 @@ byte send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;
 #ifdef FEATURE_MEMORIES
 byte play_memory_prempt = 0;
 long last_memory_button_buffer_insert = 0;
-byte repeat_memory = 255;
-unsigned int memory_repeat_time = default_memory_repeat_time;
-unsigned long last_memory_repeat_time = 0;
 #endif //FEATURE_MEMORIES
 
 #ifdef FEATURE_SERIAL
@@ -447,9 +441,6 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
 #ifdef FEATURE_AUTOSPACE
 #define EEPROM_autospace_active 12
 #endif //FEATURE_AUTOSPACE
-// eprom location 13 available
-#define EEPROM_memory_repeat_time_high 14
-#define EEPROM_memory_repeat_time_low 15
 
 #define SIDETONE_HZ_LOW_LIMIT 299
 #define SIDETONE_HZ_HIGH_LIMIT 2001
@@ -654,10 +645,6 @@ void loop()
     check_for_dead_op();
     #endif
 
-    #ifdef FEATURE_MEMORIES
-    check_memory_repeat();
-    #endif
-
     #ifdef FEATURE_DISPLAY
     check_paddles();
     service_dit_dah_buffers();
@@ -846,25 +833,6 @@ void check_for_dirty_configuration()
 
 }
 
-//-------------------------------------------------------------------------------------------------------
-#ifdef FEATURE_MEMORIES
-void check_memory_repeat() {
-
-  #ifdef DEBUG_LOOP
-  Serial.println(F("loop: entering check_memory_repeat"));
-  #endif    
-  
-  if ((repeat_memory < number_of_memories) && ((millis() - last_memory_repeat_time) > memory_repeat_time)) {
-    add_to_send_buffer(SERIAL_SEND_BUFFER_MEMORY_NUMBER);
-    add_to_send_buffer(repeat_memory);
-    last_memory_repeat_time = millis();
-    #ifdef DEBUG_MEMORIES
-    Serial.print(F("check_memory_repeat: added repeat_memory to send buffer\n\r"));
-    #endif
-  }
-
-}
-#endif
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -995,7 +963,6 @@ void put_memory_button_in_buffer(byte memory_number_to_put_in_buffer)
     Serial.print(F("put_memory_button_in_buffer: memory_number_to_put_in_buffer:"));
     Serial.println(memory_number_to_put_in_buffer,DEC);
     #endif
-    repeat_memory = 255;
     if ((millis() - last_memory_button_buffer_insert) > 400) {    // don't do another buffer insert if we just did one - button debounce
       add_to_send_buffer(SERIAL_SEND_BUFFER_MEMORY_NUMBER);
       add_to_send_buffer(memory_number_to_put_in_buffer);
@@ -1149,10 +1116,7 @@ void write_settings_to_eeprom(int initialize_eeprom) {
   #ifdef FEATURE_AUTOSPACE
   EEPROM.write(EEPROM_autospace_active,autospace_active);
   #endif //FEATURE_AUTOSPACE
-  #ifdef FEATURE_MEMORIES
-  EEPROM.write(EEPROM_memory_repeat_time_low,lowByte(memory_repeat_time));
-  EEPROM.write(EEPROM_memory_repeat_time_high,highByte(memory_repeat_time));  
-  #endif //FEATURE_MEMORIES
+  
   config_dirty = 0;
 }
 
@@ -1174,11 +1138,7 @@ int read_settings_from_eeprom() {
     #ifdef FEATURE_AUTOSPACE
     autospace_active = EEPROM.read(EEPROM_autospace_active);
     #endif //FEATURE_AUTOSPACE
-    #ifdef FEATURE_MEMORIES
-    if (EEPROM.read(EEPROM_memory_repeat_time_high) != 255 ) {
-      memory_repeat_time=word(EEPROM.read(EEPROM_memory_repeat_time_high),EEPROM.read(EEPROM_memory_repeat_time_low));
-    }
-    #endif //FEATURE_MEMORIES
+   
     config_dirty = 0;
     return 0;
   } else {
@@ -1209,12 +1169,6 @@ void check_dit_paddle()
     }
     #endif
     dit_buffer = 1;
-    #ifdef FEATURE_MEMORIES
-    if (repeat_memory < 255) {
-      repeat_memory = 255;
-      send_buffer_bytes = 0;
-    }
-    #endif
   }
 
 }
@@ -1240,9 +1194,6 @@ void check_dah_paddle()
     }
     #endif
     dah_buffer = 1;
-    #ifdef FEATURE_MEMORIES
-    repeat_memory = 255;
-    #endif
   }
 }
 
@@ -1686,9 +1637,6 @@ void command_mode ()
            break; 
         case 2: command_tuning_mode(); break;                             // T - tuning mode
         case 122: command_speed_mode(); break;                            // W - change wpm
-        #ifdef FEATURE_MEMORIES
-        case 2122: command_set_mem_repeat_delay(); break; // Y - set memory repeat delay
-        #endif
         case 2112: stay_in_command_mode = 0; break;                       // X - exit command mode
         #ifdef FEATURE_AUTOSPACE
         case 2211: // Z - Autospace
@@ -1744,41 +1692,6 @@ void command_mode ()
   #endif //DEBUG_COMMAND_MODE
 }
 #endif //FEATURE_COMMAND_BUTTONS
-
-//-------------------------------------------------------------------------------------------------------
-
-#ifdef FEATURE_MEMORIES
-void command_set_mem_repeat_delay() {
- 
- //ddddd
-  
-  byte character_count = 0;;
-  int cw_char = 0;
-  byte number_sent = 0;
-  unsigned int repeat_value = 0;
-  byte error_flag = 0;
-  
-  for (character_count = 0; character_count < 4; character_count++) {
-    cw_char = get_cw_input_from_user(0);
-    number_sent = (convert_cw_number_to_ascii(cw_char) - 48);
-    if ((number_sent > -1) && (number_sent < 10)) {
-      repeat_value = (repeat_value * 10) + number_sent;
-    } else { // we got a bad value
-      error_flag = 1;
-      character_count = 5;
-    }      
-  }
-  
-  if (error_flag) {
-    boop();
-  } else {
-    memory_repeat_time = repeat_value;
-    config_dirty = 1;
-    beep();
-  }
-  
-}
-#endif //FEATURE_MEMORIES
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -2105,9 +2018,6 @@ void check_command_buttons()
   byte store_key_tx = key_tx;
   byte previous_sidetone_mode = 0;
   if ((analogbuttontemp < analog_buttons_number_of_buttons) && ((millis() - last_button_action) > 200)) {
-    #ifdef FEATURE_MEMORIES
-    repeat_memory = 255;
-    #endif
     button_depress_time = millis();
     while ((analogbuttontemp == analogbuttonpressed()) && ((millis() - button_depress_time) < 1000)) {
       if ((digitalRead(paddle_left) == LOW) || (digitalRead(paddle_right) == LOW)) {
@@ -2169,16 +2079,6 @@ void check_command_buttons()
          }
          key_tx = 1;
        }  //(analogbuttontemp == 0)
-       if ((analogbuttontemp > 0) && (analogbuttontemp < analog_buttons_number_of_buttons)) {
-         while (analogbuttonpressed() == analogbuttontemp) {
-            if (((digitalRead(paddle_left) == LOW) || (digitalRead(paddle_right) == LOW)) && (analogbuttontemp < (number_of_memories + 1))){
-              #ifdef FEATURE_MEMORIES
-              repeat_memory = analogbuttontemp - 1;
-              last_memory_repeat_time = 0;
-              #endif
-            }
-         }
-       }
     }
     last_button_action = millis();
   }
@@ -2655,9 +2555,6 @@ void service_send_buffer()
     send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;
     dit_buffer = 0;
     dah_buffer = 0;    
-    #ifdef FEATURE_MEMORIES
-    repeat_memory = 255;
-    #endif
   }
 
 }
@@ -2729,11 +2626,6 @@ void service_command_line_interface() {
         }
       }
       add_to_send_buffer(incoming_serial_byte);
-      #ifdef FEATURE_MEMORIES
-      if (incoming_serial_byte != 13) {
-        repeat_memory = 255;
-      }
-      #endif
     } else {     //(incoming_serial_byte != 92)  -- we got a backslash
       serial_backslash_command = 1;
       Serial.write(incoming_serial_byte);
@@ -2816,19 +2708,12 @@ void process_serial_command() {
       }
       break;
     #ifdef FEATURE_MEMORIES
-    case 33: repeat_play_memory(); break;      // ! - repeat play
-    case 124: serial_set_memory_repeat(); break; // | - set memory repeat time
     case 49: serial_play_memory(0); break;     // 1 - play memory 1  (0)
     case 50: serial_play_memory(1); break;     // 2 - play memory 2  (1)
     case 51: serial_play_memory(2); break;     // 3 - play memory 3  (2)
     case 52: serial_play_memory(3); break;     // 4 - play memory 4  (3)
-    case 53: serial_play_memory(4); break;     // 5 - play memory 5  (4)
-    case 54: serial_play_memory(5); break;     // 6 - play memory 6  (5)
-    case 55: serial_play_memory(6); break;     // 7 - play memory 7  (6)
-    case 56: serial_play_memory(7); break;     // 8 - play memory 8  (7)
-    case 57: serial_play_memory(8); break;     // 9 - play memory 9  (8)
 
-    case 80: repeat_memory = 255; serial_program_memory(); break;                                // P - program memory
+    case 80: serial_program_memory(); break;                                // P - program memory
     #endif //FEATURE_MEMORIES
     case 81: serial_qrss_mode(); break; // Q - activate QRSS mode
     case 82: speed_mode = SPEED_NORMAL; Serial.println(F("QRSS Off")); break; // R - activate regular timing mode
@@ -2861,9 +2746,6 @@ void process_serial_command() {
       config_dirty = 1;
     break; // case 79
     case 84: // T - tune
-      #ifdef FEATURE_MEMORIES
-      repeat_memory = 255;
-      #endif
       serial_tune_command(); break;
    
     case 87: serial_wpm_set();break;                                        // W - set WPM
@@ -2886,7 +2768,6 @@ void process_serial_command() {
     case 92:
       send_buffer_bytes = 0;
       play_memory_prempt = 1;
-      repeat_memory = 255;
       break;                           // \ - double backslash - clear serial send buffer
     #endif
     case 94:                           // ^ - toggle send CW send immediately
@@ -2930,38 +2811,6 @@ void service_serial_paddle_echo()
 }
 #endif
 #endif
-//---------------------------------------------------------------------
-#ifdef FEATURE_SERIAL
-#ifdef FEATURE_COMMAND_LINE_INTERFACE
-#ifdef FEATURE_MEMORIES
-void serial_set_memory_repeat() {
-
-  int temp_int = serial_get_number_input(5, -1, 32000);
-  if (temp_int > -1) {
-    memory_repeat_time = temp_int;
-    config_dirty = 1;
-  }
-
-}
-#endif
-#endif
-#endif
-//---------------------------------------------------------------------
-
-#ifdef FEATURE_SERIAL
-#ifdef FEATURE_COMMAND_LINE_INTERFACE
-#ifdef FEATURE_MEMORIES
-void repeat_play_memory() {
-
-  byte memory_number = serial_get_number_input(2,0, (number_of_memories+1));
-  if (memory_number > -1) {
-    repeat_memory = memory_number - 1;
-  }
-
-}
-#endif
-#endif
-#endif
 
 //---------------------------------------------------------------------
 
@@ -2973,7 +2822,6 @@ void serial_play_memory(byte memory_number) {
   if (memory_number < number_of_memories) {
     add_to_send_buffer(SERIAL_SEND_BUFFER_MEMORY_NUMBER);
     add_to_send_buffer(memory_number);
-    repeat_memory = 255;
   }
 
 }
@@ -3671,7 +3519,6 @@ void play_memory(byte memory_number)
             dit_buffer = 0;
             dah_buffer = 0;
             button0_buffer = 0;
-            repeat_memory = 255;
             #ifdef FEATURE_COMMAND_BUTTONS
             while (analogbuttonread(0)) {}
             #endif  
@@ -3681,7 +3528,6 @@ void play_memory(byte memory_number)
 
       } else {
         if (y == (memory_start(memory_number))) {      // memory is totally empty - do a boop
-          repeat_memory = 255;
           #ifdef FEATURE_DISPLAY
           lcd_center_print_timed("Memory empty", 0, default_display_msg_delay);
           #else
@@ -3697,12 +3543,6 @@ void play_memory(byte memory_number)
         y--;  // we're in a pause mode, so sit and spin awhile
       }
     }
-
-    last_memory_repeat_time = millis();
-    #ifdef DEBUG_PLAY_MEMORY
-    Serial.println(F("\nplay_memory: reset last_memory_repeat_time"));
-    #endif
-
   }
 
 }
