@@ -43,6 +43,7 @@
 // * Disable all PTT lines
 // * Delete Memory Macros
 // * Removed Winkey functions
+// * Removed call sign practice
 
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
@@ -264,8 +265,6 @@
 
 #define CW 0
 
-#define SERIAL_NORMAL 0
-
 #define SERIAL_SEND_BUFFER_SPECIAL_START 13
 #define SERIAL_SEND_BUFFER_WPM_CHANGE 14        // was 200
 #define SERIAL_SEND_BUFFER_TIMED_KEY_DOWN 17    // was 203
@@ -397,7 +396,6 @@ unsigned long last_memory_repeat_time = 0;
 #endif //FEATURE_MEMORIES
 
 #ifdef FEATURE_SERIAL
-byte serial_mode = SERIAL_NORMAL;
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
 prog_uchar string_k3ng_keyer[] __attribute__((section(".progmem.data"))) = {"\n\rK3NG Keyer Version "};
 #ifdef FEATURE_SERIAL_HELP
@@ -567,7 +565,6 @@ void setup()
   // initialize serial port
   #ifdef FEATURE_SERIAL
   #ifdef FEATURE_COMMAND_LINE_INTERFACE
-  serial_mode = SERIAL_NORMAL;
   serial_baud_rate = default_serial_baud_rate;
   #endif // FEATURE_COMMAND_LINE_INTERFACE
 
@@ -579,13 +576,11 @@ void setup()
 
   #ifndef OPTION_SUPPRESS_SERIAL_BOOT_MSG
   #ifdef FEATURE_COMMAND_LINE_INTERFACE
-  if (serial_mode == SERIAL_NORMAL) {
-    serial_print(string_k3ng_keyer);
-    Serial.write(CODE_VERSION);
-    #ifdef FEATURE_SERIAL_HELP
-    serial_print(string_enter_help);
-    #endif
-  }
+  serial_print(string_k3ng_keyer);
+  Serial.write(CODE_VERSION);
+  #ifdef FEATURE_SERIAL_HELP
+  serial_print(string_enter_help);
+  #endif
   #ifdef DEBUG_MEMORYCHECK
   memorycheck();
   #endif //DEBUG_MEMORYCHECK
@@ -3479,10 +3474,8 @@ void memorycheck()
   if (free > 2048) {
     free = 0;
   }
-  if (serial_mode == SERIAL_NORMAL) {
-    Serial.print((unsigned long)free,DEC);
-    Serial.write(" bytes free\n\r");
-  }
+  Serial.print((unsigned long)free,DEC);
+  Serial.write(" bytes free\n\r");
 }
 #endif
 
