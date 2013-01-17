@@ -415,9 +415,7 @@ prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n
   #ifdef FEATURE_AUTOSPACE
   "\\Z\t\t: Autospace on/off\n\r"
   #endif
-  "\\+\t\t: Prosign\n\r"
   "\\\\\t\t: Empty keyboard send buffer\n\r"
-  "\nMemory Macros:\n\r"
   "\\#\t\t: Jump to memory #\n\r"
   "\\D###\t\t: Delay for ### seconds\n\r"
   "\\E\t\t: Send serial number\n\r"
