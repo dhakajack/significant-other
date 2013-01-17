@@ -44,6 +44,7 @@
 // * Delete Memory Macros
 // * Removed Winkey functions
 // * Removed call sign practice
+// * Removed the DL2SBA bankswitch and reverse button options
 
 
 // Command Line Interface ("CLI") (USB Port) (Note: turn on carriage return if using Arduino Serial Monitor program)
@@ -117,7 +118,6 @@
 //#define FEATURE_DEAD_OP_WATCHDOG
 //#define FEATURE_AUTOSPACE
 //#define FEATURE_FARNSWORTH
-//#define FEATURE_DL2SBA_BANKSWITCH  // Switch memory banks feature as described here: http://dl2sba.com/index.php?option=com_content&view=article&id=131:nanokeyer&catid=15:shack&Itemid=27#english
 //#define FEATURE_DISPLAY            // LCD display support (include one of the hardware options below)
 //#define FEATURE_LCD_4BIT           // classic LCD display using 4 I/O lines
 //#define FEATURE_LCD_I2C            // I2C LCD display using MCP23017 at addr 0x20 (Adafruit)
@@ -125,7 +125,6 @@
 
 
 //#define OPTION_SUPPRESS_SERIAL_BOOT_MSG
-//#define OPTION_REVERSE_BUTTON_ORDER                // This is mainly for the DJ0MY NanoKeyer http://nanokeyer.wordpress.com/
 #define OPTION_PROG_MEM_TRIM_TRAILING_SPACES         // trim trailing spaces from memory when programming in command mode
 #define OPTION_DIT_PADDLE_NO_SEND_ON_MEM_RPT
 //#define OPTION_MORE_DISPLAY_MSGS                     // additional optional display messages - comment out to save memory
@@ -470,11 +469,6 @@ byte autospace_active = 1;
 
 
 //---------------------------------------------------------------------------------------------------------
-
-
-// this code is a friggin work of art.  free as in beer software sucks.
-
-
 //---------------------------------------------------------------------------------------------------------
 
 void setup()
@@ -2028,61 +2022,19 @@ void check_the_memory_buttons()
 //------------------------------------------------------------------
 
 #ifdef FEATURE_COMMAND_BUTTONS
-#ifdef FEATURE_DL2SBA_BANKSWITCH
-void setOneButton(int button, int index) { 
-    int button_value = int(1023 * (float(button * analog_buttons_r2)/float((button * analog_buttons_r2) + analog_buttons_r1))); 
-    int lower_button_value = int(1023 * (float((button-1) * analog_buttons_r2)/float(((button-1) * analog_buttons_r2) + analog_buttons_r1))); 
-    int higher_button_value = int(1023 * (float((button+1) * analog_buttons_r2)/float(((button+1) * analog_buttons_r2) + analog_buttons_r1))); 
-    button_array_low_limit[index] = (button_value - ((button_value - lower_button_value)/2)); 
-    button_array_high_limit[index] = (button_value + ((higher_button_value - button_value)/2)); 
-}
-#endif
-#endif
-
-//------------------------------------------------------------------
-#ifdef FEATURE_COMMAND_BUTTONS
 void initialize_analog_button_array() {
-
-  
-  #ifndef FEATURE_DL2SBA_BANKSWITCH
   
   int button_value;
   int lower_button_value;
   int higher_button_value;
 
-  #ifdef OPTION_REVERSE_BUTTON_ORDER
-  byte y = analog_buttons_number_of_buttons - 1;
-  #endif
-
   for (int x = 0;x < analog_buttons_number_of_buttons;x++) {
     button_value = int(1023 * (float(x * analog_buttons_r2)/float((x * analog_buttons_r2) + analog_buttons_r1)));
     lower_button_value = int(1023 * (float((x-1) * analog_buttons_r2)/float(((x-1) * analog_buttons_r2) + analog_buttons_r1)));
     higher_button_value = int(1023 * (float((x+1) * analog_buttons_r2)/float(((x+1) * analog_buttons_r2) + analog_buttons_r1)));
-    #ifndef OPTION_REVERSE_BUTTON_ORDER
     button_array_low_limit[x] = (button_value - ((button_value - lower_button_value)/2));
     button_array_high_limit[x] = (button_value + ((higher_button_value - button_value)/2));
-    #else
-    button_array_low_limit[y] = (button_value - ((button_value - lower_button_value)/2));
-    button_array_high_limit[y] = (button_value + ((higher_button_value - button_value)/2));
-    y--;
-    #endif
   }
-  
-  #else //FEATURE_DL2SBA_BANKSWITCH
-  
-  setOneButton(0,0); 
-  setOneButton(1,3); 
-  setOneButton(2,2); 
-  setOneButton(3,1); 
-  setOneButton(4,9); 
-  setOneButton(5,8); 
-  setOneButton(6,7); 
-  setOneButton(7,6); 
-  setOneButton(8,5); 
-  setOneButton(9,4); 
-      
-  #endif //FEATURE_DL2SBA_BANKSWITCH
-
 }
 #endif
 
@@ -3991,9 +3943,6 @@ void initialize_debug_startup(){
   #endif
   #ifdef FEATURE_FARNSWORTH
   Serial.println(F("FEATURE_FARNSWORTH"));
-  #endif
-  #ifdef FEATURE_DL2SBA_BANKSWITCH
-  Serial.println(F("FEATURE_DL2SBA_BANKSWITCH"));
   #endif
   #ifdef FEATURE_COMMAND_BUTTONS
   Serial.println(F("FEATURE_COMMAND_BUTTONS"));
