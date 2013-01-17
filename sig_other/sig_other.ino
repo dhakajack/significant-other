@@ -100,21 +100,6 @@
 //    Z  Autospace On/Off
 //    #  Play a memory without transmitting
 
-// Memory Macros
-//    \#     Jump to memory #
-//    \c     Play serial number with cut numbers
-//    \d###  Delay for ### seconds
-//    \e     Play serial number, then increment
-//    \f#### Change sidetone to #### hertz (must be four digits - use leading zero below 1000 hz)
-//    \n     Decrement serial number, do not send
-//    \q##   Switch to QRSS mode, dit length ## seconds
-//    \r     Switch to regular speed mode
-//    \t###  Transmit for ### seconds (must be three digits, use leading zeros if necessary)
-//    \w###  Set regular mode speed to ### WPM (must be three digits, use leading zeros if necessary)
-//    \y#    Increase speed # WPM
-//    \z#    Decrease speed # WPM
-//    \+     Prosign the next two characters
-
 // Useful Stuff
 //    Reset to defaults: squeeze both paddles at power up (good to use if you dorked up the speed and don't have the CLI)
 //    Press the right paddle to enter straight key mode at power up
@@ -136,7 +121,6 @@
 //#define FEATURE_DISPLAY            // LCD display support (include one of the hardware options below)
 //#define FEATURE_LCD_4BIT           // classic LCD display using 4 I/O lines
 //#define FEATURE_LCD_I2C            // I2C LCD display using MCP23017 at addr 0x20 (Adafruit)
-//#define FEATURE_CW_DECODER
 //#define OPTION_NON_ENGLISH_EXTENSIONS  // add support for additional CW characters (i.e. À, Å, Þ, etc.)
 
 
@@ -164,8 +148,6 @@
 //#define DEBUG_COMMAND_MODE
 //#define DEBUG_GET_CW_INPUT_FROM_USER
 //#define DEBUG_POTENTIOMETER
-//#define DEBUG_CW_DECODER
-//#define DEBUG_CW_DECODER_WPM
 
 // Workaround for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34734
 //   #undef PROGMEM
@@ -179,7 +161,6 @@
 #define tx_key_line 6       // (high = key down/tx on)
 #define sidetone_line 9         // connect a speaker for sidetone
 #define potentiometer A0        // Speed potentiometer (0 to 5 V) Use pot from 1k to 10k
-#define cw_decoder_pin A5 //A3
 
 #ifdef FEATURE_COMMAND_BUTTONS
 #define analog_buttons_pin A3
@@ -694,9 +675,6 @@ void loop()
     service_display();
     #endif
     
-    #ifdef FEATURE_CW_DECODER
-    service_cw_decoder();
-    #endif
   }
   
 }
@@ -3978,11 +3956,7 @@ void initialize_pins() {
   
   pinMode (sidetone_line, OUTPUT);
   digitalWrite (sidetone_line, LOW);
-  
-  #ifdef FEATURE_CW_DECODER
-  pinMode (cw_decoder_pin, INPUT);
-  digitalWrite (cw_decoder_pin, HIGH);  
-  #endif //FEATURE_CW_DECODER
+ 
 }
 
 //---------------------------------------------------------------------
@@ -4030,203 +4004,3 @@ void initialize_debug_startup(){
   Serial.println(F("setup: exiting, going into loop"));
 }
 #endif //DEBUG_STARTUP
- 
-//--------------------------------------------------------------------- 
-  
-#define CW_DECODER_SCREEN_COLUMNS 40        // word wrap at this many columns
-#define CW_DECODER_SPACE_PRINT_THRESH 4.5   // print space if no tone for this many element lengths
-#define CW_DECODER_SPACE_DECODE_THRESH 2.0  // invoke character decode if no tone for this many element lengths
-#define CW_DECODER_NOISE_FILTER 20          // ignore elements shorter than this (mS)
- 
-#ifdef FEATURE_CW_DECODER
-void service_cw_decoder() {
-
-  static unsigned long last_transition_time = 0;
-  static unsigned long last_decode_time = 0;
-  static byte last_state = HIGH;
-  static int decode_elements[16];                  // this stores received element lengths in mS (positive = tone, minus = no tone)
-  static byte decode_element_pointer = 0;
-  static float decode_element_tone_average = 0;
-  static float decode_element_no_tone_average = 0;
-  byte decode_it_flag = 0;
-  byte cd_decoder_pin_state = digitalRead(cw_decoder_pin);
-  int element_duration = 0;
-  static float decoder_wpm = wpm;
-  long decode_character = 0;
-  static byte space_sent = 0;
-  #ifdef FEATURE_COMMAND_LINE_INTERFACE
-  static byte screen_column = 0;
-  static int last_printed_decoder_wpm = 0;
-  #endif
- 
- 
-  if  (last_transition_time == 0) { 
-    if (cd_decoder_pin_state == LOW) {  // is this our first tone?
-      last_transition_time = millis();
-      last_state = LOW;
-      #ifdef DEBUG_CW_DECODER
-      tone(sidetone_line, 1500);
-      #endif
-    } else {
-      if ((last_decode_time > 0) && (!space_sent) && ((millis() - last_decode_time) > ((1200/decoder_wpm)*CW_DECODER_SPACE_PRINT_THRESH))) { // should we send a space?
-         #ifdef FEATURE_SERIAL
-         #ifdef FEATURE_COMMAND_LINE_INTERFACE
-         Serial.write(32);
-         screen_column++;
-         #endif //FEATURE_COMMAND_LINE_INTERFACE
-         #endif //FEATURE_SERIAL
-         space_sent = 1;
-      }
-    }
-  } else {
-    if (cd_decoder_pin_state != last_state) {
-      // we have a transition 
-      #ifdef DEBUG_CW_DECODER
-      //Serial.println(F("service_cw_decoder: transition"));
-      if (cd_decoder_pin_state == LOW) {
-        tone(sidetone_line, 1500);
-      } else {
-        noTone(sidetone_line);
-      } 
-      #endif
-      element_duration = millis() - last_transition_time;
-      if (element_duration > CW_DECODER_NOISE_FILTER) {                                    // filter out noise
-        if (cd_decoder_pin_state == LOW) {  // we have a tone
-          decode_elements[decode_element_pointer] = (-1 * element_duration);  // the last element was a space, so make it negative
-          if (decode_element_no_tone_average == 0) {
-            decode_element_no_tone_average = element_duration;
-          } else {
-            decode_element_no_tone_average = (element_duration + decode_element_no_tone_average) / 2;
-          }
-          decode_element_pointer++;
-          last_state = LOW;
-        } else {  // we have no tone
-          decode_elements[decode_element_pointer] = element_duration;  // the last element was a tone, so make it positive        
-          if (decode_element_tone_average == 0) {
-            decode_element_tone_average = element_duration;
-          } else {
-            decode_element_tone_average = (element_duration + decode_element_tone_average) / 2;
-          }
-          last_state = HIGH;
-          decode_element_pointer++;
-        }
-        last_transition_time = millis();
-        if (decode_element_pointer == 16) { decode_it_flag = 1; }  // if we've filled up the array, go ahead and decode it
-      }
-      
-      
-    } else {
-      // no transition
-      element_duration = millis() - last_transition_time;
-      if (last_state == HIGH)  {
-        // we're still high (no tone) - have we reached character space yet?        
-        //if ((element_duration > (decode_element_no_tone_average * 2.5)) || (element_duration > (decode_element_tone_average * 2.5))) {
-        if (element_duration > (float(1200/decoder_wpm)*CW_DECODER_SPACE_DECODE_THRESH)) {
-          decode_it_flag = 1;
-        }
-      } else {
-        // have we had tone for an outrageous amount of time?
-       
-      }
-    }
-   }
- 
- 
- 
- 
-  if (decode_it_flag) {                      // are we ready to decode the element array?
-    #ifdef DEBUG_CW_DECODER
-    noTone(sidetone_line);  
-    #endif
-    
-    // adjust the decoder wpm based on what we got
-    if (decode_element_no_tone_average > 0) {
-      if (abs((1200/decode_element_no_tone_average) - decoder_wpm) < 5) {
-        decoder_wpm = (decoder_wpm + (1200/decode_element_no_tone_average))/2;
-      } else {
-        if (abs((1200/decode_element_no_tone_average) - decoder_wpm) < 10) {
-          decoder_wpm = (decoder_wpm + decoder_wpm + (1200/decode_element_no_tone_average))/3;
-        } else {
-          if (abs((1200/decode_element_no_tone_average) - decoder_wpm) < 20) {
-            decoder_wpm = (decoder_wpm + decoder_wpm + decoder_wpm + (1200/decode_element_no_tone_average))/4;    
-          }      
-        }
-      }
-    }
-    
-    #ifdef DEBUG_CW_DECODER_WPM
-    if (abs(decoder_wpm - last_printed_decoder_wpm) > 0.9) {
-      Serial.print("<");
-      Serial.print(int(decoder_wpm));
-      Serial.print(">");
-      last_printed_decoder_wpm = decoder_wpm;
-    }
-    #endif //DEBUG_CW_DECODER_WPM
-    
-    for (byte x = 0;x < decode_element_pointer; x++) {
-      if (decode_elements[x] > 0) {  // is this a tone element?
-        if (decode_element_no_tone_average > 0) {
-        // we have spaces to time from 
-          if ((decode_elements[x]/decode_element_no_tone_average) < 2.1) {
-            decode_character = (decode_character * 10) + 1; // we have a dit
-          } else {
-            decode_character = (decode_character * 10) + 2; // we have a dah
-          }
-        } else {
-          // we have no spaces to time from, use the current wpm
-          if ((decode_elements[x]/(1200/decoder_wpm)) < 1.3) {
-            decode_character = (decode_character * 10) + 1; // we have a dit
-          } else {
-            decode_character = (decode_character * 10) + 2; // we have a dah
-          }          
-        }
-      }
-      #ifdef DEBUG_CW_DECODER
-      Serial.print(F("service_cw_decoder: decode_elements["));
-      Serial.print(x);
-      Serial.print(F("]: "));
-      Serial.println(decode_elements[x]);
-      #endif //DEBUG_CW_DECODER
-    }
-    #ifdef DEBUG_CW_DECODER
-    Serial.print(F("service_cw_decoder: decode_element_tone_average: "));
-    Serial.println(decode_element_tone_average);
-    Serial.print(F("service_cw_decoder: decode_element_no_tone_average: "));
-    Serial.println(decode_element_no_tone_average);
-    Serial.print(F("service_cw_decoder: decode_element_no_tone_average wpm: "));
-    Serial.println(1200/decode_element_no_tone_average);
-    Serial.print(F("service_cw_decoder: decoder_wpm: "));
-    Serial.println(decoder_wpm);
-    Serial.print(F("service_cw_decoder: decode_character: "));
-    Serial.println(decode_character);
-    #endif //DEBUG_CW_DECODER
-    #ifdef FEATURE_SERIAL
-    #ifdef FEATURE_COMMAND_LINE_INTERFACE
-    Serial.write(convert_cw_number_to_ascii(decode_character));
-    screen_column++;
-    #endif //FEATURE_COMMAND_LINE_INTERFACE
-    #endif //FEATURE_SERIAL
-    #ifdef FEATURE_DISPLAY
-    display_scroll_print_char(convert_cw_number_to_ascii(decode_character));
-    #endif //FEATURE_DISPLAY
-    // reinitialize everything
-    last_transition_time = 0;
-    last_decode_time = millis();
-    decode_element_pointer = 0; 
-    decode_element_tone_average = 0;
-    decode_element_no_tone_average = 0;
-    space_sent = 0;
-  }
-  
-  #ifdef FEATURE_SERIAL
-  #ifdef FEATURE_COMMAND_LINE_INTERFACE
-  if (screen_column > CW_DECODER_SCREEN_COLUMNS) {
-    Serial.println();
-    screen_column = 0;
-  }
-  #endif //FEATURE_COMMAND_LINE_INTERFACE
-  #endif //FEATURE_SERIAL
-  
-}
-
-#endif //FEATURE_CW_DECODER
