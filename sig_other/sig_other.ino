@@ -11,20 +11,20 @@
 
 // All trademarks referred to in source code and documentation are copyright their respective owners.
 
-    /*
+/*
     This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    */
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 // If you offer a hardware kit using this software, show your appreciation by sending the author a note and then forward a
 // complimentary kit or a bottle of bourbon to K3NG ;-)
@@ -155,7 +155,7 @@
 #define analog_buttons_pin A3
 
 // Initial and hardcoded settings
-#define initial_speed_wpm 26             // "factory default" keyer speed setting
+#define initial_speed_wpm 20             // "factory default" keyer speed setting
 #define initial_sidetone_freq 600        // "factory default" sidetone frequency setting
 #define hz_high_beep 1500                // frequency in hertz of high beep
 #define hz_low_beep 400                  // frequency in hertz of low beep
@@ -164,7 +164,6 @@
 #define initial_pot_wpm_low_value 13     // Potentiometer WPM fully CCW
 #define initial_pot_wpm_high_value 35    // Potentiometer WPM fully CW
 #define potentiometer_change_threshold 1 // don't change the keyer speed until pot wpm has changed more than this
-//#define default_serial_baud_rate 9600
 #define default_serial_baud_rate 115200
 #define send_buffer_size 50
 #define default_length_letterspace 3
@@ -267,7 +266,8 @@ byte last_sending_type = MANUAL_SENDING;
 byte zero = 0;
 byte iambic_flag = 0;
 
-enum lcd_statuses {LCD_CLEAR, LCD_REVERT, LCD_TIMED_MESSAGE, LCD_SCROLL_MSG};
+enum lcd_statuses {
+  LCD_CLEAR, LCD_REVERT, LCD_TIMED_MESSAGE, LCD_SCROLL_MSG};
 #define default_display_msg_delay 1000
 
 byte lcd_status = LCD_CLEAR;
@@ -294,8 +294,10 @@ long dah_end_time;
 //these buttons to be used in a pinch for iambic keying...like when you forget to bring the paddles,
 //the connecting wire, the 3.5mm adapter, etc.
 //calculations are based on up to 10% tolerance resistors. http://goo.gl/pN383
-int button_array_high_limit[analog_buttons_number_of_buttons+1] = {100,819,661,562,336};
-int button_array_low_limit[analog_buttons_number_of_buttons+1] = {0,746, 563, 460,432};
+int button_array_high_limit[analog_buttons_number_of_buttons+1] = {
+  100,819,661,562,336};
+int button_array_low_limit[analog_buttons_number_of_buttons+1] = {
+  0,746, 563, 460,432};
 long button_last_add_to_send_buffer_time = 0;
 
 #ifdef FEATURE_FARNSWORTH
@@ -331,13 +333,18 @@ long last_memory_button_buffer_insert = 0;
 
 #ifdef FEATURE_SERIAL
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
-prog_uchar string_k3ng_keyer[] __attribute__((section(".progmem.data"))) = {"\n\rK3NG Keyer Version "};
+prog_uchar string_k3ng_keyer[] __attribute__((section(".progmem.data"))) = {
+  "\n\rK3NG Keyer Version "};
 #ifdef FEATURE_SERIAL_HELP
-prog_uchar string_enter_help[] __attribute__((section(".progmem.data"))) = {"\n\rEnter \\? for help\n\n\r"};
+prog_uchar string_enter_help[] __attribute__((section(".progmem.data"))) = {
+  "\n\rEnter \\? for help\n\n\r"};
 #endif
-prog_uchar string_qrss_mode[] __attribute__((section(".progmem.data"))) = {"Setting keyer to QRSS Mode. Dit length: "};
-prog_uchar string_setting_serial_number[] __attribute__((section(".progmem.data"))) = {"Setting serial number to "};
-prog_uchar string_setting_dah_to_dit_ratio[] __attribute__((section(".progmem.data"))) = {"Setting dah to dit ratio to "};
+prog_uchar string_qrss_mode[] __attribute__((section(".progmem.data"))) = {
+  "Setting keyer to QRSS Mode. Dit length: "};
+prog_uchar string_setting_serial_number[] __attribute__((section(".progmem.data"))) = {
+  "Setting serial number to "};
+prog_uchar string_setting_dah_to_dit_ratio[] __attribute__((section(".progmem.data"))) = {
+  "Setting dah to dit ratio to "};
 #endif //FEATURE_COMMAND_LINE_INTERFACE
 #endif //FEATURE_SERIAL
 
@@ -345,46 +352,44 @@ prog_uchar string_setting_dah_to_dit_ratio[] __attribute__((section(".progmem.da
 #ifdef FEATURE_SERIAL_HELP
 #ifdef FEATURE_SERIAL
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
-prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {"\n\rK3NG Keyer Help\n\r\n\r"
-  "CLI commands:\n\r"
-  "\\#\t\t: play memory # x\n\r"
-  "\\A\t\t: Iambic A\n\r"
-  "\\B\t\t: Iambic B\n\r"
-  "\\D\t\t: Ultimatic\n\r"
-  "\\E####\t\t: Set serial number to ####\n\r"
-  "\\F####\t\t: Set sidetone to #### hz\n\r"
-  "\\G\t\t: switch to Bug mode\n\r"
-  "\\I\t\t: TX line disable/enable\n\r"
-  "\\J###\t\t: Set Dah to Dit Ratio\n\r"
-  "\\L##\t\t: Set weighting (50 = normal)\n\r"
-  #ifdef FEATURE_FARNSWORTH
-  "\\M###\t\t: Set Farnsworth Speed\n\r"
-  #endif
-  "\\N\t\t: toggle paddle reverse\n\r"
-  "\\Px<string>\t: program memory #x with <string>\n\r"
-  "\\Q#[#]\t\t: Switch to QRSS mode with ## second dit length\n\r"
-  "\\R\t\t: Switch to regular speed (wpm) mode\n\r"
-  "\\S\t\t: status report\n\r"
-  "\\T\t\t: Tune mode\n\r"
-  "\\W#[#][#]\t: Change WPM to ###\n\r"
-  "\\Y#\t\t: Change wordspace to #\n\r"
-  #ifdef FEATURE_AUTOSPACE
-  "\\Z\t\t: Autospace on/off\n\r"
-  #endif
-  "\\\\\t\t: Empty keyboard send buffer\n\r"
-  "\\#\t\t: Jump to memory #\n\r"
-  "\\D###\t\t: Delay for ### seconds\n\r"
-  "\\E\t\t: Send serial number\n\r"
-  "\\F####\t\t: Set sidetone to #### hz\n\r"
-  "\\N\t\t: Decrement serial number\n\r"
-  "\\Q##\t\t: Switch to QRSS with ## second dit length\n\r"
-  "\\R\t\t: Switch to regular speed mode\n\r"
-  "\\T###\t\t: Transmit for ### seconds\n\r"
-  "\\W###\t\t: Change WPM to ###\n\r"
-  "\\Y#\t\t: Increase speed # WPM\n\r"
-  "\\Z#\t\t: Decrease speed # WPM\n\r"
-  "\\^\t\t: Toggle send CW immediately\n\r"
-  "\\+\t\t: Prosign\n\r"};
+prog_uchar serial_help_string[] __attribute__((section(".progmem.data"))) = {
+  "\n\rK3NG Keyer Help\n\r\n\r"
+    "CLI commands:\n\r"
+    "\\#\t\t: play memory # x\n\r"
+    "\\A\t\t: Iambic A\n\r"
+    "\\B\t\t: Iambic B\n\r"
+    "\\D\t\t: Ultimatic\n\r"
+    "\\E####\t\t: Set serial number to ####\n\r"
+    "\\F####\t\t: Set sidetone to #### hz\n\r"
+    "\\G\t\t: switch to Bug mode\n\r"
+    "\\I\t\t: TX line disable/enable\n\r"
+    "\\J###\t\t: Set Dah to Dit Ratio\n\r"
+    "\\L##\t\t: Set weighting (50 = normal)\n\r"
+#ifdef FEATURE_FARNSWORTH
+    "\\M###\t\t: Set Farnsworth Speed\n\r"
+#endif
+    "\\N\t\t: toggle paddle reverse\n\r"
+    "\\Px<string>\t: program memory #x with <string>\n\r"
+    "\\Q#[#]\t\t: Switch to QRSS mode with ## second dit length\n\r"
+    "\\R\t\t: Switch to regular speed (wpm) mode\n\r"
+    "\\S\t\t: status report\n\r"
+    "\\T\t\t: Tune mode\n\r"
+    "\\W#[#][#]\t: Change WPM to ###\n\r"
+    "\\Y#\t\t: Change wordspace to #\n\r"
+#ifdef FEATURE_AUTOSPACE
+    "\\Z\t\t: Autospace on/off\n\r"
+#endif
+    "\\\\\t\t: Empty keyboard send buffer\n\r"
+    "\\#\t\t: Jump to memory #\n\r"
+    "\\D###\t\t: Delay for ### seconds\n\r"
+    "\\E\t\t: Send serial number\n\r"
+    "\\F####\t\t: Set sidetone to #### hz\n\r"
+    "\\N\t\t: Decrement serial number\n\r"
+    "\\Q##\t\t: Switch to QRSS with ## second dit length\n\r"
+    "\\R\t\t: Switch to regular speed mode\n\r"
+    "\\T###\t\t: Transmit for ### seconds\n\r"
+    "\\^\t\t: Toggle send CW immediately\n\r"
+    "\\+\t\t: Prosign\n\r"};
 #endif
 #endif
 #endif
@@ -445,13 +450,14 @@ void setup()
 
   delay(250);  // wait a little bit for the caps to charge up on the paddle lines
 
-  #ifdef OPTION_WATCHDOG_TIMER
+#ifdef OPTION_WATCHDOG_TIMER
   wdt_enable(WDTO_4S);
-  #endif //OPTION_WATCHDOG_TIMER
+#endif //OPTION_WATCHDOG_TIMER
 
   // do an eeprom reset to defaults if paddles are squeezed
   if (digitalRead(paddle_left) == LOW && digitalRead(paddle_right) == LOW) {
-    while (digitalRead(paddle_left) == LOW && digitalRead(paddle_right) == LOW) {}
+    while (digitalRead(paddle_left) == LOW && digitalRead(paddle_right) == LOW) {
+    }
     write_settings_to_eeprom(1);
     beep_boop();
     beep_boop();
@@ -468,60 +474,61 @@ void setup()
 
   // check for beacon mode (paddle_left == low) or straight key mode (paddle_right == low)
   if (digitalRead(paddle_left) == LOW) {
-    #ifdef FEATURE_BEACON
+#ifdef FEATURE_BEACON
     machine_mode = BEACON;
-    #endif
-  } else {
+#endif
+  } 
+  else {
     if (digitalRead(paddle_right) == LOW) {
       keyer_mode = STRAIGHT;
     }
   }
 
-  #ifdef DEBUG_CAPTURE_COM_PORT
+#ifdef DEBUG_CAPTURE_COM_PORT
   Serial.begin(serial_baud_rate);
   debug_capture();
-  #endif
-  
+#endif
+
 
   // initialize serial port
-  #ifdef FEATURE_SERIAL
-  #ifdef FEATURE_COMMAND_LINE_INTERFACE
+#ifdef FEATURE_SERIAL
+#ifdef FEATURE_COMMAND_LINE_INTERFACE
   serial_baud_rate = default_serial_baud_rate;
-  #endif // FEATURE_COMMAND_LINE_INTERFACE
+#endif // FEATURE_COMMAND_LINE_INTERFACE
 
   Serial.begin(serial_baud_rate);
-  
-  #ifdef DEBUG_STARTUP
-  Serial.println(F("setup: serial port opened"));
-  #endif
 
-  #ifndef OPTION_SUPPRESS_SERIAL_BOOT_MSG
-  #ifdef FEATURE_COMMAND_LINE_INTERFACE
+#ifdef DEBUG_STARTUP
+  Serial.println(F("setup: serial port opened"));
+#endif
+
+#ifndef OPTION_SUPPRESS_SERIAL_BOOT_MSG
+#ifdef FEATURE_COMMAND_LINE_INTERFACE
   serial_print(string_k3ng_keyer);
   Serial.write(CODE_VERSION);
-  #ifdef FEATURE_SERIAL_HELP
+#ifdef FEATURE_SERIAL_HELP
   serial_print(string_enter_help);
-  #endif
-  #ifdef DEBUG_MEMORYCHECK
+#endif
+#ifdef DEBUG_MEMORYCHECK
   memorycheck();
-  #endif //DEBUG_MEMORYCHECK
-  #endif //FEATURE_COMMAND_LINE_INTERFACE
-  #endif //ifndef OPTION_SUPPRESS_SERIAL_BOOT_MSG
-  #endif //FEATURE_SERIAL
+#endif //DEBUG_MEMORYCHECK
+#endif //FEATURE_COMMAND_LINE_INTERFACE
+#endif //ifndef OPTION_SUPPRESS_SERIAL_BOOT_MSG
+#endif //FEATURE_SERIAL
 
   lcd.begin(lcd_columns, lcd_rows);
   lcd.setBacklight(HIGH);
   lcd_center_print_timed("Testing",0,4000);
 
   if (machine_mode != BEACON) {
-    #ifdef FEATURE_SAY_HI
+#ifdef FEATURE_SAY_HI
     // say HI
     // store current setting (compliments of DL2SBA - http://dl2sba.com/ )
     byte oldKey = key_tx; 
     byte oldSideTone = sidetone_mode;
     key_tx = 0;
     sidetone_mode = SIDETONE_ON;     
-    
+
     //delay(201);
     lcd_center_print_timed("h",1,4000);
     send_char('H',NORMAL);
@@ -530,26 +537,26 @@ void setup()
 
     sidetone_mode = oldSideTone; 
     key_tx = oldKey;     
-    #endif //FEATURE_SAY_HI
-    
+#endif //FEATURE_SAY_HI
+
   }
- 
-  #ifdef DEBUG_STARTUP
+
+#ifdef DEBUG_STARTUP
   initialize_debug_startup();
-  #endif
-  
+#endif
+
 }
 
 // --------------------------------------------------------------------------------------------
 
 void loop()
 {  
-  #ifdef OPTION_WATCHDOG_TIMER
+#ifdef OPTION_WATCHDOG_TIMER
   wdt_reset();
-  #endif  //OPTION_WATCHDOG_TIMER
-  
-  #ifdef FEATURE_BEACON
-  #ifdef FEATURE_MEMORIES
+#endif  //OPTION_WATCHDOG_TIMER
+
+#ifdef FEATURE_BEACON
+#ifdef FEATURE_MEMORIES
   if (machine_mode == BEACON) {
     delay(201);
     while (machine_mode == BEACON) {  // if we're in beacon mode, just keep playing memory 1
@@ -557,13 +564,13 @@ void loop()
         play_memory(0);
       }
       service_send_buffer();
-      #ifdef FEATURE_SERIAL
+#ifdef FEATURE_SERIAL
       check_serial();
-      #endif
+#endif
     }
   }
-  #endif //FEATURE_MEMORIES
-  #endif //FEATURE_BEACON
+#endif //FEATURE_MEMORIES
+#endif //FEATURE_BEACON
 
 
 
@@ -572,14 +579,14 @@ void loop()
     check_paddles();
     service_dit_dah_buffers();
 
-    #ifdef FEATURE_SERIAL       
+#ifdef FEATURE_SERIAL       
     check_serial();
     check_paddles();            
     service_dit_dah_buffers();
-    #ifdef FEATURE_COMMAND_LINE_INTERFACE  
+#ifdef FEATURE_COMMAND_LINE_INTERFACE  
     service_serial_paddle_echo();
-    #endif //FEATURE_COMMAND_LINE_INTERFACE
-    #endif //FEATURE_SERIAL
+#endif //FEATURE_COMMAND_LINE_INTERFACE
+#endif //FEATURE_SERIAL
 
     service_send_buffer();
 
@@ -587,18 +594,18 @@ void loop()
 
     check_for_dirty_configuration();
 
-    #ifdef FEATURE_DEAD_OP_WATCHDOG
+#ifdef FEATURE_DEAD_OP_WATCHDOG
     check_for_dead_op();
-    #endif
+#endif
 
     check_paddles();
     service_dit_dah_buffers();
     service_send_buffer();
     service_lcd_paddle_echo();
     service_display();
-    
+
   }
-  
+
 }
 
 // Subroutines --------------------------------------------------------------------------------------------
@@ -607,47 +614,51 @@ void loop()
 // Are you a radio artisan ?
 void service_display() {
 
-  #ifdef DEBUG_LOOP
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering service_display"));
-  #endif    
+#endif    
 
   byte x = 0;
 
   if (lcd_status == LCD_REVERT) {
     lcd_status = lcd_previous_status;
     switch (lcd_status) {
-      case LCD_CLEAR: lcd_clear(); break;
-      case LCD_SCROLL_MSG:
-         lcd.clear();
-         for (x = 0;x < lcd_rows;x++){
-           //clear_display_row(x);
-           lcd.setCursor(0,x);
-           lcd.print(lcd_scroll_buffer[x]);
-         }         
-         lcd_scroll_flag = 0; 
-         lcd_scroll_buffer_dirty = 0;         
-         break;
+    case LCD_CLEAR: 
+      lcd_clear(); 
+      break;
+    case LCD_SCROLL_MSG:
+      lcd.clear();
+      for (x = 0;x < lcd_rows;x++){
+        //clear_display_row(x);
+        lcd.setCursor(0,x);
+        lcd.print(lcd_scroll_buffer[x]);
+      }         
+      lcd_scroll_flag = 0; 
+      lcd_scroll_buffer_dirty = 0;         
+      break;
     }
-  } else {
+  } 
+  else {
     switch (lcd_status) {
-      case LCD_CLEAR : break;
-      case LCD_TIMED_MESSAGE:
-        if (millis() > lcd_timed_message_clear_time) {
-          lcd_status = LCD_REVERT;
+    case LCD_CLEAR : 
+      break;
+    case LCD_TIMED_MESSAGE:
+      if (millis() > lcd_timed_message_clear_time) {
+        lcd_status = LCD_REVERT;
+      }
+    case LCD_SCROLL_MSG:
+      if (lcd_scroll_buffer_dirty) { 
+        if (lcd_scroll_flag) {
+          lcd.clear();
+          lcd_scroll_flag = 0;
+        }         
+        for (x = 0;x < lcd_rows;x++){
+          //clear_display_row(x);
+          lcd.setCursor(0,x);
+          lcd.print(lcd_scroll_buffer[x]);
         }
-      case LCD_SCROLL_MSG:
-        if (lcd_scroll_buffer_dirty) { 
-          if (lcd_scroll_flag) {
-            lcd.clear();
-            lcd_scroll_flag = 0;
-          }         
-          for (x = 0;x < lcd_rows;x++){
-            //clear_display_row(x);
-            lcd.setCursor(0,x);
-            lcd.print(lcd_scroll_buffer[x]);
-          }
-          lcd_scroll_buffer_dirty = 0;
-        }
+        lcd_scroll_buffer_dirty = 0;
+      }
       break;
     }
   }
@@ -659,9 +670,9 @@ void service_display() {
 void service_lcd_paddle_echo()
 {
 
-  #ifdef DEBUG_LOOP
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering service_lcd_paddle_echo"));
-  #endif    
+#endif    
 
   static byte lcd_paddle_echo_space_sent = 1;
 
@@ -680,38 +691,38 @@ void service_lcd_paddle_echo()
 //-------------------------------------------------------------------------------------------------------
 
 void display_scroll_print_char(char charin){
-  
- static byte column_pointer = 0;
- static byte row_pointer = 0;
- byte x = 0;
- 
- if (lcd_status != LCD_SCROLL_MSG) {
-   lcd_status = LCD_SCROLL_MSG;
-   lcd.clear();
- }
- if (column_pointer > (lcd_columns-1)) {
-   row_pointer++;
-   column_pointer = 0;
-   if (row_pointer > (lcd_rows-1)) {
-     for (x = 0; x < (lcd_rows-1); x++) {
-       lcd_scroll_buffer[x] = lcd_scroll_buffer[x+1];
-     }
-     lcd_scroll_buffer[x] = "";     
-     row_pointer--;
-     lcd_scroll_flag = 1;
-   }    
+
+  static byte column_pointer = 0;
+  static byte row_pointer = 0;
+  byte x = 0;
+
+  if (lcd_status != LCD_SCROLL_MSG) {
+    lcd_status = LCD_SCROLL_MSG;
+    lcd.clear();
+  }
+  if (column_pointer > (lcd_columns-1)) {
+    row_pointer++;
+    column_pointer = 0;
+    if (row_pointer > (lcd_rows-1)) {
+      for (x = 0; x < (lcd_rows-1); x++) {
+        lcd_scroll_buffer[x] = lcd_scroll_buffer[x+1];
+      }
+      lcd_scroll_buffer[x] = "";     
+      row_pointer--;
+      lcd_scroll_flag = 1;
+    }    
   } 
- lcd_scroll_buffer[row_pointer].concat(charin);
- column_pointer++;
- lcd_scroll_buffer_dirty = 1; 
+  lcd_scroll_buffer[row_pointer].concat(charin);
+  column_pointer++;
+  lcd_scroll_buffer_dirty = 1; 
 }
 
 //-------------------------------------------------------------------------------------------------------
 void lcd_clear() {
 
-//  for (byte x = 0;x < lcd_rows;x++) {
-//    clear_display_row(x);
-//  }
+  //  for (byte x = 0;x < lcd_rows;x++) {
+  //    clear_display_row(x);
+  //  }
   lcd.clear();
   lcd_status = LCD_CLEAR;
 
@@ -725,7 +736,8 @@ void lcd_center_print_timed(String lcd_print_string, byte row_number, unsigned i
     lcd_previous_status = lcd_status;
     lcd_status = LCD_TIMED_MESSAGE;
     lcd.clear();
-  } else {
+  } 
+  else {
     clear_display_row(row_number);
   }
   lcd.setCursor(((lcd_columns - lcd_print_string.length())/2),row_number);
@@ -747,18 +759,18 @@ void clear_display_row(byte row_number)
 
 void check_for_dirty_configuration()
 {
-  #ifdef DEBUG_LOOP
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering check_for_dirty_configuration"));
-  #endif
-    
+#endif
+
   static long last_config_write;
 
   if ((config_dirty) && ((millis()-last_config_write)>30000)) {
     write_settings_to_eeprom(0);
     last_config_write = millis();
-    #ifdef DEBUG_EEPROM
+#ifdef DEBUG_EEPROM
     Serial.println(F("check_for_dirty_configuration: wrote config\n"));
-    #endif
+#endif
   }
 
 }
@@ -769,14 +781,14 @@ void check_for_dirty_configuration()
 #ifdef FEATURE_DEAD_OP_WATCHDOG
 void check_for_dead_op()
 
-  // if the dit or dah paddle is stuck, disable the transmitter line after 100 straight dits or dahs
-  // go in and out of command mode to clear or just reset the unit
+// if the dit or dah paddle is stuck, disable the transmitter line after 100 straight dits or dahs
+// go in and out of command mode to clear or just reset the unit
 
 {
-  #ifdef DEBUG_LOOP
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering check_for_dead_op"));
-  #endif    
-    
+#endif    
+
   if (dead_op_watchdog_active && ((dit_counter > 100) || (dah_counter > 100))) {
     key_tx = 0;
   }
@@ -791,13 +803,15 @@ void debug_capture ()
   byte serial_byte_in;
   int x = 1022;
 
-  while (Serial.available() == 0) {}  // wait for first byte
+  while (Serial.available() == 0) {
+  }  // wait for first byte
   serial_byte_in = Serial.read();
   Serial.write(serial_byte_in);
   //if ((serial_byte_in > 47) or (serial_byte_in = 20)) { Serial.write(serial_byte_in); }  // echo back
   if (serial_byte_in == '~') {
     debug_capture_dump();    // go into dump mode if we get a tilde
-  } else {
+  } 
+  else {
     EEPROM.write(x,serial_byte_in);
     x--;
     while ( x > 400) {
@@ -813,7 +827,8 @@ void debug_capture ()
     }
   }
 
-  while (1) {}
+  while (1) {
+  }
 
 }
 #endif
@@ -829,7 +844,8 @@ void debug_capture_dump()
     eeprom_byte_in = EEPROM.read(x);
     if (eeprom_byte_in < 255) {
       Serial.print(eeprom_byte_in,BYTE);
-    } else {
+    } 
+    else {
       x = 0;
     }
   }
@@ -840,12 +856,14 @@ void debug_capture_dump()
       Serial.print(eeprom_byte_in,HEX);
       Serial.write("   :");
       Serial.println(eeprom_byte_in,BYTE);
-    } else {
+    } 
+    else {
       x = 0;
     }
   }
 
-  while (1) {}
+  while (1) {
+  }
 
 }
 #endif
@@ -854,18 +872,18 @@ void debug_capture_dump()
 
 void check_potentiometer()
 {
-  #ifdef DEBUG_LOOP
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering check_potentiometer")); 
-  #endif        
-    
+#endif        
+
   byte pot_value_wpm_read = pot_value_wpm();
   if ((abs(pot_value_wpm_read - last_pot_wpm_read) > potentiometer_change_threshold)) {
-    #ifdef DEBUG_POTENTIOMETER
+#ifdef DEBUG_POTENTIOMETER
     Serial.print(F("check_potentiometer: speed change: "));
     Serial.print(pot_value_wpm_read);
     Serial.print(F(" analog read: "));
     Serial.println(analogRead(potentiometer));
-    #endif
+#endif
     speed_set(pot_value_wpm_read);
     last_pot_wpm_read = pot_value_wpm_read;
   }
@@ -888,19 +906,20 @@ void put_memory_button_in_buffer(byte memory_number_to_put_in_buffer)
 {
 
   if (memory_number_to_put_in_buffer < number_of_memories) {
-    #ifdef DEBUG_MEMORIES
+#ifdef DEBUG_MEMORIES
     Serial.print(F("put_memory_button_in_buffer: memory_number_to_put_in_buffer:"));
     Serial.println(memory_number_to_put_in_buffer,DEC);
-    #endif
+#endif
     if ((millis() - last_memory_button_buffer_insert) > 400) {    // don't do another buffer insert if we just did one - button debounce
       add_to_send_buffer(SERIAL_SEND_BUFFER_MEMORY_NUMBER);
       add_to_send_buffer(memory_number_to_put_in_buffer);
       last_memory_button_buffer_insert = millis();
     }
-  } else {
-    #ifdef DEBUG_MEMORIES
+  } 
+  else {
+#ifdef DEBUG_MEMORIES
     Serial.println(F("put_memory_button_in_buffer: bad memory_number_to_put_in_buffer"));
-    #endif
+#endif
   }
 }
 #endif
@@ -909,16 +928,16 @@ void put_memory_button_in_buffer(byte memory_number_to_put_in_buffer)
 
 void check_paddles()
 {
-  
-  #ifdef DEBUG_LOOP
-  Serial.println(F("loop: entering check_paddles"));
-  #endif  
 
-  #define NO_CLOSURE 0
-  #define DIT_CLOSURE_DAH_OFF 1
-  #define DAH_CLOSURE_DIT_OFF 2
-  #define DIT_CLOSURE_DAH_ON 3
-  #define DAH_CLOSURE_DIT_ON 4
+#ifdef DEBUG_LOOP
+  Serial.println(F("loop: entering check_paddles"));
+#endif  
+
+#define NO_CLOSURE 0
+#define DIT_CLOSURE_DAH_OFF 1
+#define DAH_CLOSURE_DIT_OFF 2
+#define DIT_CLOSURE_DAH_ON 3
+#define DAH_CLOSURE_DIT_ON 4
 
   static byte last_closure = NO_CLOSURE;
 
@@ -928,91 +947,105 @@ void check_paddles()
   if (keyer_mode == ULTIMATIC) {
     if (ultimatic_mode == ULTIMATIC_NORMAL) {
       switch (last_closure) {
-        case DIT_CLOSURE_DAH_OFF:
+      case DIT_CLOSURE_DAH_OFF:
+        if (dah_buffer) {
+          if (dit_buffer) {
+            last_closure = DAH_CLOSURE_DIT_ON;
+            dit_buffer = 0;
+          } 
+          else {
+            last_closure = DAH_CLOSURE_DIT_OFF;
+          }
+        } 
+        else {
+          if (!dit_buffer) {
+            last_closure = NO_CLOSURE;
+          }
+        }
+        break;
+      case DIT_CLOSURE_DAH_ON:
+        if (dit_buffer) {
           if (dah_buffer) {
-            if (dit_buffer) {
-              last_closure = DAH_CLOSURE_DIT_ON;
-              dit_buffer = 0;
-            } else {
-              last_closure = DAH_CLOSURE_DIT_OFF;
-            }
-          } else {
-            if (!dit_buffer) {
-              last_closure = NO_CLOSURE;
-            }
+            dah_buffer = 0;
+          } 
+          else {
+            last_closure = DIT_CLOSURE_DAH_OFF;
           }
-          break;
-        case DIT_CLOSURE_DAH_ON:
-          if (dit_buffer) {
-            if (dah_buffer) {
-              dah_buffer = 0;
-            } else {
-              last_closure = DIT_CLOSURE_DAH_OFF;
-            }
-          } else {
-            if (dah_buffer) {
-              last_closure = DAH_CLOSURE_DIT_OFF;
-            } else {
-              last_closure = NO_CLOSURE;
-            }
+        } 
+        else {
+          if (dah_buffer) {
+            last_closure = DAH_CLOSURE_DIT_OFF;
+          } 
+          else {
+            last_closure = NO_CLOSURE;
           }
-          break;
+        }
+        break;
 
-        case DAH_CLOSURE_DIT_OFF:
+      case DAH_CLOSURE_DIT_OFF:
+        if (dit_buffer) {
+          if (dah_buffer) {
+            last_closure = DIT_CLOSURE_DAH_ON;
+            dah_buffer = 0;
+          } 
+          else {
+            last_closure = DIT_CLOSURE_DAH_OFF;
+          }
+        } 
+        else {
+          if (!dah_buffer) {
+            last_closure = NO_CLOSURE;
+          }
+        }
+        break;
+
+      case DAH_CLOSURE_DIT_ON:
+        if (dah_buffer) {
           if (dit_buffer) {
-            if (dah_buffer) {
+            dit_buffer = 0;
+          } 
+          else {
+            last_closure = DAH_CLOSURE_DIT_OFF;
+          }
+        } 
+        else {
+          if (dit_buffer) {
+            last_closure = DIT_CLOSURE_DAH_OFF;
+          } 
+          else {
+            last_closure = NO_CLOSURE;
+          }
+        }
+        break;
+
+      case NO_CLOSURE:
+        if ((dit_buffer) && (!dah_buffer)) {
+          last_closure = DIT_CLOSURE_DAH_OFF;
+        } 
+        else {
+          if ((dah_buffer) && (!dit_buffer)) {
+            last_closure = DAH_CLOSURE_DIT_OFF;
+          } 
+          else {
+            if ((dit_buffer) && (dah_buffer)) {
+              // need to handle dit/dah priority here
               last_closure = DIT_CLOSURE_DAH_ON;
               dah_buffer = 0;
-            } else {
-              last_closure = DIT_CLOSURE_DAH_OFF;
-            }
-          } else {
-            if (!dah_buffer) {
-              last_closure = NO_CLOSURE;
             }
           }
-          break;
-
-        case DAH_CLOSURE_DIT_ON:
-          if (dah_buffer) {
-            if (dit_buffer) {
-              dit_buffer = 0;
-            } else {
-              last_closure = DAH_CLOSURE_DIT_OFF;
-            }
-          } else {
-            if (dit_buffer) {
-              last_closure = DIT_CLOSURE_DAH_OFF;
-            } else {
-              last_closure = NO_CLOSURE;
-            }
-          }
-          break;
-
-        case NO_CLOSURE:
-          if ((dit_buffer) && (!dah_buffer)) {
-            last_closure = DIT_CLOSURE_DAH_OFF;
-          } else {
-            if ((dah_buffer) && (!dit_buffer)) {
-              last_closure = DAH_CLOSURE_DIT_OFF;
-            } else {
-              if ((dit_buffer) && (dah_buffer)) {
-                // need to handle dit/dah priority here
-                last_closure = DIT_CLOSURE_DAH_ON;
-                dah_buffer = 0;
-              }
-            }
-          }
-          break;
+        }
+        break;
       }
-    } else {
-     if ((dit_buffer) && (dah_buffer)) {   // dit or dah priority mode
-       if (ultimatic_mode == ULTIMATIC_DIT_PRIORITY) {
-         dah_buffer = 0;
-       } else {
-         dit_buffer = 0;
-       }
-     }
+    } 
+    else {
+      if ((dit_buffer) && (dah_buffer)) {   // dit or dah priority mode
+        if (ultimatic_mode == ULTIMATIC_DIT_PRIORITY) {
+          dah_buffer = 0;
+        } 
+        else {
+          dit_buffer = 0;
+        }
+      }
     }
   }
 }
@@ -1021,9 +1054,9 @@ void check_paddles()
 void write_settings_to_eeprom(int initialize_eeprom) {
 
   if (initialize_eeprom) {
-    #ifdef FEATURE_MEMORIES
+#ifdef FEATURE_MEMORIES
     initialize_eeprom_memories();
-    #endif  //FEATURE_MEMORIES
+#endif  //FEATURE_MEMORIES
     EEPROM.write(0,eeprom_magic_number);
   }
 
@@ -1032,7 +1065,8 @@ void write_settings_to_eeprom(int initialize_eeprom) {
   EEPROM.write(EEPROM_paddle_mode,paddle_mode);
   if (keyer_mode == STRAIGHT) {
     EEPROM.write(EEPROM_keyer_mode,IAMBIC_B);
-  } else {
+  } 
+  else {
     EEPROM.write(EEPROM_keyer_mode,keyer_mode);
   }
   EEPROM.write(EEPROM_sidetone_mode,sidetone_mode);
@@ -1041,11 +1075,11 @@ void write_settings_to_eeprom(int initialize_eeprom) {
   EEPROM.write(EEPROM_dah_to_dit_ratio_low,lowByte(dah_to_dit_ratio));
   EEPROM.write(EEPROM_dah_to_dit_ratio_high,highByte(dah_to_dit_ratio));
   EEPROM.write(EEPROM_length_wordspace,length_wordspace);
- 
-  #ifdef FEATURE_AUTOSPACE
+
+#ifdef FEATURE_AUTOSPACE
   EEPROM.write(EEPROM_autospace_active,autospace_active);
-  #endif //FEATURE_AUTOSPACE
-  
+#endif //FEATURE_AUTOSPACE
+
   config_dirty = 0;
 }
 
@@ -1064,13 +1098,14 @@ int read_settings_from_eeprom() {
     dah_to_dit_ratio = word(EEPROM.read(EEPROM_dah_to_dit_ratio_high),EEPROM.read(EEPROM_dah_to_dit_ratio_low));
     length_wordspace = EEPROM.read(EEPROM_length_wordspace);
 
-    #ifdef FEATURE_AUTOSPACE
+#ifdef FEATURE_AUTOSPACE
     autospace_active = EEPROM.read(EEPROM_autospace_active);
-    #endif //FEATURE_AUTOSPACE
-   
+#endif //FEATURE_AUTOSPACE
+
     config_dirty = 0;
     return 0;
-  } else {
+  } 
+  else {
     return 1;
   }
 
@@ -1085,18 +1120,19 @@ void check_dit_paddle()
 
   if (paddle_mode == PADDLE_NORMAL) {
     dit_paddle = paddle_left;
-  } else {
+  } 
+  else {
     dit_paddle = paddle_right;
   }
   pin_value = digitalRead(dit_paddle);
-  
+
   if (pin_value == 0) {
-    #ifdef FEATURE_DEAD_OP_WATCHDOG
+#ifdef FEATURE_DEAD_OP_WATCHDOG
     if (dit_buffer == 0) {
       dit_counter++;
       dah_counter = 0;
     }
-    #endif
+#endif
     dit_buffer = 1;
   }
 
@@ -1111,17 +1147,18 @@ void check_dah_paddle()
 
   if (paddle_mode == PADDLE_NORMAL) {
     dah_paddle = paddle_right;
-  } else {
+  } 
+  else {
     dah_paddle = paddle_left;
   }
   pin_value = digitalRead(dah_paddle);
   if (pin_value == 0) {
-    #ifdef FEATURE_DEAD_OP_WATCHDOG
+#ifdef FEATURE_DEAD_OP_WATCHDOG
     if (dah_buffer == 0) {
       dah_counter++;
       dit_counter = 0;
     }
-    #endif
+#endif
     dah_buffer = 1;
   }
 }
@@ -1135,58 +1172,58 @@ void send_dit(byte sending_type)
   //        weighting is
 
   unsigned int character_wpm = wpm;
-  #ifdef FEATURE_FARNSWORTH
+#ifdef FEATURE_FARNSWORTH
   if ((sending_type == AUTOMATIC_SENDING) && (wpm_farnsworth > wpm)) {
     character_wpm = wpm_farnsworth;
   }
-  #endif //FEATURE_FARNSWORTH
+#endif //FEATURE_FARNSWORTH
 
   being_sent = SENDING_DIT;
   tx_and_sidetone_key(1,sending_type);
-  #ifdef DEBUG_VARIABLE_DUMP
+#ifdef DEBUG_VARIABLE_DUMP
   dit_start_time = millis();
-  #endif
+#endif
   loop_element_lengths((1.0*(float(weighting)/50)),keying_compensation,character_wpm,sending_type);
-  #ifdef DEBUG_VARIABLE_DUMP
+#ifdef DEBUG_VARIABLE_DUMP
   dit_end_time = millis();
-  #endif
+#endif
   tx_and_sidetone_key(0,sending_type);
 
-//  if (keyer_mode == IAMBIC_A) {
-//    dit_buffer = 0;
-//    dah_buffer = 0;
-//  }
+  //  if (keyer_mode == IAMBIC_A) {
+  //    dit_buffer = 0;
+  //    dah_buffer = 0;
+  //  }
   loop_element_lengths((2.0-(float(weighting)/50)),(-1.0*keying_compensation),character_wpm,sending_type);
-  #ifdef FEATURE_AUTOSPACE
+#ifdef FEATURE_AUTOSPACE
   if ((sending_type == MANUAL_SENDING) && (autospace_active)) {
     check_paddles();
   }
   if ((sending_type == MANUAL_SENDING) && (autospace_active) && (dit_buffer == 0) && (dah_buffer == 0)) {
     loop_element_lengths(2,0,wpm,sending_type);
   }
-  #endif
+#endif
 
-  #ifdef FEATURE_COMMAND_LINE_INTERFACE
+#ifdef FEATURE_COMMAND_LINE_INTERFACE
   if ((cli_paddle_echo) && (sending_type == MANUAL_SENDING)) {
     cli_paddle_echo_buffer = (cli_paddle_echo_buffer * 10) + 1;
     cli_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
-  #endif
+#endif
 
   if ((lcd_paddle_echo) && (sending_type == MANUAL_SENDING)) {
     lcd_paddle_echo_buffer = (lcd_paddle_echo_buffer * 10) + 1;
     lcd_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
-  
+
   being_sent = SENDING_NOTHING;
   last_sending_type = sending_type;
-  
-//  if ((keyer_mode == IAMBIC_A) && (iambic_flag)) {
-//    iambic_flag = 0;
-//    dit_buffer = 0;
-//    dah_buffer = 0;
-//  } 
-  
+
+  //  if ((keyer_mode == IAMBIC_A) && (iambic_flag)) {
+  //    iambic_flag = 0;
+  //    dit_buffer = 0;
+  //    dah_buffer = 0;
+  //  } 
+
   check_paddles();
 
 }
@@ -1197,53 +1234,53 @@ void send_dah(byte sending_type)
 {
 
   unsigned int character_wpm = wpm;
-  #ifdef FEATURE_FARNSWORTH
+#ifdef FEATURE_FARNSWORTH
   if ((sending_type == AUTOMATIC_SENDING) && (wpm_farnsworth > wpm)) {
     character_wpm = wpm_farnsworth;
   }
-  #endif //FEATURE_FARNSWORTH
+#endif //FEATURE_FARNSWORTH
 
   being_sent = SENDING_DAH;
   tx_and_sidetone_key(1,sending_type);
-  #ifdef DEBUG_VARIABLE_DUMP
+#ifdef DEBUG_VARIABLE_DUMP
   dah_start_time = millis();
-  #endif
+#endif
   loop_element_lengths((float(dah_to_dit_ratio/100.0)*(float(weighting)/50)),keying_compensation,character_wpm,sending_type);
-  #ifdef DEBUG_VARIABLE_DUMP
+#ifdef DEBUG_VARIABLE_DUMP
   dah_end_time = millis();
-  #endif
+#endif
   tx_and_sidetone_key(0,sending_type);
-//  if (keyer_mode == IAMBIC_A) {
-//    dit_buffer = 0;
-//    dah_buffer = 0;
-//  }
+  //  if (keyer_mode == IAMBIC_A) {
+  //    dit_buffer = 0;
+  //    dah_buffer = 0;
+  //  }
   loop_element_lengths((4.0-(3.0*(float(weighting)/50))),(-1.0*keying_compensation),character_wpm,sending_type);
-  #ifdef FEATURE_AUTOSPACE
+#ifdef FEATURE_AUTOSPACE
   if ((sending_type == MANUAL_SENDING) && (autospace_active)) {
     check_paddles();
   }
   if ((sending_type == MANUAL_SENDING) && (autospace_active) && (dit_buffer == 0) && (dah_buffer == 0)) {
     loop_element_lengths(2,0,wpm,sending_type);
   }
-  #endif
+#endif
 
-  #ifdef FEATURE_COMMAND_LINE_INTERFACE
+#ifdef FEATURE_COMMAND_LINE_INTERFACE
   if ((cli_paddle_echo) && (sending_type == MANUAL_SENDING)) {
     cli_paddle_echo_buffer = (cli_paddle_echo_buffer * 10) + 2;
     cli_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
-  #endif
+#endif
 
   if ((lcd_paddle_echo) && (sending_type == MANUAL_SENDING)) {
     lcd_paddle_echo_buffer = (lcd_paddle_echo_buffer * 10) + 2;
     lcd_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
 
-//  if ((keyer_mode == IAMBIC_A) && (iambic_flag)) {
-//    iambic_flag = 0;
-//    //dit_buffer = 0;
-//    dah_buffer = 0;
-//  }
+  //  if ((keyer_mode == IAMBIC_A) && (iambic_flag)) {
+  //    iambic_flag = 0;
+  //    //dit_buffer = 0;
+  //    dah_buffer = 0;
+  //  }
 
   check_paddles();
 
@@ -1267,7 +1304,8 @@ void tx_and_sidetone_key (int state, byte sending_type)
       tone(sidetone_line, hz_sidetone);
     }
     key_state = 1;
-  } else {
+  } 
+  else {
     if ((state == 0) && (key_state)) {
       if (key_tx) {
         digitalWrite (tx_key_line, LOW);       
@@ -1286,7 +1324,7 @@ void loop_element_lengths(float lengths, float additional_time_ms, int speed_wpm
 {
 
 
-  
+
   if ((lengths == 0) or (lengths < 0)) {
     return;
   }
@@ -1295,49 +1333,52 @@ void loop_element_lengths(float lengths, float additional_time_ms, int speed_wpm
 
   if (speed_mode == SPEED_NORMAL) {
     element_length = 1200/speed_wpm_in;
-  } else {
+  } 
+  else {
     element_length = qrss_dit_length * 1000;
   }
 
 
   unsigned long endtime = millis() + long(element_length*lengths) + long(additional_time_ms);
   while ((millis() < endtime) && (millis() > 200)) {  // the second condition is to account for millis() rollover
-    #ifdef OPTION_WATCHDOG_TIMER
+#ifdef OPTION_WATCHDOG_TIMER
     wdt_reset();
-    #endif  //OPTION_WATCHDOG_TIMER
+#endif  //OPTION_WATCHDOG_TIMER
     if (keyer_mode == ULTIMATIC) {
-    } else {
+    } 
+    else {
       if ((keyer_mode == IAMBIC_A) && (digitalRead(paddle_left) == LOW ) && (digitalRead(paddle_right) == LOW )) {
-          iambic_flag = 1;
+        iambic_flag = 1;
       }    
-     
+
       if (being_sent == SENDING_DIT) {
         check_dah_paddle();
-      } else {
+      } 
+      else {
         if (being_sent == SENDING_DAH) {
           check_dit_paddle();
         }
       }
 
     }
-    #ifdef FEATURE_MEMORIES
+#ifdef FEATURE_MEMORIES
     check_the_memory_buttons();
-    #endif
+#endif
     // blow out prematurely if we're automatic sending and a paddle gets hit
     if (sending_type == AUTOMATIC_SENDING && (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) || dit_buffer || dah_buffer)) {
-    if (machine_mode == NORMAL) {
-      return;
-    }
-  }   
- }
- 
+      if (machine_mode == NORMAL) {
+        return;
+      }
+    }   
+  }
+
   if ((keyer_mode == IAMBIC_A) && (iambic_flag) && (digitalRead(paddle_left) == HIGH ) && (digitalRead(paddle_right) == HIGH )) {
-      iambic_flag = 0;
-      dit_buffer = 0;
-      dah_buffer = 0;
+    iambic_flag = 0;
+    dit_buffer = 0;
+    dah_buffer = 0;
   }    
- 
- 
+
+
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1347,7 +1388,7 @@ void speed_change(int change)
   if (((wpm + change) > 5) && ((wpm + change) < 60)) {
     speed_set(wpm + change);
   }
-  
+
   lcd_center_print_timed(String(wpm) + " wpm", 1, default_display_msg_delay);
 }
 
@@ -1355,9 +1396,9 @@ void speed_change(int change)
 
 void speed_set(int wpm_set)
 {
-    wpm = wpm_set;
-    config_dirty = 1;
-    lcd_center_print_timed(String(wpm) + " wpm", 0, default_display_msg_delay);
+  wpm = wpm_set;
+  config_dirty = 1;
+  lcd_center_print_timed(String(wpm) + " wpm", 0, default_display_msg_delay);
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1373,7 +1414,7 @@ int get_cw_input_from_user(unsigned int exit_time_seconds) {
 
   while (looping) {
     check_potentiometer();
-   
+
     check_paddles();
 
     if (dit_buffer) {
@@ -1391,9 +1432,9 @@ int get_cw_input_from_user(unsigned int exit_time_seconds) {
       last_element_time = millis();
     }
     if ((paddle_hit) && (millis() > (last_element_time + (float(600/wpm) * length_letterspace)))) {
-      #ifdef DEBUG_GET_CW_INPUT_FROM_USER
+#ifdef DEBUG_GET_CW_INPUT_FROM_USER
       Serial.println(F("get_cw_input_from_user: hit length_letterspace"));
-      #endif
+#endif
       looping = 0;
     }
 
@@ -1406,21 +1447,22 @@ int get_cw_input_from_user(unsigned int exit_time_seconds) {
       button_hit = 1;
     }
 
-    #ifdef FEATURE_SERIAL
+#ifdef FEATURE_SERIAL
     check_serial();
-    #endif
+#endif
 
   }
   if (button_hit) {
-    #ifdef DEBUG_GET_CW_INPUT_FROM_USER
+#ifdef DEBUG_GET_CW_INPUT_FROM_USER
     Serial.println(F("get_cw_input_from_user: button_hit exit 9"));
-    #endif
+#endif
     return 9;
-  } else {
-    #ifdef DEBUG_GET_CW_INPUT_FROM_USER
+  } 
+  else {
+#ifdef DEBUG_GET_CW_INPUT_FROM_USER
     Serial.print(F("get_cw_input_from_user: exiting cw_char:"));
     Serial.println(cw_char);
-    #endif    
+#endif    
     return cw_char;
   }
 }
@@ -1431,11 +1473,11 @@ void command_mode ()
 {
 
   machine_mode = COMMAND;
-  
-  #ifdef DEBUG_COMMAND_MODE
+
+#ifdef DEBUG_COMMAND_MODE
   Serial.println(F("command_mode: entering"));
-  #endif
-  
+#endif
+
   int cw_char;
   byte stay_in_command_mode = 1;
   byte speed_mode_before = speed_mode;
@@ -1454,106 +1496,131 @@ void command_mode ()
   while (stay_in_command_mode) {
     cw_char = 0;
     cw_char = get_cw_input_from_user(0);
-    #ifdef DEBUG_COMMAND_MODE
+#ifdef DEBUG_COMMAND_MODE
     Serial.print(F("command_mode: cwchar: "));
     Serial.println(cw_char);
-    #endif
+#endif
     if (cw_char > 0) {              // do the command      
       switch (cw_char) {
-        case 12: // A - Iambic mode
-          keyer_mode = IAMBIC_A;
-          keyer_mode_before = IAMBIC_A;
+      case 12: // A - Iambic mode
+        keyer_mode = IAMBIC_A;
+        keyer_mode_before = IAMBIC_A;
+        config_dirty = 1;
+        lcd_center_print_timed("Iambic A", 0, default_display_msg_delay);
+        send_dit(AUTOMATIC_SENDING);
+        break; 
+      case 2111: // B - Iambic mode
+        keyer_mode = IAMBIC_B;
+        keyer_mode_before = IAMBIC_B;
+        config_dirty = 1;
+        lcd_center_print_timed("Iambic B", 0, default_display_msg_delay);      
+        break; 
+      case 211: // D - Ultimatic mode
+        keyer_mode = ULTIMATIC;
+        keyer_mode_before = ULTIMATIC;
+        config_dirty = 1;
+        lcd_center_print_timed("Ultimatic", 0, default_display_msg_delay);                  
+        send_dit(AUTOMATIC_SENDING);
+        break; 
+      case 1121: 
+        command_sidetone_freq_adj(); 
+        break;                    // F - adjust sidetone frequency
+      case 221: // G - switch to buG mode
+        keyer_mode = BUG;
+        keyer_mode_before = BUG;
+        config_dirty = 1;
+        lcd_center_print_timed("Bug", 0, default_display_msg_delay);     
+        send_dit(AUTOMATIC_SENDING);
+        break;  
+      case 11:                                                     // I - toggle TX enable / disable
+        if (command_mode_disable_tx) {
+          command_mode_disable_tx = 0;
+          lcd_center_print_timed("TX On", 0, default_display_msg_delay);        
+        } 
+        else {
+          command_mode_disable_tx = 1;
+          lcd_center_print_timed("TX Off", 0, default_display_msg_delay);          
+        }
+        send_dit(AUTOMATIC_SENDING);
+        break;
+      case 1222: 
+        command_dah_to_dit_ratio_adjust(); 
+        break;                        // J - dah to dit ratio adjust
+#ifdef FEATURE_MEMORIES
+      case 1221: 
+        command_program_memory(); 
+        break;                       // P - program a memory
+      case 21: // N - paddle mode toggle
+        if (paddle_mode == PADDLE_NORMAL) {
+          paddle_mode = PADDLE_REVERSE;
+          lcd_center_print_timed("Paddle Reverse", 0, default_display_msg_delay);
+        } 
+        else {
+          lcd_center_print_timed("Paddle Normal", 0, default_display_msg_delay);          
+          paddle_mode = PADDLE_NORMAL;
+        }
+        config_dirty = 1;
+        send_dit(AUTOMATIC_SENDING);
+        break;  
+#endif
+      case 222: // O - toggle sidetone on and off
+        if ((sidetone_mode == SIDETONE_ON) || (sidetone_mode == SIDETONE_PADDLE_ONLY)) {
+          lcd_center_print_timed("Sidetone Off", 0, default_display_msg_delay);
+          sidetone_mode = SIDETONE_OFF;
+        } 
+        else {
+          lcd_center_print_timed("Sidetone On", 0, default_display_msg_delay);
+          sidetone_mode = SIDETONE_ON;
+        }
+        config_dirty = 1;
+        send_dit(AUTOMATIC_SENDING);
+        break; 
+      case 2: 
+        command_tuning_mode(); 
+        break;                             // T - tuning mode                   
+      case 2112: 
+        stay_in_command_mode = 0; 
+        break;                       // X - exit command mode
+#ifdef FEATURE_AUTOSPACE
+      case 2211: // Z - Autospace
+        if (autospace_active) {
+          autospace_active = 0;
           config_dirty = 1;
-          lcd_center_print_timed("Iambic A", 0, default_display_msg_delay);
+          lcd_center_print_timed("Autospace Off", 0, default_display_msg_delay);
           send_dit(AUTOMATIC_SENDING);
-          break; 
-        case 2111: // B - Iambic mode
-          keyer_mode = IAMBIC_B;
-          keyer_mode_before = IAMBIC_B;
+        } 
+        else {
+          autospace_active = 1;
           config_dirty = 1;
-          lcd_center_print_timed("Iambic B", 0, default_display_msg_delay);      
-          break; 
-        case 211: // D - Ultimatic mode
-          keyer_mode = ULTIMATIC;
-          keyer_mode_before = ULTIMATIC;
-          config_dirty = 1;
-          lcd_center_print_timed("Ultimatic", 0, default_display_msg_delay);                  
+          lcd_center_print_timed("Autospace On", 0, default_display_msg_delay);
           send_dit(AUTOMATIC_SENDING);
-          break; 
-        case 1121: command_sidetone_freq_adj(); break;                    // F - adjust sidetone frequency
-        case 221: // G - switch to buG mode
-          keyer_mode = BUG;
-          keyer_mode_before = BUG;
-          config_dirty = 1;
-          lcd_center_print_timed("Bug", 0, default_display_msg_delay);     
-          send_dit(AUTOMATIC_SENDING);
-          break;  
-        case 11:                                                     // I - toggle TX enable / disable
-          if (command_mode_disable_tx) {
-            command_mode_disable_tx = 0;
-            lcd_center_print_timed("TX On", 0, default_display_msg_delay);        
-          } else {
-            command_mode_disable_tx = 1;
-            lcd_center_print_timed("TX Off", 0, default_display_msg_delay);          
-          }
-          send_dit(AUTOMATIC_SENDING);
-          break;
-        case 1222: command_dah_to_dit_ratio_adjust(); break;                        // J - dah to dit ratio adjust
-        #ifdef FEATURE_MEMORIES
-        case 1221: command_program_memory(); break;                       // P - program a memory
-        case 21: // N - paddle mode toggle
-          if (paddle_mode == PADDLE_NORMAL) {
-            paddle_mode = PADDLE_REVERSE;
-            lcd_center_print_timed("Paddle Reverse", 0, default_display_msg_delay);
-          } else {
-            lcd_center_print_timed("Paddle Normal", 0, default_display_msg_delay);          
-            paddle_mode = PADDLE_NORMAL;
-          }
-          config_dirty = 1;
-          send_dit(AUTOMATIC_SENDING);
-          break;  
-        #endif
-        case 222: // O - toggle sidetone on and off
-          if ((sidetone_mode == SIDETONE_ON) || (sidetone_mode == SIDETONE_PADDLE_ONLY)) {
-            lcd_center_print_timed("Sidetone Off", 0, default_display_msg_delay);
-            sidetone_mode = SIDETONE_OFF;
-           } else {
-             lcd_center_print_timed("Sidetone On", 0, default_display_msg_delay);
-             sidetone_mode = SIDETONE_ON;
-           }
-           config_dirty = 1;
-           send_dit(AUTOMATIC_SENDING);
-           break; 
-        case 2: command_tuning_mode(); break;                             // T - tuning mode
-        case 122: command_speed_mode(); break;                            // W - change wpm
-        case 2112: stay_in_command_mode = 0; break;                       // X - exit command mode
-        #ifdef FEATURE_AUTOSPACE
-        case 2211: // Z - Autospace
-          if (autospace_active) {
-            autospace_active = 0;
-            config_dirty = 1;
-            lcd_center_print_timed("Autospace Off", 0, default_display_msg_delay);
-            send_dit(AUTOMATIC_SENDING);
-          } else {
-            autospace_active = 1;
-            config_dirty = 1;
-            lcd_center_print_timed("Autospace On", 0, default_display_msg_delay);
-            send_dit(AUTOMATIC_SENDING);
-          }
-          break;
-        #endif
-        #ifdef FEATURE_MEMORIES
-        case 12222: play_memory(0); break;
-        case 11222: play_memory(1); break;
-        case 11122: play_memory(2); break;
-        case 11112: play_memory(3); break;
-        case 11111: play_memory(4); break;
-        #endif
-        case 9: stay_in_command_mode = 0; break;                          // button was hit - exit
-        default: // unknown command, send a ?
-          lcd_center_print_timed("Unknown command", 0, default_display_msg_delay);          
-          send_char('?',NORMAL); 
-          break;                                   
+        }
+        break;
+#endif
+#ifdef FEATURE_MEMORIES
+      case 12222: 
+        play_memory(0); 
+        break;
+      case 11222: 
+        play_memory(1); 
+        break;
+      case 11122: 
+        play_memory(2); 
+        break;
+      case 11112: 
+        play_memory(3); 
+        break;
+      case 11111: 
+        play_memory(4); 
+        break;
+#endif
+      case 9: 
+        stay_in_command_mode = 0; 
+        break;                          // button was hit - exit
+      default: // unknown command, send a ?
+        lcd_center_print_timed("Unknown command", 0, default_display_msg_delay);          
+        send_char('?',NORMAL); 
+        break;                                   
       }
     }
   }
@@ -1561,22 +1628,22 @@ void command_mode ()
   machine_mode = NORMAL;
   speed_mode = speed_mode_before;   // go back to whatever speed mode we were in before
   keyer_mode = keyer_mode_before;
-  #ifdef DEBUG_COMMAND_MODE
+#ifdef DEBUG_COMMAND_MODE
   if (command_mode_disable_tx) {
     Serial.print(F("command_mode: command_mode_disable_tx set"));
   }
-  #endif //DEBUG_COMMAND_MODE
+#endif //DEBUG_COMMAND_MODE
 }
 
 //-------------------------------------------------------------------------------------------------------
 
 void adjust_dah_to_dit_ratio(int adjustment) {
 
- if ((dah_to_dit_ratio + adjustment) > 150 && (dah_to_dit_ratio + adjustment) < 810) {
-   dah_to_dit_ratio = dah_to_dit_ratio + adjustment;
- }
+  if ((dah_to_dit_ratio + adjustment) > 150 && (dah_to_dit_ratio + adjustment) < 810) {
+    dah_to_dit_ratio = dah_to_dit_ratio + adjustment;
+  }
 
- config_dirty = 1;
+  config_dirty = 1;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -1586,22 +1653,23 @@ void command_dah_to_dit_ratio_adjust () {
   byte looping = 1;
 
   lcd_center_print_timed("Adj dah to dit", 0, default_display_msg_delay);          
-  
+
   while (looping) {
-   send_dit(AUTOMATIC_SENDING);
-   send_dah(AUTOMATIC_SENDING);
-   if (digitalRead(paddle_left) == LOW) {
-     adjust_dah_to_dit_ratio(10);
-   }
-   if (digitalRead(paddle_right) == LOW) {
-     adjust_dah_to_dit_ratio(-10);
-   }
-   while ((digitalRead(paddle_left) == LOW && digitalRead(paddle_right) == LOW) || (analogbuttonread(0))) { // if paddles are squeezed or button0 pressed - exit
-     looping = 0;
-   }
-   
+    send_dit(AUTOMATIC_SENDING);
+    send_dah(AUTOMATIC_SENDING);
+    if (digitalRead(paddle_left) == LOW) {
+      adjust_dah_to_dit_ratio(10);
+    }
+    if (digitalRead(paddle_right) == LOW) {
+      adjust_dah_to_dit_ratio(-10);
+    }
+    while ((digitalRead(paddle_left) == LOW && digitalRead(paddle_right) == LOW) || (analogbuttonread(0))) { // if paddles are squeezed or button0 pressed - exit
+      looping = 0;
+    }
+
   }
-  while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {}  // wait for all lines to go high
+  while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {
+  }  // wait for all lines to go high
   dit_buffer = 0;
   dah_buffer = 0;
 }
@@ -1612,9 +1680,9 @@ void command_tuning_mode() {
 
   byte looping = 1;
   byte latched = 0;
-  
+
   lcd_center_print_timed("Tune Mode", 0, default_display_msg_delay);          
-  
+
   send_dit(AUTOMATIC_SENDING);
   key_tx = 1;
   while (looping) {
@@ -1622,10 +1690,11 @@ void command_tuning_mode() {
     if (digitalRead(paddle_left) == LOW) {
       tx_and_sidetone_key(1,MANUAL_SENDING);
       latched = 0;
-    } else {
-       if (digitalRead(paddle_left) == HIGH && latched == 0) {
-         tx_and_sidetone_key(0,MANUAL_SENDING);
-       }
+    } 
+    else {
+      if (digitalRead(paddle_left) == HIGH && latched == 0) {
+        tx_and_sidetone_key(0,MANUAL_SENDING);
+      }
     }
 
     if (digitalRead(paddle_right) == LOW && latched == 0) {
@@ -1634,7 +1703,8 @@ void command_tuning_mode() {
       while ((digitalRead(paddle_right) == LOW) && (digitalRead(paddle_left) == HIGH)) {
         delay(10);
       }
-    } else {
+    } 
+    else {
       if ((digitalRead(paddle_right) == LOW) && (latched)) {
         latched = 0;
         tx_and_sidetone_key(0,MANUAL_SENDING);
@@ -1643,13 +1713,14 @@ void command_tuning_mode() {
         }
       }
     }
-   if ((analogbuttonread(0)) || ((digitalRead(paddle_left) == LOW) && (digitalRead(paddle_right) == LOW))) { // if paddles are squeezed or button0 pressed - exit
-     looping = 0;
-   }
-   
+    if ((analogbuttonread(0)) || ((digitalRead(paddle_left) == LOW) && (digitalRead(paddle_right) == LOW))) { // if paddles are squeezed or button0 pressed - exit
+      looping = 0;
+    }
+
   }
   tx_and_sidetone_key(0,MANUAL_SENDING);
-  while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {}  // wait for all lines to go high
+  while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {
+  }  // wait for all lines to go high
   key_tx = 0;
   send_dit(AUTOMATIC_SENDING);
   dit_buffer = 0;
@@ -1689,48 +1760,14 @@ void command_sidetone_freq_adj() {
       looping = 0;
     }
   }
-  while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {}  // wait for all lines to go high
+  while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {
+  }  // wait for all lines to go high
   noTone(sidetone_line);
 
 }
 
 //-------------------------------------------------------------------------------------------------------
 
-void command_speed_mode()
-{
-
-  byte looping = 1;
-  String wpm_string;
-  
-  lcd_center_print_timed("Adjust Speed", 0, default_display_msg_delay);        
-
-  while (looping) {
-    send_dit(AUTOMATIC_SENDING);
-    if ((digitalRead(paddle_left) == LOW)) {
-      speed_change(1);
-    }
-    if ((digitalRead(paddle_right) == LOW)) {
-      speed_change(-1);
-    }
-    while ((digitalRead(paddle_left) == LOW && digitalRead(paddle_right) == LOW) || (analogbuttonread(0) ))  // if paddles are squeezed or button0 pressed - exit
-    {
-      looping = 0;
-    }
-
-  }
-  while (digitalRead(paddle_left) == LOW || digitalRead(paddle_right) == LOW || analogbuttonread(0) ) {}  // wait for all lines to go high
-
-  // announce speed in CW
-  //wpm_string = String(wpm, DEC);
-  //send_char(wpm_string[0],NORMAL);
-  //send_char(wpm_string[1],NORMAL);
-
-  dit_buffer = 0;
-  dah_buffer = 0;
-
-}
-
-//------------------------------------------------------------------
 
 #ifdef FEATURE_MEMORIES
 void check_the_memory_buttons()
@@ -1750,53 +1787,53 @@ void check_the_memory_buttons()
 byte analogbuttonpressed() {
 
   int analog_line_read = analogRead(analog_buttons_pin);
-  
-  #ifdef DEBUG_BUTTONS
+
+#ifdef DEBUG_BUTTONS
   static byte debug_flag = 0;
-  #endif
-  
+#endif
+
   if (analog_line_read < 1000) {
-    #ifdef DEBUG_BUTTONS
+#ifdef DEBUG_BUTTONS
     if (!debug_flag) {
       Serial.print(F("\nanalogbuttonpressed: analog_line_read: "));
       Serial.println(analog_line_read);
     }
-    #endif
+#endif
 
     for (int x = 0;x < analog_buttons_number_of_buttons;x++) {
       if ((analog_line_read > button_array_low_limit[x])&& (analog_line_read <  button_array_high_limit[x])) {
-        #ifdef DEBUG_BUTTONS
+#ifdef DEBUG_BUTTONS
         if (!debug_flag) {
           Serial.print(F("analogbuttonpressed: returning: "));
           Serial.println(x);
           debug_flag = 1;
         }
-        #endif
+#endif
         return x;
       }  
     }
   }
-  #ifdef DEBUG_BUTTONS
+#ifdef DEBUG_BUTTONS
   debug_flag = 0;
-  #endif
+#endif
   return 255; 
 }
-  
+
 
 //------------------------------------------------------------------
 byte analogbuttonread(byte button_number) {
- 
+
   // button numbers start with 0
-  
+
   int analog_line_read = analogRead(analog_buttons_pin);
 
-  #ifdef DEBUG_BUTTONS
+#ifdef DEBUG_BUTTONS
   static byte debug_flag = 0;
-  #endif
-  
+#endif
+
   if (analog_line_read < 1000) {  
     if ((analog_line_read > button_array_low_limit[button_number])&& (analog_line_read <  button_array_high_limit[button_number])) {
-      #ifdef DEBUG_BUTTONS
+#ifdef DEBUG_BUTTONS
       if (!debug_flag) {
         Serial.print(F("\nanalogbuttonread: analog_line_read: "));
         Serial.print(analog_line_read);
@@ -1804,13 +1841,13 @@ byte analogbuttonread(byte button_number) {
         Serial.println(button_number);
         debug_flag = 1;
       }
-      #endif
+#endif
       return 1;
     }  
   }
-  #ifdef DEBUG_BUTTONS
+#ifdef DEBUG_BUTTONS
   debug_flag = 0;
-  #endif  
+#endif  
   return 0;
 }
 
@@ -1819,9 +1856,9 @@ byte analogbuttonread(byte button_number) {
 void check_command_buttons()
 {
 
-  #ifdef DEBUG_LOOP
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering check_buttons"));
-  #endif
+#endif
 
   static long last_button_action = 0;
   byte analogbuttontemp = analogbuttonpressed();
@@ -1842,55 +1879,32 @@ void check_command_buttons()
         command_mode();
         if (command_mode_disable_tx) {
           key_tx = !store_key_tx;
-        } else {
+        } 
+        else {
           key_tx = 1;
         }
       }
-      #ifdef FEATURE_MEMORIES
+#ifdef FEATURE_MEMORIES
       if ((analogbuttontemp > 0) && (analogbuttontemp < (number_of_memories + 1)) && ((millis() - button_last_add_to_send_buffer_time) > 400)) {
         add_to_send_buffer(SERIAL_SEND_BUFFER_MEMORY_NUMBER);
         add_to_send_buffer(analogbuttontemp - 1);
         button_last_add_to_send_buffer_time = millis();
-        #ifdef DEBUG_BUTTONS
+#ifdef DEBUG_BUTTONS
         Serial.print(F("\ncheck_buttons: add_to_send_buffer: "));
         Serial.println(analogbuttontemp - 1);
-        #endif //DEBUG_BUTTONS
+#endif //DEBUG_BUTTONS
       }
-      #endif
-    } else {
-        if (analogbuttontemp == 0) {
-          key_tx = 0;
-          // do stuff if this is a command button hold down
-          while (analogbuttonpressed() == 0) {
-            if (digitalRead(paddle_left) == LOW) {                     // left paddle increase speed
-              speed_change(1);
-              previous_sidetone_mode = sidetone_mode;
-              sidetone_mode = SIDETONE_ON; 
-              send_dit(MANUAL_SENDING);
-              sidetone_mode = previous_sidetone_mode;
-              //speed_button_cmd_executed = 1;
-              dit_buffer = 0;
-              
-              #ifdef DEBUG_BUTTONS
-              Serial.println(F("\ncheck_buttons: speed_change(1)"));
-              #endif //DEBUG_BUTTONS            
-            }
-            if (digitalRead(paddle_right) == LOW) {                    // right paddle decreases speed
-              speed_change(-1);
-              previous_sidetone_mode = sidetone_mode;
-              sidetone_mode = SIDETONE_ON; 
-              send_dah(MANUAL_SENDING);
-              sidetone_mode = previous_sidetone_mode;              
-              //speed_button_cmd_executed = 1;
-              dah_buffer = 0;
-
-              #ifdef DEBUG_BUTTONS
-              Serial.println(F("\ncheck_buttons: speed_change(-1)"));
-              #endif //DEBUG_BUTTONS            
-            }
-         }
-         key_tx = 1;
-       }  //(analogbuttontemp == 0)
+#endif
+    } 
+    else {
+      if (analogbuttontemp == 0) {
+        key_tx = 0;
+        // do stuff if this is a command button hold down
+        while (analogbuttonpressed() == 0) {
+          // do whatever it is that needs doing while command button is held down; otherwise delete this block
+        }
+        key_tx = 1;
+      }  //(analogbuttontemp == 0)
     }
     last_button_action = millis();
   }
@@ -1900,16 +1914,17 @@ void check_command_buttons()
 
 void service_dit_dah_buffers()
 {
-  #ifdef DEBUG_LOOP
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering service_dit_dah_buffers"));
-  #endif      
-      
+#endif      
+
   if ((keyer_mode == IAMBIC_A) || (keyer_mode == IAMBIC_B) || (keyer_mode == ULTIMATIC)) {
     if ((keyer_mode == IAMBIC_A) && (iambic_flag) && (digitalRead(paddle_left)) && (digitalRead(paddle_right))) {
       iambic_flag = 0;
       dit_buffer = 0;
       dah_buffer = 0;
-    } else {
+    } 
+    else {
       if (dit_buffer) {
         dit_buffer = 0;
         send_dit(MANUAL_SENDING);
@@ -1919,7 +1934,8 @@ void service_dit_dah_buffers()
         send_dah(MANUAL_SENDING);
       }
     }
-  } else {
+  } 
+  else {
     if (keyer_mode == BUG) {
       if (dit_buffer) {
         dit_buffer = 0;
@@ -1928,23 +1944,26 @@ void service_dit_dah_buffers()
       if (dah_buffer) {
         dah_buffer = 0;
         tx_and_sidetone_key(1,MANUAL_SENDING);
-      } else {
+      } 
+      else {
         tx_and_sidetone_key(0,MANUAL_SENDING);
       }
-      #ifdef FEATURE_DEAD_OP_WATCHDOG
+#ifdef FEATURE_DEAD_OP_WATCHDOG
       dah_counter = 0;
-      #endif
-    } else {
+#endif
+    } 
+    else {
       if (keyer_mode == STRAIGHT) {
         if (dit_buffer) {
           dit_buffer = 0;
           tx_and_sidetone_key(1,MANUAL_SENDING);
-        } else {
+        } 
+        else {
           tx_and_sidetone_key(0,MANUAL_SENDING);
         }
-        #ifdef FEATURE_DEAD_OP_WATCHDOG
+#ifdef FEATURE_DEAD_OP_WATCHDOG
         dit_counter = 0;
-        #endif
+#endif
       }
     }
   }
@@ -1955,7 +1974,7 @@ void service_dit_dah_buffers()
 
 void beep()
 {
- tone(sidetone_line, hz_high_beep, 200);
+  tone(sidetone_line, hz_high_beep, 200);
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -2013,105 +2032,399 @@ void send_dahs(int dahs)
 
 void send_char(char cw_char, byte omit_letterspace)
 {
-  #ifdef DEBUG_SEND_CHAR
+#ifdef DEBUG_SEND_CHAR
   Serial.print(F("send_char: called with cw_char:"));
   Serial.print(cw_char);
   if (omit_letterspace) {
     Serial.print(F(" OMIT_LETTERSPACE"));
   }
   Serial.println();
-  #endif
+#endif
 
-  if ((cw_char == 10) || (cw_char == 13)) { return; }  // don't attempt to send carriage return or line feed
+  if ((cw_char == 10) || (cw_char == 13)) { 
+    return; 
+  }  // don't attempt to send carriage return or line feed
   switch (cw_char) {
-    case 'A': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-    case 'B': send_dah(AUTOMATIC_SENDING); send_dits(3); break;
-    case 'C': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-    case 'D': send_dah(AUTOMATIC_SENDING); send_dits(2); break;
-    case 'E': send_dit(AUTOMATIC_SENDING); break;
-    case 'F': send_dits(2); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-    case 'G': send_dahs(2); send_dit(AUTOMATIC_SENDING); break;
-    case 'H': send_dits(4); break;
-    case 'I': send_dits(2); break;
-    case 'J': send_dit(AUTOMATIC_SENDING); send_dahs(3); break;
-    case 'K': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-    case 'L': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(2); break;
-    case 'M': send_dahs(2); break;
-    case 'N': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-    case 'O': send_dahs(3); break;
-    case 'P': send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); break;
-    case 'Q': send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-    case 'R': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-    case 'S': send_dits(3); break;
-    case 'T': send_dah(AUTOMATIC_SENDING); break;
-    case 'U': send_dits(2); send_dah(AUTOMATIC_SENDING); break;
-    case 'V': send_dits(3); send_dah(AUTOMATIC_SENDING); break;
-    case 'W': send_dit(AUTOMATIC_SENDING); send_dahs(2); break;
-    case 'X': send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); break;
-    case 'Y': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); break;
-    case 'Z': send_dahs(2); send_dits(2); break;
+  case 'A': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case 'B': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(3); 
+    break;
+  case 'C': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case 'D': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(2); 
+    break;
+  case 'E': 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case 'F': 
+    send_dits(2); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case 'G': 
+    send_dahs(2); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case 'H': 
+    send_dits(4); 
+    break;
+  case 'I': 
+    send_dits(2); 
+    break;
+  case 'J': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(3); 
+    break;
+  case 'K': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case 'L': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(2); 
+    break;
+  case 'M': 
+    send_dahs(2); 
+    break;
+  case 'N': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case 'O': 
+    send_dahs(3); 
+    break;
+  case 'P': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(2); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case 'Q': 
+    send_dahs(2); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case 'R': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case 'S': 
+    send_dits(3); 
+    break;
+  case 'T': 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case 'U': 
+    send_dits(2); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case 'V': 
+    send_dits(3); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case 'W': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(2); 
+    break;
+  case 'X': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(2); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case 'Y': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(2); 
+    break;
+  case 'Z': 
+    send_dahs(2); 
+    send_dits(2); 
+    break;
 
-    case '0': send_dahs(5); break;
-    case '1': send_dit(AUTOMATIC_SENDING); send_dahs(4); break;
-    case '2': send_dits(2); send_dahs(3); break;
-    case '3': send_dits(3); send_dahs(2); break;
-    case '4': send_dits(4); send_dah(AUTOMATIC_SENDING); break;
-    case '5': send_dits(5); break;
-    case '6': send_dah(AUTOMATIC_SENDING); send_dits(4); break;
-    case '7': send_dahs(2); send_dits(3); break;
-    case '8': send_dahs(3); send_dits(2); break;
-    case '9': send_dahs(4); send_dit(AUTOMATIC_SENDING); break;
+  case '0': 
+    send_dahs(5); 
+    break;
+  case '1': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(4); 
+    break;
+  case '2': 
+    send_dits(2); 
+    send_dahs(3); 
+    break;
+  case '3': 
+    send_dits(3); 
+    send_dahs(2); 
+    break;
+  case '4': 
+    send_dits(4); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case '5': 
+    send_dits(5); 
+    break;
+  case '6': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(4); 
+    break;
+  case '7': 
+    send_dahs(2); 
+    send_dits(3); 
+    break;
+  case '8': 
+    send_dahs(3); 
+    send_dits(2); 
+    break;
+  case '9': 
+    send_dahs(4); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
 
-    case '=': send_dah(AUTOMATIC_SENDING); send_dits(3); send_dah(AUTOMATIC_SENDING); break;
-    case '/': send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-    case ' ': loop_element_lengths((length_wordspace-length_letterspace-2),0,wpm,AUTOMATIC_SENDING); break;
-    case '*': send_dah(AUTOMATIC_SENDING); send_dits(3); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;    // using asterisk for BK
+  case '=': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(3); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case '/': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(2); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case ' ': 
+    loop_element_lengths((length_wordspace-length_letterspace-2),0,wpm,AUTOMATIC_SENDING); 
+    break;
+  case '*': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(3); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;    // using asterisk for BK
     //case '&': send_dit(AUTOMATIC_SENDING); loop_element_lengths(3); send_dits(3); break;
-    case '.': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-    case ',': send_dahs(2); send_dits(2); send_dahs(2); break;
-    case '\'': send_dit(AUTOMATIC_SENDING); send_dahs(4); send_dit(AUTOMATIC_SENDING); break;                   // apostrophe
-    case '!': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); break;
-    case '(': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); break;
-    case ')': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-    case '&': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(3); break;
-    case ':': send_dahs(3); send_dits(3); break;
-    case ';': send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-    case '+': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-    case '-': send_dah(AUTOMATIC_SENDING); send_dits(4); send_dah(AUTOMATIC_SENDING); break;
-    case '_': send_dits(2); send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;
-    case '"': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-    case '$': send_dits(3); send_dah(AUTOMATIC_SENDING); send_dits(2); send_dah(AUTOMATIC_SENDING); break;
-    case '@': send_dit(AUTOMATIC_SENDING); send_dahs(2); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;
-    case '<': send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); break;     // AR
-    case '>': send_dits(3); send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break;               // SK
-    case '\n': break;
-    case '\r': break;
-      
-    #ifdef OPTION_NON_ENGLISH_EXTENSIONS
-    case 192: send_dit(AUTOMATIC_SENDING);send_dahs(2);send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); break; // 'À'
-    case 194: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break; // 'Â'
-    case 197: send_dit(AUTOMATIC_SENDING);send_dahs(2);send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); break; // 'Å' / 
-    case 196: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break; // 'Ä'
-    case 198: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING); send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); break; // 'Æ'
-    case 199: send_dah(AUTOMATIC_SENDING);send_dit(AUTOMATIC_SENDING); send_dah(AUTOMATIC_SENDING); send_dits(2); break;  // 'Ç'
-    case 208: send_dits(2);send_dahs(2);send_dit(AUTOMATIC_SENDING);break;  // 'Ð'
-    case 138: send_dahs(4);break; // 'Š'
-    case 200: send_dit(AUTOMATIC_SENDING);send_dah(AUTOMATIC_SENDING);send_dits(2);send_dah(AUTOMATIC_SENDING); break; // 'È'
-    case 201: send_dits(2);send_dah(AUTOMATIC_SENDING);send_dits(2);break; // 'É'
-    case 142: send_dahs(2);send_dits(2);send_dah(AUTOMATIC_SENDING);send_dit(AUTOMATIC_SENDING);break; // 'Ž'
-    case 209: send_dahs(2);send_dit(AUTOMATIC_SENDING);send_dahs(2);break; // 'Ñ'
-    case 214: send_dahs(3);send_dit(AUTOMATIC_SENDING);break; // 'Ö'
-    case 216: send_dahs(3);send_dit(AUTOMATIC_SENDING);break; // 'Ø'
-    case 211: send_dahs(3);send_dit(AUTOMATIC_SENDING);break; // 'Ó'
-    case 220: send_dits(2);send_dahs(2);break; // 'Ü'
-    case 223: send_dits(6);break; // 'ß'
-    #endif //OPTION_NON_ENGLISH_EXTENSIONS      
-    
-    case '|': loop_element_lengths(0.5,0,wpm,AUTOMATIC_SENDING); return; break;
-    default: send_dits(2); send_dahs(2); send_dits(2); break; 
+  case '.': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case ',': 
+    send_dahs(2); 
+    send_dits(2); 
+    send_dahs(2); 
+    break;
+  case '\'': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(4); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;                   // apostrophe
+  case '!': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(2); 
+    break;
+  case '(': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(2); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case ')': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(2); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case '&': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(3); 
+    break;
+  case ':': 
+    send_dahs(3); 
+    send_dits(3); 
+    break;
+  case ';': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case '+': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case '-': 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(4); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case '_': 
+    send_dits(2); 
+    send_dahs(2); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case '"': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(2); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case '$': 
+    send_dits(3); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(2); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;
+  case '@': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dahs(2); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;
+  case '<': 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    break;     // AR
+  case '>': 
+    send_dits(3); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break;               // SK
+  case '\n': 
+    break;
+  case '\r': 
+    break;
+
+#ifdef OPTION_NON_ENGLISH_EXTENSIONS
+  case 192: 
+    send_dit(AUTOMATIC_SENDING);
+    send_dahs(2);
+    send_dit(AUTOMATIC_SENDING);
+    send_dah(AUTOMATIC_SENDING); 
+    break; // 'À'
+  case 194: 
+    send_dit(AUTOMATIC_SENDING);
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break; // 'Â'
+  case 197: 
+    send_dit(AUTOMATIC_SENDING);
+    send_dahs(2);
+    send_dit(AUTOMATIC_SENDING);
+    send_dah(AUTOMATIC_SENDING); 
+    break; // 'Å' / 
+  case 196: 
+    send_dit(AUTOMATIC_SENDING);
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break; // 'Ä'
+  case 198: 
+    send_dit(AUTOMATIC_SENDING);
+    send_dah(AUTOMATIC_SENDING); 
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    break; // 'Æ'
+  case 199: 
+    send_dah(AUTOMATIC_SENDING);
+    send_dit(AUTOMATIC_SENDING); 
+    send_dah(AUTOMATIC_SENDING); 
+    send_dits(2); 
+    break;  // 'Ç'
+  case 208: 
+    send_dits(2);
+    send_dahs(2);
+    send_dit(AUTOMATIC_SENDING);
+    break;  // 'Ð'
+  case 138: 
+    send_dahs(4);
+    break; // 'Š'
+  case 200: 
+    send_dit(AUTOMATIC_SENDING);
+    send_dah(AUTOMATIC_SENDING);
+    send_dits(2);
+    send_dah(AUTOMATIC_SENDING); 
+    break; // 'È'
+  case 201: 
+    send_dits(2);
+    send_dah(AUTOMATIC_SENDING);
+    send_dits(2);
+    break; // 'É'
+  case 142: 
+    send_dahs(2);
+    send_dits(2);
+    send_dah(AUTOMATIC_SENDING);
+    send_dit(AUTOMATIC_SENDING);
+    break; // 'Ž'
+  case 209: 
+    send_dahs(2);
+    send_dit(AUTOMATIC_SENDING);
+    send_dahs(2);
+    break; // 'Ñ'
+  case 214: 
+    send_dahs(3);
+    send_dit(AUTOMATIC_SENDING);
+    break; // 'Ö'
+  case 216: 
+    send_dahs(3);
+    send_dit(AUTOMATIC_SENDING);
+    break; // 'Ø'
+  case 211: 
+    send_dahs(3);
+    send_dit(AUTOMATIC_SENDING);
+    break; // 'Ó'
+  case 220: 
+    send_dits(2);
+    send_dahs(2);
+    break; // 'Ü'
+  case 223: 
+    send_dits(6);
+    break; // 'ß'
+#endif //OPTION_NON_ENGLISH_EXTENSIONS      
+
+  case '|': 
+    loop_element_lengths(0.5,0,wpm,AUTOMATIC_SENDING); 
+    return; 
+    break;
+  default: 
+    send_dits(2); 
+    send_dahs(2); 
+    send_dits(2); 
+    break; 
   } 
   if (omit_letterspace != OMIT_LETTERSPACE) {
-      loop_element_lengths((length_letterspace-1),0,wpm,AUTOMATIC_SENDING); //this is minus one because send_dit and send_dah have a trailing element space
+    loop_element_lengths((length_letterspace-1),0,wpm,AUTOMATIC_SENDING); //this is minus one because send_dit and send_dah have a trailing element space
   }
 }
 
@@ -2122,9 +2435,13 @@ int uppercase (int charbytein)
   if (((charbytein > 96) && (charbytein < 123)) || ((charbytein > 223) && (charbytein < 255))) {
     charbytein = charbytein - 32;
   }
-  if (charbytein == 158) { charbytein = 142; }  // ž -> Ž
-  if (charbytein == 154) { charbytein = 138; }  // š -> Š
-  
+  if (charbytein == 158) { 
+    charbytein = 142; 
+  }  // ž -> Ž
+  if (charbytein == 154) { 
+    charbytein = 138; 
+  }  // š -> Š
+
   return charbytein;
 }
 
@@ -2160,26 +2477,29 @@ void serial_qrss_mode()
         service_dit_dah_buffers();
         //check_the_memory_buttons();
       }
-    } else {
+    } 
+    else {
 
       incoming_serial_byte = Serial.read();
       if ((incoming_serial_byte > 47) && (incoming_serial_byte < 58)) {    // ascii 48-57 = "0" - "9")
         numberstring = numberstring + incoming_serial_byte;
         numbers[numberindex] = incoming_serial_byte;
-//        Serial.write("numberindex:");
-//        Serial.print(numberindex,DEC);
-//        Serial.write("     numbers:");
-//        Serial.println(numbers[numberindex],DEC);
+        //        Serial.write("numberindex:");
+        //        Serial.print(numberindex,DEC);
+        //        Serial.write("     numbers:");
+        //        Serial.println(numbers[numberindex],DEC);
         numberindex++;
         if (numberindex > 2)
-          {
-            looping = 0;
-            error = 1;
-          }
-      } else {
+        {
+          looping = 0;
+          error = 1;
+        }
+      } 
+      else {
         if (incoming_serial_byte == 13) {   // carriage return - get out
           looping = 0;
-        } else {                 // bogus input - error out
+        } 
+        else {                 // bogus input - error out
           looping = 0;
           error = 1;
         }
@@ -2189,9 +2509,12 @@ void serial_qrss_mode()
 
   if (error) {
     Serial.println(F("Error..."));
-    while (Serial.available() > 0) { incoming_serial_byte = Serial.read(); }  // clear out buffer
+    while (Serial.available() > 0) { 
+      incoming_serial_byte = Serial.read(); 
+    }  // clear out buffer
     return;
-  } else {
+  } 
+  else {
     serial_print(string_qrss_mode);
     Serial.print(numberstring);
     Serial.println(F(" seconds"));
@@ -2224,13 +2547,13 @@ void service_send_buffer()
   // 208 - SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE
   // 210 - SERIAL_SEND_BUFFER_MEMORY_NUMBER - next byte is memory number to play
 
-  #ifdef DEBUG_LOOP
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering service_send_buffer"));
-  #endif          
+#endif          
 
-  #ifdef FEATURE_MEMORIES
+#ifdef FEATURE_MEMORIES
   play_memory_prempt = 0;
-  #endif
+#endif
 
   static unsigned long timed_command_end_time;
   static byte timed_command_in_progress = 0;
@@ -2249,15 +2572,15 @@ void service_send_buffer()
         }
 
         if (send_buffer_array[0] == SERIAL_SEND_BUFFER_MEMORY_NUMBER) {
-          #ifdef DEBUG_SEND_BUFFER
+#ifdef DEBUG_SEND_BUFFER
           Serial.println(F("service_send_buffer: SERIAL_SEND_BUFFER_MEMORY_NUMBER"));
-          #endif
+#endif
           remove_from_send_buffer();
           if (send_buffer_bytes > 0) {
             if (send_buffer_array[0] < number_of_memories) {
-              #ifdef FEATURE_MEMORIES
+#ifdef FEATURE_MEMORIES
               play_memory(send_buffer_array[0]);
-              #endif
+#endif
             }
             remove_from_send_buffer();
           }
@@ -2309,13 +2632,14 @@ void service_send_buffer()
             remove_from_send_buffer();
           }
         }
-      } else {
-        #ifdef FEATURE_SERIAL
+      } 
+      else {
+#ifdef FEATURE_SERIAL
         Serial.write(send_buffer_array[0]);
         if (send_buffer_array[0] == 13) {
           Serial.write(10);  // if we got a carriage return, also send a line feed
         }
-        #endif //FEATURE_SERIAL
+#endif //FEATURE_SERIAL
         if (lcd_send_echo) {
           display_scroll_print_char(send_buffer_array[0]);
           service_display();
@@ -2325,7 +2649,8 @@ void service_send_buffer()
       }
     }
 
-  } else {
+  } 
+  else {
 
     if (send_buffer_status == SERIAL_SEND_BUFFER_TIMED_COMMAND) {    // we're in a timed command
 
@@ -2345,7 +2670,8 @@ void service_send_buffer()
     if (send_buffer_status == SERIAL_SEND_BUFFER_HOLD) {  // we're in a send hold ; see if there's a SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE in the buffer
       if (send_buffer_bytes == 0) {
         send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;  // this should never happen, but what the hell, we'll catch it here if it ever does happen
-      } else {
+      } 
+      else {
         for (int z = 0; z < send_buffer_bytes; z++) {
           if (send_buffer_array[z] ==  SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE) {
             send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;
@@ -2386,27 +2712,28 @@ void remove_from_send_buffer()
 
 void add_to_send_buffer(byte incoming_serial_byte)
 {
-//  if ((incoming_serial_byte == SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE) && (send_buffer_status == SERIAL_SEND_BUFFER_HOLD)) {
-//    send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;
-//  } else {
-    if (send_buffer_bytes < send_buffer_size) {
-      if (incoming_serial_byte != 127) {
-        send_buffer_bytes++;
-        send_buffer_array[send_buffer_bytes - 1] = incoming_serial_byte;
-      } else {  // we got a backspace
-        send_buffer_bytes--;
-      }
+  //  if ((incoming_serial_byte == SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE) && (send_buffer_status == SERIAL_SEND_BUFFER_HOLD)) {
+  //    send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;
+  //  } else {
+  if (send_buffer_bytes < send_buffer_size) {
+    if (incoming_serial_byte != 127) {
+      send_buffer_bytes++;
+      send_buffer_array[send_buffer_bytes - 1] = incoming_serial_byte;
+    } 
+    else {  // we got a backspace
+      send_buffer_bytes--;
     }
-//  }
+  }
+  //  }
 }
 
 //-------------------------------------------------------------------------------------------------------
 
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
 void service_command_line_interface() {
- 
+
   static byte cli_wait_for_cr_flag = 0; 
-  
+
   if (serial_backslash_command == 0) {
     //incoming_serial_byte = Serial.read();
     incoming_serial_byte = uppercase(incoming_serial_byte);
@@ -2418,34 +2745,37 @@ void service_command_line_interface() {
       if (cli_wait_for_cr_to_send_cw) {
         if (cli_wait_for_cr_flag == 0) {
           if (incoming_serial_byte > 31) {
-            #ifdef DEBUG_CHECK_SERIAL
+#ifdef DEBUG_CHECK_SERIAL
             Serial.println(F("check_serial: add_to_send_buffer(SERIAL_SEND_BUFFER_HOLD_SEND)"));
-            #endif
+#endif
             add_to_send_buffer(SERIAL_SEND_BUFFER_HOLD_SEND);
             cli_wait_for_cr_flag = 1;
           }
-        } else {
+        } 
+        else {
           if (incoming_serial_byte == 13) {
-            #ifdef DEBUG_CHECK_SERIAL
+#ifdef DEBUG_CHECK_SERIAL
             Serial.println(F("check_serial: add_to_send_buffer(SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE)"));
-            #endif
+#endif
             add_to_send_buffer(SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE);
             cli_wait_for_cr_flag = 0;
           }
         }
       }
       add_to_send_buffer(incoming_serial_byte);
-    } else {     //(incoming_serial_byte != 92)  -- we got a backslash
+    } 
+    else {     //(incoming_serial_byte != 92)  -- we got a backslash
       serial_backslash_command = 1;
       Serial.write(incoming_serial_byte);
     }
-  } else { // (serial_backslash_command == 0) -- we already got a backslash
-      //incoming_serial_byte = Serial.read();
-      Serial.write(incoming_serial_byte);
-      incoming_serial_byte = uppercase(incoming_serial_byte);
-      process_serial_command();
-      serial_backslash_command = 0;
-      Serial.println();
+  } 
+  else { // (serial_backslash_command == 0) -- we already got a backslash
+    //incoming_serial_byte = Serial.read();
+    Serial.write(incoming_serial_byte);
+    incoming_serial_byte = uppercase(incoming_serial_byte);
+    process_serial_command();
+    serial_backslash_command = 0;
+    Serial.println();
   }
 }
 #endif //FEATURE_COMMAND_LINE_INTERFACE
@@ -2455,27 +2785,27 @@ void service_command_line_interface() {
 #ifdef FEATURE_SERIAL
 void check_serial()
 {
-  
-  #ifdef DEBUG_LOOP
+
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering check_serial")); 
-  #endif 
-  
+#endif 
+
 
   // Reminder to Goody: multi-parameter commands must be nested in if-then-elses
 
   while (Serial.available() > 0) {
     incoming_serial_byte = Serial.read();
-    #ifndef FEATURE_COMMAND_LINE_INTERFACE
+#ifndef FEATURE_COMMAND_LINE_INTERFACE
     //incoming_serial_byte = Serial.read();
     Serial.println(F("No serial features enabled..."));
-    #endif
+#endif
 
     // yea, this is a bit funky below
-    
-    #ifdef FEATURE_COMMAND_LINE_INTERFACE    
+
+#ifdef FEATURE_COMMAND_LINE_INTERFACE    
     service_command_line_interface();
-    #endif //FEATURE_COMMAND_LINE_INTERFACE
-    
+#endif //FEATURE_COMMAND_LINE_INTERFACE
+
   }  //while (Serial.available() > 0)
 }
 #endif
@@ -2485,110 +2815,171 @@ void check_serial()
 #ifdef FEATURE_SERIAL
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
 void process_serial_command() {
-        
+
   Serial.println();
   switch (incoming_serial_byte) {
-    case 126: wdt_enable(WDTO_30MS); while(1) {} ; break;  // ~ - reset unit
-    case 42:                                                // * - paddle echo on / off
-      if (cli_paddle_echo) {
-        cli_paddle_echo = 0;
-      } else {
-        cli_paddle_echo = 1;
-      }
-      break;
-    case 43: cli_prosign_flag = 1; break;
-    #ifdef FEATURE_SERIAL_HELP
-    case 63: serial_print(serial_help_string); break;                         // ? = print help
-    #endif //FEATURE_SERIAL_HELP
-    case 65: keyer_mode = IAMBIC_A; config_dirty = 1; Serial.println(F("Iambic A")); break;    // A - Iambic A mode
-    case 66: keyer_mode = IAMBIC_B; config_dirty = 1; Serial.println(F("Iambic B")); break;    // B - Iambic B mode
-    case 68: keyer_mode = ULTIMATIC; config_dirty = 1; Serial.println(F("Ultimatic")); break;  // D - Ultimatic mode
-    case 69: serial_set_serial_number(); break;                                   // E - set serial number
-    case 70: serial_set_sidetone_freq(); break;                                   // F - set sidetone frequency
-    case 71: keyer_mode = BUG; config_dirty = 1; Serial.println(F("Bug")); break;              // G - Bug mode
-    case 73:                                                                      // I - transmit line on/off
-      Serial.print(F("TX o"));
-      if (key_tx) {
-        key_tx = 0;
-        Serial.println(F("ff"));
-      } else {
-        key_tx = 1;
-        Serial.println(F("n"));
-      }
-      break;
-    #ifdef FEATURE_MEMORIES
-    case 49: serial_play_memory(0); break;     // 1 - play memory 1  (0)
-    case 50: serial_play_memory(1); break;     // 2 - play memory 2  (1)
-    case 51: serial_play_memory(2); break;     // 3 - play memory 3  (2)
-    case 52: serial_play_memory(3); break;     // 4 - play memory 4  (3)
+  case 126: 
+    wdt_enable(WDTO_30MS); 
+    while(1) {
+    } 
+    ; 
+    break;  // ~ - reset unit
+  case 42:                                                // * - paddle echo on / off
+    if (cli_paddle_echo) {
+      cli_paddle_echo = 0;
+    } 
+    else {
+      cli_paddle_echo = 1;
+    }
+    break;
+  case 43: 
+    cli_prosign_flag = 1; 
+    break;
+#ifdef FEATURE_SERIAL_HELP
+  case 63: 
+    serial_print(serial_help_string); 
+    break;                         // ? = print help
+#endif //FEATURE_SERIAL_HELP
+  case 65: 
+    keyer_mode = IAMBIC_A; 
+    config_dirty = 1; 
+    Serial.println(F("Iambic A")); 
+    break;    // A - Iambic A mode
+  case 66: 
+    keyer_mode = IAMBIC_B; 
+    config_dirty = 1; 
+    Serial.println(F("Iambic B")); 
+    break;    // B - Iambic B mode
+  case 68: 
+    keyer_mode = ULTIMATIC; 
+    config_dirty = 1; 
+    Serial.println(F("Ultimatic")); 
+    break;  // D - Ultimatic mode
+  case 69: 
+    serial_set_serial_number(); 
+    break;                                   // E - set serial number
+  case 70: 
+    serial_set_sidetone_freq(); 
+    break;                                   // F - set sidetone frequency
+  case 71: 
+    keyer_mode = BUG; 
+    config_dirty = 1; 
+    Serial.println(F("Bug")); 
+    break;              // G - Bug mode
+  case 73:                                                                      // I - transmit line on/off
+    Serial.print(F("TX o"));
+    if (key_tx) {
+      key_tx = 0;
+      Serial.println(F("ff"));
+    } 
+    else {
+      key_tx = 1;
+      Serial.println(F("n"));
+    }
+    break;
+#ifdef FEATURE_MEMORIES
+  case 49: 
+    serial_play_memory(0); 
+    break;     // 1 - play memory 1  (0)
+  case 50: 
+    serial_play_memory(1); 
+    break;     // 2 - play memory 2  (1)
+  case 51: 
+    serial_play_memory(2); 
+    break;     // 3 - play memory 3  (2)
+  case 52: 
+    serial_play_memory(3); 
+    break;     // 4 - play memory 4  (3)
 
-    case 80: serial_program_memory(); break;                                // P - program memory
-    #endif //FEATURE_MEMORIES
-    case 81: serial_qrss_mode(); break; // Q - activate QRSS mode
-    case 82: speed_mode = SPEED_NORMAL; Serial.println(F("QRSS Off")); break; // R - activate regular timing mode
-    case 83: serial_status(); break;                                              // S - Status command
-    case 74: serial_set_dit_to_dah_ratio(); break;                          // J - dit to dah ratio
-    case 76: serial_set_weighting(); break;
-    #ifdef FEATURE_FARNSWORTH
-    case 77: serial_set_farnsworth(); break;                                // M - set Farnsworth speed
-    #endif
-    case 78:                                                                // N - paddle reverse
-      Serial.print(F("Paddles "));
-      if (paddle_mode == PADDLE_NORMAL) {
-        paddle_mode = PADDLE_REVERSE;
-        Serial.println(F("reversed"));
-      } else {
-        paddle_mode = PADDLE_NORMAL;
-        Serial.println(F("normal"));
-      }
-      config_dirty = 1;
+  case 80: 
+    serial_program_memory(); 
+    break;                                // P - program memory
+#endif //FEATURE_MEMORIES
+  case 81: 
+    serial_qrss_mode(); 
+    break; // Q - activate QRSS mode
+  case 82: 
+    speed_mode = SPEED_NORMAL; 
+    Serial.println(F("QRSS Off")); 
+    break; // R - activate regular timing mode
+  case 83: 
+    serial_status(); 
+    break;                                              // S - Status command
+  case 74: 
+    serial_set_dit_to_dah_ratio(); 
+    break;                          // J - dit to dah ratio
+  case 76: 
+    serial_set_weighting(); 
+    break;
+#ifdef FEATURE_FARNSWORTH
+  case 77: 
+    serial_set_farnsworth(); 
+    break;                                // M - set Farnsworth speed
+#endif
+  case 78:                                                                // N - paddle reverse
+    Serial.print(F("Paddles "));
+    if (paddle_mode == PADDLE_NORMAL) {
+      paddle_mode = PADDLE_REVERSE;
+      Serial.println(F("reversed"));
+    } 
+    else {
+      paddle_mode = PADDLE_NORMAL;
+      Serial.println(F("normal"));
+    }
+    config_dirty = 1;
     break;  // case 78
-    case 79:                                                                // O - toggle sidetone on/off
-      Serial.print(F("Sidetone O"));
-      if ((sidetone_mode == SIDETONE_ON) || (sidetone_mode == SIDETONE_PADDLE_ONLY)) {
-        sidetone_mode = SIDETONE_OFF;
-        Serial.println(F("FF"));
-      } else {
-        sidetone_mode = SIDETONE_ON;
-        Serial.println(F("N"));
-      }
-      config_dirty = 1;
+  case 79:                                                                // O - toggle sidetone on/off
+    Serial.print(F("Sidetone O"));
+    if ((sidetone_mode == SIDETONE_ON) || (sidetone_mode == SIDETONE_PADDLE_ONLY)) {
+      sidetone_mode = SIDETONE_OFF;
+      Serial.println(F("FF"));
+    } 
+    else {
+      sidetone_mode = SIDETONE_ON;
+      Serial.println(F("N"));
+    }
+    config_dirty = 1;
     break; // case 79
-    case 84: // T - tune
-      serial_tune_command(); break;
-   
-    case 87: serial_wpm_set();break;                                        // W - set WPM
-    case 89: serial_change_wordspace(); break;
-    #ifdef FEATURE_AUTOSPACE
-    case 90:
-      Serial.print(F("Autospace O"));
-      if (autospace_active) {
-        autospace_active = 0;
-        config_dirty = 1;
-        Serial.println(F("ff"));
-      } else {
-        autospace_active = 1;
-        config_dirty = 1;
-        Serial.println(F("n"));
-      }
-      break;
-    #endif
-    #ifdef FEATURE_MEMORIES
-    case 92:
-      send_buffer_bytes = 0;
-      play_memory_prempt = 1;
-      break;                           // \ - double backslash - clear serial send buffer
-    #endif
-    case 94:                           // ^ - toggle send CW send immediately
-       if (cli_wait_for_cr_to_send_cw) {
-         cli_wait_for_cr_to_send_cw = 0;
-         Serial.println(F("Send CW immediately"));
-       } else {
-         cli_wait_for_cr_to_send_cw = 1;
-         Serial.println(F("Wait for CR to send CW"));
-       }
-      break;
-    default: Serial.println(F("Unknown command")); break;
+  case 84: // T - tune
+    serial_tune_command(); 
+    break;
+  case 89: 
+    serial_change_wordspace(); 
+    break;
+#ifdef FEATURE_AUTOSPACE
+  case 90:
+    Serial.print(F("Autospace O"));
+    if (autospace_active) {
+      autospace_active = 0;
+      config_dirty = 1;
+      Serial.println(F("ff"));
+    } 
+    else {
+      autospace_active = 1;
+      config_dirty = 1;
+      Serial.println(F("n"));
+    }
+    break;
+#endif
+#ifdef FEATURE_MEMORIES
+  case 92:
+    send_buffer_bytes = 0;
+    play_memory_prempt = 1;
+    break;                           // \ - double backslash - clear serial send buffer
+#endif
+  case 94:                           // ^ - toggle send CW send immediately
+    if (cli_wait_for_cr_to_send_cw) {
+      cli_wait_for_cr_to_send_cw = 0;
+      Serial.println(F("Send CW immediately"));
+    } 
+    else {
+      cli_wait_for_cr_to_send_cw = 1;
+      Serial.println(F("Wait for CR to send CW"));
+    }
+    break;
+  default: 
+    Serial.println(F("Unknown command")); 
+    break;
   }
 
 }
@@ -2600,10 +2991,10 @@ void process_serial_command() {
 
 void service_serial_paddle_echo()
 {
-  
-  #ifdef DEBUG_LOOP
+
+#ifdef DEBUG_LOOP
   Serial.println(F("loop: entering service_serial_paddle_echo"));
-  #endif          
+#endif          
 
   static byte cli_paddle_echo_space_sent = 1;
 
@@ -2657,23 +3048,26 @@ int serial_get_number_input(byte places,int lower_limit, int upper_limit)
         check_paddles();
         service_dit_dah_buffers();
         service_send_buffer();
-        
+
         check_potentiometer();
       }
-    } else {
+    } 
+    else {
       incoming_serial_byte = Serial.read();
       if ((incoming_serial_byte > 47) && (incoming_serial_byte < 58)) {    // ascii 48-57 = "0" - "9")
         numberstring = numberstring + incoming_serial_byte;
         numbers[numberindex] = incoming_serial_byte;
         numberindex++;
         if (numberindex > places){
-            looping = 0;
-            error = 1;
+          looping = 0;
+          error = 1;
         }
-      } else {
+      } 
+      else {
         if (incoming_serial_byte == 13) {   // carriage return - get out
           looping = 0;
-        } else {                 // bogus input - error out
+        } 
+        else {                 // bogus input - error out
           looping = 0;
           error = 1;
         }
@@ -2682,9 +3076,12 @@ int serial_get_number_input(byte places,int lower_limit, int upper_limit)
   }
   if (error) {
     Serial.write("Error...\n\r");
-    while (Serial.available() > 0) { incoming_serial_byte = Serial.read(); }  // clear out buffer
+    while (Serial.available() > 0) { 
+      incoming_serial_byte = Serial.read(); 
+    }  // clear out buffer
     return(-1);
-  } else {
+  } 
+  else {
     int y = 1;
     int return_number = 0;
     for (int x = (numberindex - 1); x >= 0 ; x = x - 1) {
@@ -2693,7 +3090,8 @@ int serial_get_number_input(byte places,int lower_limit, int upper_limit)
     }
     if ((return_number > lower_limit) && (return_number < upper_limit)) {
       return(return_number);
-    } else {
+    } 
+    else {
       Serial.write("Error...\n\r");
       return(-1);
     }
@@ -2725,13 +3123,13 @@ void serial_change_wordspace()
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
 void serial_set_dit_to_dah_ratio()
 {
-    int set_ratio_to = serial_get_number_input(4, 99, 1000);
-    if ((set_ratio_to > 99) && (set_ratio_to < 1000)) {
-      dah_to_dit_ratio = set_ratio_to;
-      serial_print(string_setting_dah_to_dit_ratio);
-      Serial.println((float(dah_to_dit_ratio)/100));
-      config_dirty = 1;
-    }
+  int set_ratio_to = serial_get_number_input(4, 99, 1000);
+  if ((set_ratio_to > 99) && (set_ratio_to < 1000)) {
+    dah_to_dit_ratio = set_ratio_to;
+    serial_print(string_setting_dah_to_dit_ratio);
+    Serial.println((float(dah_to_dit_ratio)/100));
+    config_dirty = 1;
+  }
 }
 #endif
 #endif
@@ -2762,22 +3160,6 @@ void serial_set_sidetone_freq()
     Serial.print(set_sidetone_hz,DEC);
     Serial.write(" hz\n\r");
     hz_sidetone = set_sidetone_hz;
-    config_dirty = 1;
-  }
-}
-#endif
-#endif
-
-//---------------------------------------------------------------------
-#ifdef FEATURE_SERIAL
-#ifdef FEATURE_COMMAND_LINE_INTERFACE
-void serial_wpm_set()
-{
-  int set_wpm = serial_get_number_input(3,0,1000);
-  if (set_wpm > 0) {
-    speed_set(set_wpm);
-    Serial.write("Setting WPM to ");
-    Serial.println(set_wpm,DEC);
     config_dirty = 1;
   }
 }
@@ -2831,7 +3213,8 @@ void serial_tune_command ()
 
   tx_and_sidetone_key(1,MANUAL_SENDING);
   Serial.write("Keying transmitter - press a key to unkey...\n\r");
-  while ((Serial.available() == 0) && (!analogbuttonread(0))) {}  // keystroke or button0 hit gets us out of here
+  while ((Serial.available() == 0) && (!analogbuttonread(0))) {
+  }  // keystroke or button0 hit gets us out of here
   while (Serial.available() > 0) {  // clear out the buffer if anything is there
     incoming = Serial.read();
   }
@@ -2848,25 +3231,37 @@ void serial_status() {
 
   Serial.println();
   switch (keyer_mode) {
-    case IAMBIC_A: Serial.write("Iambic A"); break;
-    case IAMBIC_B: Serial.write("Iambic B"); break;
-    case BUG: Serial.write("Bug"); break;
-    case STRAIGHT: Serial.write("Straightkey"); break;
-    case ULTIMATIC: Serial.write("Ultimatic"); break;
+  case IAMBIC_A: 
+    Serial.write("Iambic A"); 
+    break;
+  case IAMBIC_B: 
+    Serial.write("Iambic B"); 
+    break;
+  case BUG: 
+    Serial.write("Bug"); 
+    break;
+  case STRAIGHT: 
+    Serial.write("Straightkey"); 
+    break;
+  case ULTIMATIC: 
+    Serial.write("Ultimatic"); 
+    break;
   }
   Serial.write("\n\r");
   if (speed_mode == SPEED_NORMAL) {
     Serial.write("WPM: ");
     Serial.println(wpm,DEC);
-    #ifdef FEATURE_FARNSWORTH
+#ifdef FEATURE_FARNSWORTH
     Serial.write("Farnsworth WPM: ");
     if (wpm_farnsworth < wpm) {
       Serial.write("disabled\n\r");
-    } else {
+    } 
+    else {
       Serial.println(wpm_farnsworth,DEC);
     }
-    #endif //FEATURE_FARNSWORTH
-  } else {
+#endif //FEATURE_FARNSWORTH
+  } 
+  else {
     Serial.print(F("QRSS Mode Activated - Dit Length: "));
     Serial.print(qrss_dit_length,DEC);
     Serial.println(" seconds");
@@ -2876,9 +3271,15 @@ void serial_status() {
   Serial.println(hz_sidetone,DEC);
   Serial.print(F("Sidetone:"));
   switch (sidetone_mode) {
-    case SIDETONE_ON: Serial.println(F("ON")); break;
-    case SIDETONE_OFF: Serial.println(F("OFF")); break;
-    case SIDETONE_PADDLE_ONLY: Serial.println(F("Paddle Only")); break;
+  case SIDETONE_ON: 
+    Serial.println(F("ON")); 
+    break;
+  case SIDETONE_OFF: 
+    Serial.println(F("OFF")); 
+    break;
+  case SIDETONE_PADDLE_ONLY: 
+    Serial.println(F("Paddle Only")); 
+    break;
   }
   Serial.print(F("Dah to dit ratio: "));
   Serial.println((float(dah_to_dit_ratio)/100));
@@ -2888,30 +3289,31 @@ void serial_status() {
   Serial.println(serial_number,DEC);
   Serial.print(F("Potentiometer WPM: "));
   Serial.println(pot_value_wpm(),DEC);
-  #ifdef FEATURE_AUTOSPACE
+#ifdef FEATURE_AUTOSPACE
   Serial.write("Autospace: ");
   if (autospace_active) {
     Serial.write("On");
-  } else {
+  } 
+  else {
     Serial.write("Off");
   }
   Serial.println();
-  #endif
+#endif
   Serial.write("Wordspace: ");
   Serial.println(length_wordspace,DEC);
-  #ifdef FEATURE_MEMORIES
+#ifdef FEATURE_MEMORIES
   serial_status_memories();
-  #endif
+#endif
 
-  #ifdef DEBUG_MEMORYCHECK
+#ifdef DEBUG_MEMORYCHECK
   memorycheck();
-  #endif
+#endif
 
-  #ifdef DEBUG_VARIABLE_DUMP
+#ifdef DEBUG_VARIABLE_DUMP
   Serial.println(wpm);
-  #ifdef FEATURE_FARNSWORTH
+#ifdef FEATURE_FARNSWORTH
   Serial.println(wpm_farnsworth);
-  #endif //FEATURE_FARNSWORTH
+#endif //FEATURE_FARNSWORTH
   Serial.println(1.0*(float(weighting)/50));
   Serial.println(keying_compensation,DEC);
   Serial.println(2.0-(float(weighting)/50));
@@ -2919,9 +3321,9 @@ void serial_status() {
   Serial.println((dit_end_time-dit_start_time),DEC);
   Serial.println((dah_end_time-dah_start_time),DEC);
   Serial.println(millis(),DEC);
-  #endif //DEBUG_VARIABLE_DUMP
-  
-  #ifdef DEBUG_BUTTONS
+#endif //DEBUG_VARIABLE_DUMP
+
+#ifdef DEBUG_BUTTONS
   for (int x = 0;x < analog_buttons_number_of_buttons;x++) {
     Serial.print(F("analog_button_array:   "));
     Serial.print(x);
@@ -2930,9 +3332,9 @@ void serial_status() {
     Serial.print(F("  button_array_high_limit: "));
     Serial.println(button_array_high_limit[x]);
   }
-  #endif
-  
-  
+#endif
+
+
 }
 #endif
 #endif
@@ -2941,77 +3343,189 @@ void serial_status() {
 int convert_cw_number_to_ascii (long number_in)
 {
 
- switch (number_in) {
-   case 12: return 65; break;         // A
-   case 2111: return 66; break;
-   case 2121: return 67; break;
-   case 211: return 68; break;
-   case 1: return 69; break;
-   case 1121: return 70; break;
-   case 221: return 71; break;
-   case 1111: return 72; break;
-   case 11: return 73; break;
-   case 1222: return 74; break;
-   case 212: return 75; break;
-   case 1211: return 76; break;
-   case 22: return 77; break;
-   case 21: return 78; break;
-   case 222: return 79; break;
-   case 1221: return 80; break;
-   case 2212: return 81; break;
-   case 121: return 82; break;
-   case 111: return 83; break;
-   case 2: return 84; break;
-   case 112: return 85; break;
-   case 1112: return 86; break;
-   case 122: return 87; break;
-   case 2112: return 88; break;
-   case 2122: return 89; break;
-   case 2211: return 90; break;    // Z
+  switch (number_in) {
+  case 12: 
+    return 65; 
+    break;         // A
+  case 2111: 
+    return 66; 
+    break;
+  case 2121: 
+    return 67; 
+    break;
+  case 211: 
+    return 68; 
+    break;
+  case 1: 
+    return 69; 
+    break;
+  case 1121: 
+    return 70; 
+    break;
+  case 221: 
+    return 71; 
+    break;
+  case 1111: 
+    return 72; 
+    break;
+  case 11: 
+    return 73; 
+    break;
+  case 1222: 
+    return 74; 
+    break;
+  case 212: 
+    return 75; 
+    break;
+  case 1211: 
+    return 76; 
+    break;
+  case 22: 
+    return 77; 
+    break;
+  case 21: 
+    return 78; 
+    break;
+  case 222: 
+    return 79; 
+    break;
+  case 1221: 
+    return 80; 
+    break;
+  case 2212: 
+    return 81; 
+    break;
+  case 121: 
+    return 82; 
+    break;
+  case 111: 
+    return 83; 
+    break;
+  case 2: 
+    return 84; 
+    break;
+  case 112: 
+    return 85; 
+    break;
+  case 1112: 
+    return 86; 
+    break;
+  case 122: 
+    return 87; 
+    break;
+  case 2112: 
+    return 88; 
+    break;
+  case 2122: 
+    return 89; 
+    break;
+  case 2211: 
+    return 90; 
+    break;    // Z
 
-   case 22222: return 48; break;    // 0
-   case 12222: return 49; break;
-   case 11222: return 50; break;
-   case 11122: return 51; break;
-   case 11112: return 52; break;
-   case 11111: return 53; break;
-   case 21111: return 54; break;
-   case 22111: return 55; break;
-   case 22211: return 56; break;
-   case 22221: return 57; break;
+  case 22222: 
+    return 48; 
+    break;    // 0
+  case 12222: 
+    return 49; 
+    break;
+  case 11222: 
+    return 50; 
+    break;
+  case 11122: 
+    return 51; 
+    break;
+  case 11112: 
+    return 52; 
+    break;
+  case 11111: 
+    return 53; 
+    break;
+  case 21111: 
+    return 54; 
+    break;
+  case 22111: 
+    return 55; 
+    break;
+  case 22211: 
+    return 56; 
+    break;
+  case 22221: 
+    return 57; 
+    break;
 
-   case 112211: return 63; break;  // ?
-   case 21121: return 47; break;   // /
-   case 21112: return 45; break;   // -
-   case 221122: return 44; break;  // ,
-   case 2111212: return 36; break; // BK (store as ascii $)
+  case 112211: 
+    return 63; 
+    break;  // ?
+  case 21121: 
+    return 47; 
+    break;   // /
+  case 21112: 
+    return 45; 
+    break;   // -
+  case 221122: 
+    return 44; 
+    break;  // ,
+  case 2111212: 
+    return 36; 
+    break; // BK (store as ascii $)
 
-   case 222222: return 92; break;  // special hack; six dahs = \ (backslash)
+  case 222222: 
+    return 92; 
+    break;  // special hack; six dahs = \ (backslash)
 
-   case 9: return 32; break;       // special 9 = space
-   
-   #ifdef OPTION_NON_ENGLISH_EXTENSIONS
-   case 12212: return 197; break;   // Å   - customize for your locality  ( 1 = dit, 2 = dah, return code is ASCII code )
-   case 1212: return 196; break;    // Ä   - customize for your locality
-   //case 12212: return 192; break; // À   - customize for your locality
-   //case 1212: return 197; break;  // Ä   - customize for your locality
-   //case 1212: return 198; break;  // Æ   - customize for your locality
-   case 21211: return 199; break;   // Ç
-   case 11221: return 208; break;   // Ð
-   case 2222: return 138; break;    // Š
-   case 12112: return 200; break;   // È
-   case 11211: return 201; break;   // É
-   case 221121: return 142; break;  // Ž
-   case 22122: return 209; break;   // Ñ
-   case 2221: return 214; break;    // Ö 
-   //case 2221: return 211; break;  // Ó   - customize for your locality  ( 1 = dit, 2 = dah, return code is ASCII code )
-   //case 2221: return 216; break;  // Ø   - customize for your locality
-   case 1122: return 220; break;    // Ü 
-   case 111111: return 223; break;   // ß
-   #endif //OPTION_NON_ENGLISH_EXTENSIONS
+  case 9: 
+    return 32; 
+    break;       // special 9 = space
 
-   default: return 254; break;
- }
+#ifdef OPTION_NON_ENGLISH_EXTENSIONS
+  case 12212: 
+    return 197; 
+    break;   // Å   - customize for your locality  ( 1 = dit, 2 = dah, return code is ASCII code )
+  case 1212: 
+    return 196; 
+    break;    // Ä   - customize for your locality
+    //case 12212: return 192; break; // À   - customize for your locality
+    //case 1212: return 197; break;  // Ä   - customize for your locality
+    //case 1212: return 198; break;  // Æ   - customize for your locality
+  case 21211: 
+    return 199; 
+    break;   // Ç
+  case 11221: 
+    return 208; 
+    break;   // Ð
+  case 2222: 
+    return 138; 
+    break;    // Š
+  case 12112: 
+    return 200; 
+    break;   // È
+  case 11211: 
+    return 201; 
+    break;   // É
+  case 221121: 
+    return 142; 
+    break;  // Ž
+  case 22122: 
+    return 209; 
+    break;   // Ñ
+  case 2221: 
+    return 214; 
+    break;    // Ö 
+    //case 2221: return 211; break;  // Ó   - customize for your locality  ( 1 = dit, 2 = dah, return code is ASCII code )
+    //case 2221: return 216; break;  // Ø   - customize for your locality
+  case 1122: 
+    return 220; 
+    break;    // Ü 
+  case 111111: 
+    return 223; 
+    break;   // ß
+#endif //OPTION_NON_ENGLISH_EXTENSIONS
+
+  default: 
+    return 254; 
+    break;
+  }
 
 }
 
@@ -3024,13 +3538,13 @@ void memorycheck()
 
   unsigned long free = (unsigned long)SP - (unsigned long)HP;
 
-//  Serial.print("Heap=");
-//  Serial.println((unsigned long)HP,HEX);
-//  Serial.print("Stack=");
-//  Serial.println((unsigned long)SP,HEX);
-//  Serial.print("Free Memory = ");
-//  Serial.print((unsigned long)free,HEX);
-//  Serial.print("  ");
+  //  Serial.print("Heap=");
+  //  Serial.println((unsigned long)HP,HEX);
+  //  Serial.print("Stack=");
+  //  Serial.println((unsigned long)SP,HEX);
+  //  Serial.print("Free Memory = ");
+  //  Serial.print((unsigned long)free,HEX);
+  //  Serial.print("  ");
   if (free > 2048) {
     free = 0;
   }
@@ -3070,11 +3584,13 @@ void serial_status_memories()
     Serial.write(":");
     if ( EEPROM.read(memory_start(x)) == 255) {
       Serial.write("{empty}");
-    } else {
+    } 
+    else {
       for (int y = (memory_start(x)); (y < last_memory_location); y++) {
         if (EEPROM.read(y) < 255) {
           Serial.write(EEPROM.read(y));
-        } else {
+        } 
+        else {
           Serial.write("$");
           y = last_memory_location;
         }
@@ -3122,16 +3638,17 @@ void serial_program_memory()
       incoming_serial_byte = Serial.read();
       if (incoming_serial_byte == 13) {        // did we get a carriage return?
         looping = 0;
-      } else {
+      } 
+      else {
         Serial.write(incoming_serial_byte);
         incoming_serial_byte = uppercase(incoming_serial_byte);
         EEPROM.write((memory_start(memory_number)+memory_index),incoming_serial_byte);
-        #ifdef DEBUG_EEPROM
+#ifdef DEBUG_EEPROM
         Serial.print(F("serial_program_memory: wrote "));
         Serial.print(incoming_serial_byte);
         Serial.print(F(" to location "));
         Serial.println((memory_start(memory_number)+memory_index));
-        #endif
+#endif
         memory_index++;
         if ((memory_start(memory_number) + memory_index) == memory_end(memory_number)) {    // are we at last memory location?
           looping = 0;
@@ -3141,14 +3658,15 @@ void serial_program_memory()
     }  //while (looping)
     // write terminating 255
     EEPROM.write((memory_start(memory_number)+memory_index),255);
-    #ifdef DEBUG_EEPROM
+#ifdef DEBUG_EEPROM
     Serial.print(F("serial_program_memory: wrote 255 to location "));
     Serial.println((memory_start(memory_number)+memory_index));
-    #endif
+#endif
     Serial.print(F("\n\rWrote memory #"));
     Serial.print(memory_number+1);
     Serial.println();
-  } else {
+  } 
+  else {
     Serial.println(F("\n\rError"));
   }
 
@@ -3166,37 +3684,76 @@ void command_program_memory()
 {
   int cw_char;
   cw_char = get_cw_input_from_user(0);            // get another cw character from the user to find out which memory number
-  #ifdef DEBUG_COMMAND_MODE
+#ifdef DEBUG_COMMAND_MODE
   Serial.print(F("command_program_memory: cw_char: "));
   Serial.println(cw_char);
-  #endif
+#endif
   if (cw_char > 0) {  //aaaaa
     if ((cw_char == 12222) && (number_of_memories > 9)) { // we have a 1, this could be 1 or 1x
       cw_char = get_cw_input_from_user(p_command_single_digit_wait_time);  // give the user 3 seconds to send another number
       switch (cw_char) {
-        case 0: program_memory(0); break;    // we didn't get anything, it's a 1   
-        case 22222: program_memory(9); break; 
-        case 12222: program_memory(10); break;
-        case 11222: program_memory(11); break;
-        case 11122: program_memory(12); break;
-        case 11112: program_memory(13); break;
-        case 11111: program_memory(14); break;
-        case 21111: program_memory(15); break;
-        default: send_char('?',NORMAL); break;
+      case 0: 
+        program_memory(0); 
+        break;    // we didn't get anything, it's a 1   
+      case 22222: 
+        program_memory(9); 
+        break; 
+      case 12222: 
+        program_memory(10); 
+        break;
+      case 11222: 
+        program_memory(11); 
+        break;
+      case 11122: 
+        program_memory(12); 
+        break;
+      case 11112: 
+        program_memory(13); 
+        break;
+      case 11111: 
+        program_memory(14); 
+        break;
+      case 21111: 
+        program_memory(15); 
+        break;
+      default: 
+        send_char('?',NORMAL); 
+        break;
       }
-    } else {    
+    } 
+    else {    
       switch (cw_char) {
-        case 12222: program_memory(0); break;      // 1 = memory 0
-        case 11222: program_memory(1); break;
-        case 11122: program_memory(2); break;
-        case 11112: program_memory(3); break;
-        case 11111: program_memory(4); break;
-        case 21111: program_memory(5); break;
-        case 22111: program_memory(6); break;
-        case 22211: program_memory(7); break;
-        case 22221: program_memory(8); break;
+      case 12222: 
+        program_memory(0); 
+        break;      // 1 = memory 0
+      case 11222: 
+        program_memory(1); 
+        break;
+      case 11122: 
+        program_memory(2); 
+        break;
+      case 11112: 
+        program_memory(3); 
+        break;
+      case 11111: 
+        program_memory(4); 
+        break;
+      case 21111: 
+        program_memory(5); 
+        break;
+      case 22111: 
+        program_memory(6); 
+        break;
+      case 22211: 
+        program_memory(7); 
+        break;
+      case 22221: 
+        program_memory(8); 
+        break;
         //case 22222: program_memory(9); break;
-        default: send_char('?',NORMAL); break;
+      default: 
+        send_char('?',NORMAL); 
+        break;
       }
     }
   }
@@ -3216,7 +3773,8 @@ byte memory_nonblocking_delay(unsigned long delaytime)
     if (((dit_buffer) || (dah_buffer) || (analogbuttonread(0))) && (machine_mode != BEACON)) {   // exit if the paddle or button0 was hit
       dit_buffer = 0;
       dah_buffer = 0;
-      while (analogbuttonread(0)) {}
+      while (analogbuttonread(0)) {
+      }
       return 1;
     }
   }
@@ -3228,7 +3786,9 @@ byte memory_nonblocking_delay(unsigned long delaytime)
 //---------------------------------------------------------------------
 void check_button0()
 {
-  if (analogbuttonread(0)) {button0_buffer = 1;}
+  if (analogbuttonread(0)) {
+    button0_buffer = 1;
+  }
 }
 
 //---------------------------------------------------------------------
@@ -3247,23 +3807,23 @@ void play_memory(byte memory_number)
   play_memory_prempt = 0;
   byte eeprom_byte_read;
 
-  #ifdef DEBUG_PLAY_MEMORY
+#ifdef DEBUG_PLAY_MEMORY
   Serial.print(F("play_memory: called with memory_number:"));
   Serial.println(memory_number);
-  #endif  
-  
+#endif  
+
   button0_buffer = 0;
 
-//  #ifdef DEBUG_MEMORYCHECK
-//  memorycheck();
-//  #endif
+  //  #ifdef DEBUG_MEMORYCHECK
+  //  memorycheck();
+  //  #endif
 
   if (machine_mode == NORMAL) {
-    #ifdef FEATURE_SERIAL
+#ifdef FEATURE_SERIAL
     Serial.println();
-    #endif
+#endif
   }
-  
+
   for (int y = (memory_start(memory_number)); (y < (memory_end(memory_number)+1)); y++) {
 
     if (machine_mode == NORMAL) {
@@ -3272,15 +3832,15 @@ void play_memory(byte memory_number)
       service_display();
     }
 
-    #ifdef FEATURE_SERIAL
+#ifdef FEATURE_SERIAL
     check_serial();
-    #endif
+#endif
 
     if ((play_memory_prempt == 0) && (pause_sending_buffer == 0)) {
       eeprom_byte_read = EEPROM.read(y);
       if (eeprom_byte_read < 255) {
 
-        #ifdef DEBUG_PLAY_MEMORY
+#ifdef DEBUG_PLAY_MEMORY
         Serial.print(F("\n\nplay_memory:\r\n\r"));
         Serial.print(F("    Memory number:"));
         Serial.println(memory_number);
@@ -3288,12 +3848,12 @@ void play_memory(byte memory_number)
         Serial.println(y);
         Serial.print(F("    eeprom_byte_read:"));
         Serial.println(eeprom_byte_read);
-        #endif
+#endif
 
         if (machine_mode == NORMAL) {
-          #ifdef FEATURE_SERIAL
+#ifdef FEATURE_SERIAL
           Serial.write(eeprom_byte_read);
-          #endif //FEATURE_SERIAL
+#endif //FEATURE_SERIAL
           if (lcd_send_echo) {
             display_scroll_print_char(eeprom_byte_read); 
             service_display();
@@ -3303,30 +3863,35 @@ void play_memory(byte memory_number)
         if (prosign_flag) {
           send_char(eeprom_byte_read,OMIT_LETTERSPACE);
           prosign_flag = 0;
-        } else {
+        } 
+        else {
           send_char(eeprom_byte_read,NORMAL);         // no - play the character
         }
-  
+
         if (machine_mode != BEACON) {
           if ((dit_buffer) || (dah_buffer) || (button0_buffer)) {   // exit if the paddle or button0 was hit
             dit_buffer = 0;
             dah_buffer = 0;
             button0_buffer = 0;
-            while (analogbuttonread(0)) {}
+            while (analogbuttonread(0)) {
+            }
             return;
           }
         }
 
-      } else {
+      } 
+      else {
         if (y == (memory_start(memory_number))) {      // memory is totally empty - do a boop
           lcd_center_print_timed("Memory empty", 0, default_display_msg_delay);
         }
         return;
       }
-    } else {
+    } 
+    else {
       if (pause_sending_buffer == 0) {
         y = (memory_end(memory_number)+1);   // we got a play_memory_prempt flag, exit out
-      } else {
+      } 
+      else {
         y--;  // we're in a pause mode, so sit and spin awhile
       }
     }
@@ -3345,7 +3910,7 @@ void program_memory(int memory_number)
     boop();
     return;
   }
-  
+
   String lcd_print_string;
   lcd_print_string.concat("Pgm Memory ");
   lcd_print_string.concat(memory_number+1);
@@ -3363,54 +3928,55 @@ void program_memory(int memory_number)
 
   dit_buffer = 0;
   dah_buffer = 0;
-  while ((digitalRead(paddle_left) == HIGH) && (digitalRead(paddle_right) == HIGH) && (!analogbuttonread(0))) { }  // loop until user starts sending or hits the button
+  while ((digitalRead(paddle_left) == HIGH) && (digitalRead(paddle_right) == HIGH) && (!analogbuttonread(0))) { 
+  }  // loop until user starts sending or hits the button
 
   while (loop2) {
 
-    #ifdef DEBUG_MEMORY_WRITE
+#ifdef DEBUG_MEMORY_WRITE
     Serial.print(F("program_memory: entering loop2\r\n\r"));
-    #endif
+#endif
 
     cwchar = 0;
     paddle_hit = 0;
     loop1 = 1;
 
     while (loop1) {
-       check_paddles();
-       if (dit_buffer) {
-         send_dit(MANUAL_SENDING);
-         dit_buffer = 0;
-         paddle_hit = 1;
-         cwchar = (cwchar * 10) + 1;
-         last_element_time = millis();
-         #ifdef DEBUG_MEMORY_WRITE
-         Serial.write(".");
-         #endif
-       }
-       if (dah_buffer) {
-         send_dah(MANUAL_SENDING);
-         dah_buffer = 0;
-         paddle_hit = 1;
-         cwchar = (cwchar * 10) + 2;
-         last_element_time = millis();
-         #ifdef DEBUG_MEMORY_WRITE
-         Serial.write("_");
-         #endif
-       }
-       if ((paddle_hit) && (millis() > (last_element_time + (float(600/wpm) * length_letterspace)))) {   // this character is over
-         loop1 = 0;
-       }
+      check_paddles();
+      if (dit_buffer) {
+        send_dit(MANUAL_SENDING);
+        dit_buffer = 0;
+        paddle_hit = 1;
+        cwchar = (cwchar * 10) + 1;
+        last_element_time = millis();
+#ifdef DEBUG_MEMORY_WRITE
+        Serial.write(".");
+#endif
+      }
+      if (dah_buffer) {
+        send_dah(MANUAL_SENDING);
+        dah_buffer = 0;
+        paddle_hit = 1;
+        cwchar = (cwchar * 10) + 2;
+        last_element_time = millis();
+#ifdef DEBUG_MEMORY_WRITE
+        Serial.write("_");
+#endif
+      }
+      if ((paddle_hit) && (millis() > (last_element_time + (float(600/wpm) * length_letterspace)))) {   // this character is over
+        loop1 = 0;
+      }
 
-       if ((paddle_hit == 0) && (millis() > (last_element_time + ((float(1200/wpm) * length_wordspace)))) && (space_count < program_memory_limit_consec_spaces)) {   // we have a space
-         loop1 = 0;
-         cwchar = 9;
-         space_count++;
-       }
+      if ((paddle_hit == 0) && (millis() > (last_element_time + ((float(1200/wpm) * length_wordspace)))) && (space_count < program_memory_limit_consec_spaces)) {   // we have a space
+        loop1 = 0;
+        cwchar = 9;
+        space_count++;
+      }
 
-       while (analogbuttonread(0)) {    // hit the button to get out of command mode if no paddle was hit
-         loop1 = 0;
-         loop2 = 0;
-       }
+      while (analogbuttonread(0)) {    // hit the button to get out of command mode if no paddle was hit
+        loop1 = 0;
+        loop2 = 0;
+      }
     }  //loop1
 
     if (cwchar != 9) {
@@ -3420,7 +3986,7 @@ void program_memory(int memory_number)
     // write the character to memory
     if (cwchar > 0) {
 
-      #ifdef DEBUG_MEMORY_WRITE
+#ifdef DEBUG_MEMORY_WRITE
       Serial.print(F("program_memory: write_character_to_memory"));
       Serial.print(F(" mem number:"));
       Serial.print(memory_number);
@@ -3432,7 +3998,7 @@ void program_memory(int memory_number)
       Serial.print(cwchar);
       Serial.print(F("   ascii to write:"));
       Serial.println(convert_cw_number_to_ascii(cwchar));
-      #endif
+#endif
 
       EEPROM.write((memory_start(memory_number)+memory_location_index),convert_cw_number_to_ascii(cwchar));
       memory_location_index++;
@@ -3442,34 +4008,35 @@ void program_memory(int memory_number)
     if ((memory_start(memory_number) + memory_location_index) == memory_end(memory_number)) {
       loop1 = 0;
       loop2 = 0;
-      #ifdef DEBUG_MEMORY_WRITE
+#ifdef DEBUG_MEMORY_WRITE
       Serial.println(F("program_memory: out of memory location"));
-      #endif
+#endif
     }
   }
 
   //write terminating 255 at end
-  #ifdef DEBUG_MEMORY_WRITE
+#ifdef DEBUG_MEMORY_WRITE
   Serial.println(F("program_memory: writing memory termination"));
-  #endif
+#endif
 
   EEPROM.write((memory_start(memory_number) + memory_location_index),255);
 
-  #ifdef OPTION_PROG_MEM_TRIM_TRAILING_SPACES
+#ifdef OPTION_PROG_MEM_TRIM_TRAILING_SPACES
   for (int x = (memory_location_index-1); x > 0; x--) {
     if (EEPROM.read((memory_start(memory_number) + x)) == 32) {
       EEPROM.write((memory_start(memory_number) + x),255);
-    } else {
+    } 
+    else {
       x = 0;
     }
   }
-  #endif
+#endif
 
   lcd_center_print_timed("Done", 0, default_display_msg_delay);
 
   play_memory(memory_number);
 
-//  send_dit(AUTOMATIC_SENDING);
+  //  send_dit(AUTOMATIC_SENDING);
 
 }
 #endif
@@ -3493,18 +4060,18 @@ int memory_end(byte memory_number) {
 //---------------------------------------------------------------------
 
 void initialize_pins() {
-  
+
   pinMode (paddle_left, INPUT);
   digitalWrite (paddle_left, HIGH);
   pinMode (paddle_right, INPUT);
   digitalWrite (paddle_right, HIGH);
-  
+
   pinMode (tx_key_line, OUTPUT);
   digitalWrite (tx_key_line, LOW);
-  
+
   pinMode (sidetone_line, OUTPUT);
   digitalWrite (sidetone_line, LOW);
- 
+
 }
 
 //---------------------------------------------------------------------
@@ -3513,33 +4080,34 @@ void initialize_pins() {
 void initialize_debug_startup(){
 
   serial_status();  
-  #ifdef FEATURE_SERIAL
+#ifdef FEATURE_SERIAL
   Serial.println(F("FEATURE_SERIAL"));
-  #endif
-  #ifdef FEATURE_COMMAND_LINE_INTERFACE
+#endif
+#ifdef FEATURE_COMMAND_LINE_INTERFACE
   Serial.println(F("FEATURE_COMMAND_LINE_INTERFACE"));
-  #endif
-  #ifdef FEATURE_SAY_HI
+#endif
+#ifdef FEATURE_SAY_HI
   Serial.println(F("FEATURE_SAY_HI"));
-  #endif
-  #ifdef FEATURE_MEMORIES
+#endif
+#ifdef FEATURE_MEMORIES
   Serial.println(F("FEATURE_MEMORIES"));
-  #endif
-  #ifdef FEATURE_BEACON
+#endif
+#ifdef FEATURE_BEACON
   Serial.println(F("FEATURE_BEACON"));
-  #endif
-  #ifdef FEATURE_SERIAL_HELP
+#endif
+#ifdef FEATURE_SERIAL_HELP
   Serial.println(F("FEATURE_SERIAL_HELP"));
-  #endif
-  #ifdef FEATURE_DEAD_OP_WATCHDOG
+#endif
+#ifdef FEATURE_DEAD_OP_WATCHDOG
   Serial.println(F("FEATURE_DEAD_OP_WATCHDOG"));
-  #endif
-  #ifdef FEATURE_AUTOSPACE
+#endif
+#ifdef FEATURE_AUTOSPACE
   Serial.println(F("FEATURE_AUTOSPACE"));
-  #endif
-  #ifdef FEATURE_FARNSWORTH
+#endif
+#ifdef FEATURE_FARNSWORTH
   Serial.println(F("FEATURE_FARNSWORTH"));
-  #endif
+#endif
   Serial.println(F("setup: exiting, going into loop"));
 }
 #endif //DEBUG_STARTUP
+
