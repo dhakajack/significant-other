@@ -106,8 +106,8 @@
 
 // compile time features and options - comment or uncomment to add or delete features
 // FEATURES add more bytes to the compiled binary, OPTIONS change code behavior
-//#define FEATURE_SERIAL
-//#define FEATURE_COMMAND_LINE_INTERFACE        // this requires FEATURE_SERIAL
+#define FEATURE_SERIAL
+#define FEATURE_COMMAND_LINE_INTERFACE        // this requires FEATURE_SERIAL
 #define FEATURE_SAY_HI
 #define FEATURE_MEMORIES
 //#define FEATURE_BEACON
@@ -1508,6 +1508,8 @@ void command_mode ()
         config_dirty = 1;
         lcd_center_print_timed("Iambic B", 0, default_display_msg_delay);      
         break; 
+        
+      /*  
       case 211: // D - Ultimatic mode
         keyer_mode = ULTIMATIC;
         keyer_mode_before = ULTIMATIC;
@@ -1601,6 +1603,7 @@ void command_mode ()
         play_memory(2); 
         break;
 #endif
+      */
       case 9: 
         stay_in_command_mode = 0; 
         break;                          // button was hit - exit
