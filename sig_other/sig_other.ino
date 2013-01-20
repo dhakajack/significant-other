@@ -172,7 +172,7 @@
 #define default_first_extension_time 0   // number of milliseconds to extend first sent dit or dah
 #define default_pot_full_scale_reading 1023
 #define default_weighting 50             // 50 = weighting factor of 1 (normal)
-#define number_of_memories byte(12)            // the number of memories (duh)
+#define number_of_memories byte(3)            // the number of memories (duh)
 #define memory_area_start 20             // the eeprom location where memory space starts
 #define memory_area_end 1023             // the eeprom location where memory space ends
 #define lcd_columns 16
@@ -181,7 +181,6 @@
 #define program_memory_limit_consec_spaces 1
 #define serial_leading_zeros 1            // set to 1 to activate leading zeros in serial numbers (i.e. #1 = 001)
 #define serial_cut_numbers 0              // set to 1 to activate cut numbers in serial numbers (i.e. #10 = 1T, #19 = 1N)
-#define p_command_single_digit_wait_time 2
 #define analog_buttons_number_of_buttons 4
 
 // Variable macros
@@ -571,8 +570,6 @@ void loop()
   }
 #endif //FEATURE_MEMORIES
 #endif //FEATURE_BEACON
-
-
 
   if (machine_mode == NORMAL) {
     check_command_buttons();
@@ -1323,8 +1320,6 @@ void tx_and_sidetone_key (int state, byte sending_type)
 void loop_element_lengths(float lengths, float additional_time_ms, int speed_wpm_in, byte sending_type)
 {
 
-
-
   if ((lengths == 0) or (lengths < 0)) {
     return;
   }
@@ -1337,7 +1332,6 @@ void loop_element_lengths(float lengths, float additional_time_ms, int speed_wpm
   else {
     element_length = qrss_dit_length * 1000;
   }
-
 
   unsigned long endtime = millis() + long(element_length*lengths) + long(additional_time_ms);
   while ((millis() < endtime) && (millis() > 200)) {  // the second condition is to account for millis() rollover
@@ -1359,7 +1353,6 @@ void loop_element_lengths(float lengths, float additional_time_ms, int speed_wpm
           check_dit_paddle();
         }
       }
-
     }
 #ifdef FEATURE_MEMORIES
     check_the_memory_buttons();
@@ -1606,12 +1599,6 @@ void command_mode ()
         break;
       case 11122: 
         play_memory(2); 
-        break;
-      case 11112: 
-        play_memory(3); 
-        break;
-      case 11111: 
-        play_memory(4); 
         break;
 #endif
       case 9: 
@@ -3688,73 +3675,24 @@ void command_program_memory()
   Serial.print(F("command_program_memory: cw_char: "));
   Serial.println(cw_char);
 #endif
-  if (cw_char > 0) {  //aaaaa
-    if ((cw_char == 12222) && (number_of_memories > 9)) { // we have a 1, this could be 1 or 1x
-      cw_char = get_cw_input_from_user(p_command_single_digit_wait_time);  // give the user 3 seconds to send another number
-      switch (cw_char) {
-      case 0: 
-        program_memory(0); 
-        break;    // we didn't get anything, it's a 1   
-      case 22222: 
-        program_memory(9); 
-        break; 
-      case 12222: 
-        program_memory(10); 
-        break;
-      case 11222: 
-        program_memory(11); 
-        break;
-      case 11122: 
-        program_memory(12); 
-        break;
-      case 11112: 
-        program_memory(13); 
-        break;
+  if (cw_char > 0) {  
+    switch (cw_char) {
+    case 12222: 
+      program_memory(0); 
+      break;      // 1 = memory 0
+    case 11222: 
+      program_memory(1); 
+      break;
+    case 11122: 
+      program_memory(2); 
+      break;
+    case 11112: 
+      program_memory(3); 
+      break;
       case 11111: 
-        program_memory(14); 
-        break;
-      case 21111: 
-        program_memory(15); 
-        break;
-      default: 
-        send_char('?',NORMAL); 
-        break;
-      }
-    } 
-    else {    
-      switch (cw_char) {
-      case 12222: 
-        program_memory(0); 
-        break;      // 1 = memory 0
-      case 11222: 
-        program_memory(1); 
-        break;
-      case 11122: 
-        program_memory(2); 
-        break;
-      case 11112: 
-        program_memory(3); 
-        break;
-      case 11111: 
-        program_memory(4); 
-        break;
-      case 21111: 
-        program_memory(5); 
-        break;
-      case 22111: 
-        program_memory(6); 
-        break;
-      case 22211: 
-        program_memory(7); 
-        break;
-      case 22221: 
-        program_memory(8); 
-        break;
-        //case 22222: program_memory(9); break;
-      default: 
-        send_char('?',NORMAL); 
-        break;
-      }
+    default: 
+      send_char('?',NORMAL); 
+      break;
     }
   }
 }
@@ -3941,7 +3879,7 @@ void program_memory(int memory_number)
     paddle_hit = 0;
     loop1 = 1;
 
-    while (loop1) {
+    while (loop1) {  // get a word, up to space
       check_paddles();
       if (dit_buffer) {
         send_dit(MANUAL_SENDING);
