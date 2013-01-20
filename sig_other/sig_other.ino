@@ -1542,9 +1542,14 @@ void command_mode ()
         command_dah_to_dit_ratio_adjust(); 
         break;                        // J - dah to dit ratio adjust
 #ifdef FEATURE_MEMORIES
+
+*/
       case 1221: 
         command_program_memory(); 
         break;                       // P - program a memory
+        
+/*
+        
       case 21: // N - paddle mode toggle
         if (paddle_mode == PADDLE_NORMAL) {
           paddle_mode = PADDLE_REVERSE;
@@ -3689,10 +3694,6 @@ void command_program_memory()
     case 11122: 
       program_memory(2); 
       break;
-    case 11112: 
-      program_memory(3); 
-      break;
-      case 11111: 
     default: 
       send_char('?',NORMAL); 
       break;
