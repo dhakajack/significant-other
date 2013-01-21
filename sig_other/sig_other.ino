@@ -1931,6 +1931,7 @@ void send_dahs(int dahs)
 void send_char(byte cw_char, byte omit_letterspace)
 {
   int morse_length = 6;  //morse code characters have at most six morsebits (dits/dahs)
+                         //except for prosigns CL and BK - if we want to store these, need to make exception
                          //this presumes that no control codes (values > 127) are sent to send_char
 #ifdef DEBUG_SEND_CHAR
   Serial.print(F("send_char: called with cw_char:"));
@@ -2880,189 +2881,138 @@ int convert_cw_number_to_ascii (long number_in)
 {
 
   switch (number_in) {
-  case 12: 
+  case 5: 
     return 65; 
     break;         // A
-  case 2111: 
+  case 24: 
     return 66; 
     break;
-  case 2121: 
+  case 26: 
     return 67; 
     break;
-  case 211: 
+  case 12: 
     return 68; 
     break;
-  case 1: 
+  case 2: 
     return 69; 
     break;
-  case 1121: 
+  case 18: 
     return 70; 
     break;
-  case 221: 
+  case 14: 
     return 71; 
     break;
-  case 1111: 
+  case 16: 
     return 72; 
     break;
-  case 11: 
+  case 4: 
     return 73; 
     break;
-  case 1222: 
+  case 23: 
     return 74; 
     break;
-  case 212: 
+  case 13: 
     return 75; 
     break;
-  case 1211: 
+  case 20: 
     return 76; 
     break;
-  case 22: 
+  case 7: 
     return 77; 
     break;
-  case 21: 
+  case 6: 
     return 78; 
     break;
-  case 222: 
+  case 15: 
     return 79; 
     break;
-  case 1221: 
+  case 22: 
     return 80; 
     break;
-  case 2212: 
+  case 29: 
     return 81; 
     break;
-  case 121: 
+  case 10: 
     return 82; 
     break;
-  case 111: 
+  case 8: 
     return 83; 
     break;
-  case 2: 
+  case 3: 
     return 84; 
     break;
-  case 112: 
+  case 9: 
     return 85; 
     break;
-  case 1112: 
+  case 17: 
     return 86; 
     break;
-  case 122: 
+  case 11: 
     return 87; 
     break;
-  case 2112: 
+  case 25: 
     return 88; 
     break;
-  case 2122: 
+  case 27: 
     return 89; 
     break;
-  case 2211: 
+  case 28: 
     return 90; 
     break;    // Z
 
-  case 22222: 
+  case 63: 
     return 48; 
     break;    // 0
-  case 12222: 
+  case 47: 
     return 49; 
     break;
-  case 11222: 
+  case 39: 
     return 50; 
     break;
-  case 11122: 
+  case 35: 
     return 51; 
     break;
-  case 11112: 
+  case 33: 
     return 52; 
     break;
-  case 11111: 
+  case 32: 
     return 53; 
     break;
-  case 21111: 
+  case 48: 
     return 54; 
     break;
-  case 22111: 
+  case 56: 
     return 55; 
     break;
-  case 22211: 
+  case 60: 
     return 56; 
     break;
-  case 22221: 
+  case 62: 
     return 57; 
     break;
 
-  case 112211: 
+  case 76: 
     return 63; 
     break;  // ?
-  case 21121: 
+  case 50: 
     return 47; 
     break;   // /
-  case 21112: 
+  case 49: 
     return 45; 
     break;   // -
-  case 221122: 
+  case 115: 
     return 44; 
     break;  // ,
-  case 2111212: 
-    return 36; 
-    break; // BK (store as ascii $)
-
-  case 222222: 
+  case 64: 
     return 92; 
     break;  // special hack; six dahs = \ (backslash)
-
-  case 9: 
+  case 0: 
     return 32; 
-    break;       // special 9 = space
-
-#ifdef OPTION_NON_ENGLISH_EXTENSIONS
-  case 12212: 
-    return 197; 
-    break;   // Å   - customize for your locality  ( 1 = dit, 2 = dah, return code is ASCII code )
-  case 1212: 
-    return 196; 
-    break;    // Ä   - customize for your locality
-    //case 12212: return 192; break; // À   - customize for your locality
-    //case 1212: return 197; break;  // Ä   - customize for your locality
-    //case 1212: return 198; break;  // Æ   - customize for your locality
-  case 21211: 
-    return 199; 
-    break;   // Ç
-  case 11221: 
-    return 208; 
-    break;   // Ð
-  case 2222: 
-    return 138; 
-    break;    // Š
-  case 12112: 
-    return 200; 
-    break;   // È
-  case 11211: 
-    return 201; 
-    break;   // É
-  case 221121: 
-    return 142; 
-    break;  // Ž
-  case 22122: 
-    return 209; 
-    break;   // Ñ
-  case 2221: 
-    return 214; 
-    break;    // Ö 
-    //case 2221: return 211; break;  // Ó   - customize for your locality  ( 1 = dit, 2 = dah, return code is ASCII code )
-    //case 2221: return 216; break;  // Ø   - customize for your locality
-  case 1122: 
-    return 220; 
-    break;    // Ü 
-  case 111111: 
-    return 223; 
-    break;   // ß
-#endif //OPTION_NON_ENGLISH_EXTENSIONS
-
+    break;       // special 0 = space
   default: 
     return 254; 
     break;
   }
-
 }
 
 #ifdef DEBUG_MEMORYCHECK
@@ -3279,6 +3229,8 @@ void check_button0()
 #ifdef FEATURE_MEMORIES
 void play_memory(byte memory_number)
 {
+  
+  char ascii_letter = ' ';
 
   if (memory_number > (number_of_memories - 1)) {
     boop();
@@ -3296,10 +3248,6 @@ void play_memory(byte memory_number)
 #endif  
 
   button0_buffer = 0;
-
-  //  #ifdef DEBUG_MEMORYCHECK
-  //  memorycheck();
-  //  #endif
 
   if (machine_mode == NORMAL) {
 #ifdef FEATURE_SERIAL
@@ -3334,11 +3282,16 @@ void play_memory(byte memory_number)
 #endif
 
         if (machine_mode == NORMAL) {
+          
+        //move this into feature_serial later, when characters will not be displayed on lcd...
+        ascii_letter = convert_cw_number_to_ascii(eeprom_byte_read);
+          
 #ifdef FEATURE_SERIAL
-          Serial.write(eeprom_byte_read);
+          Serial.write(ascii_letter);
 #endif //FEATURE_SERIAL
+
           if (lcd_send_echo) {
-            display_scroll_print_char(eeprom_byte_read); 
+            display_scroll_print_char(ascii_letter); 
             service_display();
           }     
         }
