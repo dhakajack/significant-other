@@ -2877,15 +2877,15 @@ void serial_status() {
 #endif
 //---------------------------------------------------------------------
 
-int convert_cw_number_to_ascii (long number_in)
+char convert_cw_number_to_ascii (byte number_in)
 {
 
   switch (number_in) {
   case 5: 
-    return 65; 
-    break;         // A
+    return 65; // A
+    break;         
   case 24: 
-    return 66; 
+    return 66;
     break;
   case 26: 
     return 67; 
@@ -2990,7 +2990,6 @@ int convert_cw_number_to_ascii (long number_in)
   case 62: 
     return 57; 
     break;
-
   case 76: 
     return 63; 
     break;  // ?
@@ -3003,6 +3002,8 @@ int convert_cw_number_to_ascii (long number_in)
   case 115: 
     return 44; 
     break;  // ,
+  case 85:
+    return 46;
   case 64: 
     return 92; 
     break;  // special hack; six dahs = \ (backslash)
