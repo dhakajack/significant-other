@@ -210,16 +210,16 @@
 #define SPEED_NORMAL 0
 #define SPEED_QRSS 1
 
-#define SERIAL_SEND_BUFFER_SPECIAL_START 13
-#define SERIAL_SEND_BUFFER_WPM_CHANGE 14        // was 200
-#define SERIAL_SEND_BUFFER_TIMED_KEY_DOWN 17    // was 203
-#define SERIAL_SEND_BUFFER_TIMED_WAIT 18        // was 204
-#define SERIAL_SEND_BUFFER_NULL 19              // was 205
-#define SERIAL_SEND_BUFFER_PROSIGN 20           // was 206
-#define SERIAL_SEND_BUFFER_HOLD_SEND 21         // was 207
-#define SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE 22 // was 208
-#define SERIAL_SEND_BUFFER_MEMORY_NUMBER 23 //23     // was  210
-#define SERIAL_SEND_BUFFER_SPECIAL_END 24
+#define SERIAL_SEND_BUFFER_SPECIAL_START     129  
+#define SERIAL_SEND_BUFFER_WPM_CHANGE        130
+#define SERIAL_SEND_BUFFER_TIMED_KEY_DOWN    131
+#define SERIAL_SEND_BUFFER_TIMED_WAIT        132
+#define SERIAL_SEND_BUFFER_NULL              133
+#define SERIAL_SEND_BUFFER_PROSIGN           134
+#define SERIAL_SEND_BUFFER_HOLD_SEND         135
+#define SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE 136
+#define SERIAL_SEND_BUFFER_MEMORY_NUMBER     137
+#define SERIAL_SEND_BUFFER_SPECIAL_END       138
 
 #define SERIAL_SEND_BUFFER_NORMAL 0
 #define SERIAL_SEND_BUFFER_TIMED_COMMAND 1
@@ -2959,7 +2959,6 @@ char convert_cw_number_to_ascii (byte number_in)
   case 28: 
     return 90; 
     break;    // Z
-
   case 63: 
     return 48; 
     break;    // 0
