@@ -137,7 +137,7 @@
 //#define DEBUG_VARIABLE_DUMP
 //#define DEBUG_BUTTONS
 //#define DEBUG_COMMAND_MODE
-#define DEBUG_GET_CW_INPUT_FROM_USER
+//#define DEBUG_GET_CW_INPUT_FROM_USER
 //#define DEBUG_POTENTIOMETER
 
 // Workaround for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34734
@@ -275,9 +275,9 @@ byte lcd_previous_status = LCD_CLEAR;
 byte lcd_scroll_buffer_dirty = 0;
 String lcd_scroll_buffer[lcd_rows];
 byte lcd_scroll_flag = 0;
-byte lcd_paddle_echo = 1;
-byte lcd_send_echo = 1;
-long lcd_paddle_echo_buffer = 0;
+byte lcd_paddle_echo = 1; // should sent dit/dahs echo to the lcd panel 1=yes
+byte lcd_send_echo = 1; 
+byte lcd_paddle_echo_buffer = 1;  // variable in which send dit/dah builds a character bit by bit
 unsigned long lcd_paddle_echo_buffer_decode_time = 0;
 
 #ifdef DEBUG_VARIABLE_DUMP
@@ -313,8 +313,9 @@ byte incoming_serial_byte;
 long serial_baud_rate;
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
 byte serial_backslash_command;
-byte cli_paddle_echo = 0;
-long cli_paddle_echo_buffer = 0;
+byte cli_paddle_echo = 0;  // should sent dit/dahs echo for display over the serial port? 1=yes
+                           // enabling this *and* the lcd_echo introduces latency at moderate code speeds
+byte cli_paddle_echo_buffer = 1;  // variable where send dit/dah builds a character, bit by bit
 unsigned long cli_paddle_echo_buffer_decode_time = 0;
 byte cli_prosign_flag = 0;
 byte cli_wait_for_cr_to_send_cw = 0;
@@ -675,13 +676,13 @@ void service_lcd_paddle_echo()
 
   static byte lcd_paddle_echo_space_sent = 1;
 
-  if ((lcd_paddle_echo_buffer) && (lcd_paddle_echo) && (millis() > lcd_paddle_echo_buffer_decode_time)) {
+  if ((lcd_paddle_echo_buffer > 1) && (lcd_paddle_echo) && (millis() > lcd_paddle_echo_buffer_decode_time)) {
     display_scroll_print_char(byte(convert_cw_number_to_ascii(lcd_paddle_echo_buffer)));
-    lcd_paddle_echo_buffer = 0;
+    lcd_paddle_echo_buffer = 1;
     lcd_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
     lcd_paddle_echo_space_sent = 0;
   }
-  if ((lcd_paddle_echo_buffer == 0) && (lcd_paddle_echo) && (millis() > (lcd_paddle_echo_buffer_decode_time + (float(1200/wpm)*(length_wordspace-length_letterspace)))) && (!lcd_paddle_echo_space_sent)) {
+  if ((lcd_paddle_echo_buffer == 1) && (lcd_paddle_echo) && (millis() > (lcd_paddle_echo_buffer_decode_time + (float(1200/wpm)*(length_wordspace-length_letterspace)))) && (!lcd_paddle_echo_space_sent)) {
     display_scroll_print_char(' ');
     lcd_paddle_echo_space_sent = 1;
   }
@@ -1171,10 +1172,9 @@ void send_dit(byte sending_type)
 //trigger dit sending, but also build lcd and cli (serial) paddle echo buffers bit by bit
 
 {
-
   // notes: key_compensation is a straight x mS lengthening or shortening of the key down time
   //        weighting is
-
+  
   unsigned int character_wpm = wpm;
 #ifdef FEATURE_FARNSWORTH
   if ((sending_type == AUTOMATIC_SENDING) && (wpm_farnsworth > wpm)) {
@@ -1192,11 +1192,6 @@ void send_dit(byte sending_type)
   dit_end_time = millis();
 #endif
   tx_and_sidetone_key(0,sending_type);
-
-  //  if (keyer_mode == IAMBIC_A) {
-  //    dit_buffer = 0;
-  //    dah_buffer = 0;
-  //  }
   loop_element_lengths((2.0-(float(weighting)/50)),(-1.0*keying_compensation),character_wpm,sending_type);
 #ifdef FEATURE_AUTOSPACE
   if ((sending_type == MANUAL_SENDING) && (autospace_active)) {
@@ -1209,25 +1204,24 @@ void send_dit(byte sending_type)
 
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
   if ((cli_paddle_echo) && (sending_type == MANUAL_SENDING)) {
-    cli_paddle_echo_buffer = (cli_paddle_echo_buffer * 10) + 1;
+    cli_paddle_echo_buffer = cli_paddle_echo_buffer << 1;
+    if (cli_paddle_echo_buffer > 127) {
+      cli_paddle_echo_buffer = 76; // 01001100b = ?
+    }
     cli_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
 #endif
 
   if ((lcd_paddle_echo) && (sending_type == MANUAL_SENDING)) {
-    lcd_paddle_echo_buffer = (lcd_paddle_echo_buffer * 10) + 1;
+    lcd_paddle_echo_buffer = lcd_paddle_echo_buffer << 1;
+    if (lcd_paddle_echo_buffer > 127) {
+      lcd_paddle_echo_buffer = 76; // 01001100b = ?
+    }
     lcd_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
 
   being_sent = SENDING_NOTHING;
   last_sending_type = sending_type;
-
-  //  if ((keyer_mode == IAMBIC_A) && (iambic_flag)) {
-  //    iambic_flag = 0;
-  //    dit_buffer = 0;
-  //    dah_buffer = 0;
-  //  } 
-
   check_paddles();
 
 }
@@ -1256,10 +1250,6 @@ void send_dah(byte sending_type)
   dah_end_time = millis();
 #endif
   tx_and_sidetone_key(0,sending_type);
-  //  if (keyer_mode == IAMBIC_A) {
-  //    dit_buffer = 0;
-  //    dah_buffer = 0;
-  //  }
   loop_element_lengths((4.0-(3.0*(float(weighting)/50))),(-1.0*keying_compensation),character_wpm,sending_type);
 #ifdef FEATURE_AUTOSPACE
   if ((sending_type == MANUAL_SENDING) && (autospace_active)) {
@@ -1272,21 +1262,23 @@ void send_dah(byte sending_type)
 
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
   if ((cli_paddle_echo) && (sending_type == MANUAL_SENDING)) {
-    cli_paddle_echo_buffer = (cli_paddle_echo_buffer * 10) + 2;
+    cli_paddle_echo_buffer = cli_paddle_echo_buffer << 1;
+    cli_paddle_echo_buffer = cli_paddle_echo_buffer | 1;
+    if (cli_paddle_echo_buffer > 127) {
+      cli_paddle_echo_buffer = 76; // 01001100b = ?
+    }
     cli_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
 #endif
 
   if ((lcd_paddle_echo) && (sending_type == MANUAL_SENDING)) {
-    lcd_paddle_echo_buffer = (lcd_paddle_echo_buffer * 10) + 2;
+    lcd_paddle_echo_buffer = lcd_paddle_echo_buffer << 1;
+    lcd_paddle_echo_buffer = lcd_paddle_echo_buffer | 1;
+    if (lcd_paddle_echo_buffer > 127) {
+      lcd_paddle_echo_buffer = 76; // 01001100b = ?
+    }
     lcd_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
   }
-
-  //  if ((keyer_mode == IAMBIC_A) && (iambic_flag)) {
-  //    iambic_flag = 0;
-  //    //dit_buffer = 0;
-  //    dah_buffer = 0;
-  //  }
 
   check_paddles();
 
@@ -2554,20 +2546,19 @@ void service_serial_paddle_echo()
 // and sends that character to serial out, then resets the buffer
 
 {
-
 #ifdef DEBUG_LOOP
   Serial.println(F("loop: entering service_serial_paddle_echo"));
 #endif          
 
   static byte cli_paddle_echo_space_sent = 1;
 
-  if ((cli_paddle_echo_buffer) && (cli_paddle_echo) && (millis() > cli_paddle_echo_buffer_decode_time)) {
+  if ((cli_paddle_echo_buffer > 1) && (cli_paddle_echo) && (millis() > cli_paddle_echo_buffer_decode_time)) {
     Serial.write(byte(convert_cw_number_to_ascii(cli_paddle_echo_buffer)));
-    cli_paddle_echo_buffer = 0;
+    cli_paddle_echo_buffer = 1;
     cli_paddle_echo_buffer_decode_time = millis() + (float(600/wpm)*length_letterspace);
     cli_paddle_echo_space_sent = 0;
   }
-  if ((cli_paddle_echo_buffer == 0) && (cli_paddle_echo) && (millis() > (cli_paddle_echo_buffer_decode_time + (float(1200/wpm)*(length_wordspace-length_letterspace)))) && (!cli_paddle_echo_space_sent)) {
+  if ((cli_paddle_echo_buffer == 1) && (cli_paddle_echo) && (millis() > (cli_paddle_echo_buffer_decode_time + (float(1200/wpm)*(length_wordspace-length_letterspace)))) && (!cli_paddle_echo_space_sent)) {
     Serial.write(" ");
     cli_paddle_echo_space_sent = 1;
   }
