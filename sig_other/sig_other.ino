@@ -137,7 +137,7 @@
 //#define DEBUG_VARIABLE_DUMP
 //#define DEBUG_BUTTONS
 //#define DEBUG_COMMAND_MODE
-//#define DEBUG_GET_CW_INPUT_FROM_USER
+#define DEBUG_GET_CW_INPUT_FROM_USER
 //#define DEBUG_POTENTIOMETER
 
 // Workaround for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34734
@@ -530,9 +530,9 @@ void setup()
 
     //delay(201);
     lcd_center_print_timed("h",1,4000);
-    send_char('H',NORMAL);
+    send_char(16,NORMAL);
     lcd_center_print_timed("hi",1,4000);
-    send_char('I',NORMAL);
+    send_char(4,NORMAL);
 
     sidetone_mode = oldSideTone; 
     key_tx = oldKey;     
@@ -558,7 +558,7 @@ void loop()
 #ifdef FEATURE_MEMORIES
   if (machine_mode == BEACON) {
     delay(201);
-    while (machine_mode == BEACON) {  // if we're in beacon mode, just keep playing memory 1
+    while (machine_mode == BEACON) {  // if we're in beacon mode, just keep playing memory 0
       if (!send_buffer_bytes) {
         play_memory(0);
       }
@@ -586,9 +586,7 @@ void loop()
 #endif //FEATURE_SERIAL
 
     service_send_buffer();
-
     check_potentiometer();
-
     check_for_dirty_configuration();
 
 #ifdef FEATURE_DEAD_OP_WATCHDOG
@@ -602,7 +600,6 @@ void loop()
     service_display();
 
   }
-
 }
 
 // Subroutines --------------------------------------------------------------------------------------------
@@ -1400,28 +1397,28 @@ int get_cw_input_from_user(unsigned int exit_time_seconds) {
 
   byte looping = 1;
   byte paddle_hit = 0;
-  int cw_char = 0;
+  byte cw_char = 1;
   unsigned long last_element_time = 0;
   byte button_hit = 0;
   unsigned long entry_time = millis();
 
   while (looping) {
     check_potentiometer();
-
     check_paddles();
 
     if (dit_buffer) {
       send_dit(MANUAL_SENDING);
       dit_buffer = 0;
       paddle_hit = 1;
-      cw_char = (cw_char * 10) + 1;
+      cw_char = cw_char << 1;
       last_element_time = millis();
     }
     if (dah_buffer) {
       send_dah(MANUAL_SENDING);
       dah_buffer = 0;
       paddle_hit = 1;
-      cw_char = (cw_char * 10) + 2;
+      cw_char = cw_char << 1;
+      cw_char = cw_char | 1;
       last_element_time = millis();
     }
     if ((paddle_hit) && (millis() > (last_element_time + (float(600/wpm) * length_letterspace)))) {
@@ -1433,6 +1430,10 @@ int get_cw_input_from_user(unsigned int exit_time_seconds) {
 
     if ((!paddle_hit) && (exit_time_seconds) && ((millis() - entry_time) > (exit_time_seconds * 1000))) { // if we were passed an exit time and no paddle was hit, blow out of here
       return 0;
+    }
+    
+    if (cw_char >  127){
+      return 0; 
     }
 
     while (analogbuttonread(0)) {    // hit the button to get out of command mode if no paddle was hit
@@ -1447,9 +1448,9 @@ int get_cw_input_from_user(unsigned int exit_time_seconds) {
   }
   if (button_hit) {
 #ifdef DEBUG_GET_CW_INPUT_FROM_USER
-    Serial.println(F("get_cw_input_from_user: button_hit exit 9"));
+    Serial.println(F("get_cw_input_from_user: button_hit exit 128"));
 #endif
-    return 9;
+    return 128;
   } 
   else {
 #ifdef DEBUG_GET_CW_INPUT_FROM_USER
@@ -1471,7 +1472,7 @@ void command_mode ()
   Serial.println(F("command_mode: entering"));
 #endif
 
-  int cw_char;
+  byte cw_char;
   byte stay_in_command_mode = 1;
   byte speed_mode_before = speed_mode;
   speed_mode = SPEED_NORMAL;                 // put us in normal speed mode (life is too short to do command mode in QRSS)
@@ -1495,121 +1496,23 @@ void command_mode ()
 #endif
     if (cw_char > 0) {              // do the command      
       switch (cw_char) {
-      case 12: // A - Iambic mode
+      case 5: // 101b - A - Iambic mode
         keyer_mode = IAMBIC_A;
         keyer_mode_before = IAMBIC_A;
         config_dirty = 1;
         lcd_center_print_timed("Iambic A", 0, default_display_msg_delay);
         send_dit(AUTOMATIC_SENDING);
         break; 
-      case 2111: // B - Iambic mode
+      case 24: // 11000b - Iambic mode
         keyer_mode = IAMBIC_B;
         keyer_mode_before = IAMBIC_B;
         config_dirty = 1;
         lcd_center_print_timed("Iambic B", 0, default_display_msg_delay);      
         break; 
-        
-      /*  
-      case 211: // D - Ultimatic mode
-        keyer_mode = ULTIMATIC;
-        keyer_mode_before = ULTIMATIC;
-        config_dirty = 1;
-        lcd_center_print_timed("Ultimatic", 0, default_display_msg_delay);                  
-        send_dit(AUTOMATIC_SENDING);
-        break; 
-      case 1121: 
-        command_sidetone_freq_adj(); 
-        break;                    // F - adjust sidetone frequency
-      case 221: // G - switch to buG mode
-        keyer_mode = BUG;
-        keyer_mode_before = BUG;
-        config_dirty = 1;
-        lcd_center_print_timed("Bug", 0, default_display_msg_delay);     
-        send_dit(AUTOMATIC_SENDING);
-        break;  
-      case 11:                                                     // I - toggle TX enable / disable
-        if (command_mode_disable_tx) {
-          command_mode_disable_tx = 0;
-          lcd_center_print_timed("TX On", 0, default_display_msg_delay);        
-        } 
-        else {
-          command_mode_disable_tx = 1;
-          lcd_center_print_timed("TX Off", 0, default_display_msg_delay);          
-        }
-        send_dit(AUTOMATIC_SENDING);
-        break;
-      case 1222: 
-        command_dah_to_dit_ratio_adjust(); 
-        break;                        // J - dah to dit ratio adjust
-#ifdef FEATURE_MEMORIES
-
-*/
-      case 1221: 
+      case 22: 
         command_program_memory(); 
-        break;                       // P - program a memory
-        
-/*
-        
-      case 21: // N - paddle mode toggle
-        if (paddle_mode == PADDLE_NORMAL) {
-          paddle_mode = PADDLE_REVERSE;
-          lcd_center_print_timed("Paddle Reverse", 0, default_display_msg_delay);
-        } 
-        else {
-          lcd_center_print_timed("Paddle Normal", 0, default_display_msg_delay);          
-          paddle_mode = PADDLE_NORMAL;
-        }
-        config_dirty = 1;
-        send_dit(AUTOMATIC_SENDING);
-        break;  
-#endif
-      case 222: // O - toggle sidetone on and off
-        if ((sidetone_mode == SIDETONE_ON) || (sidetone_mode == SIDETONE_PADDLE_ONLY)) {
-          lcd_center_print_timed("Sidetone Off", 0, default_display_msg_delay);
-          sidetone_mode = SIDETONE_OFF;
-        } 
-        else {
-          lcd_center_print_timed("Sidetone On", 0, default_display_msg_delay);
-          sidetone_mode = SIDETONE_ON;
-        }
-        config_dirty = 1;
-        send_dit(AUTOMATIC_SENDING);
-        break; 
-      case 2: 
-        command_tuning_mode(); 
-        break;                             // T - tuning mode                   
-      case 2112: 
-        stay_in_command_mode = 0; 
-        break;                       // X - exit command mode
-#ifdef FEATURE_AUTOSPACE
-      case 2211: // Z - Autospace
-        if (autospace_active) {
-          autospace_active = 0;
-          config_dirty = 1;
-          lcd_center_print_timed("Autospace Off", 0, default_display_msg_delay);
-          send_dit(AUTOMATIC_SENDING);
-        } 
-        else {
-          autospace_active = 1;
-          config_dirty = 1;
-          lcd_center_print_timed("Autospace On", 0, default_display_msg_delay);
-          send_dit(AUTOMATIC_SENDING);
-        }
-        break;
-#endif
-#ifdef FEATURE_MEMORIES
-      case 12222: 
-        play_memory(0); 
-        break;
-      case 11222: 
-        play_memory(1); 
-        break;
-      case 11122: 
-        play_memory(2); 
-        break;
-#endif
-      */
-      case 9: 
+        break;                       // 10110 - P - program a memory
+      case 128: 
         stay_in_command_mode = 0; 
         break;                          // button was hit - exit
       default: // unknown command, send a ?
@@ -2025,8 +1928,10 @@ void send_dahs(int dahs)
 
 //-------------------------------------------------------------------------------------------------------
 
-void send_char(char cw_char, byte omit_letterspace)
+void send_char(byte cw_char, byte omit_letterspace)
 {
+  int morse_length = 6;  //morse code characters have at most six morsebits (dits/dahs)
+                         //this presumes that no control codes (values > 127) are sent to send_char
 #ifdef DEBUG_SEND_CHAR
   Serial.print(F("send_char: called with cw_char:"));
   Serial.print(cw_char);
@@ -2035,388 +1940,24 @@ void send_char(char cw_char, byte omit_letterspace)
   }
   Serial.println();
 #endif
-
-  if ((cw_char == 10) || (cw_char == 13)) { 
-    return; 
-  }  // don't attempt to send carriage return or line feed
-  switch (cw_char) {
-  case 'A': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case 'B': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(3); 
-    break;
-  case 'C': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case 'D': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(2); 
-    break;
-  case 'E': 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case 'F': 
-    send_dits(2); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case 'G': 
-    send_dahs(2); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case 'H': 
-    send_dits(4); 
-    break;
-  case 'I': 
-    send_dits(2); 
-    break;
-  case 'J': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(3); 
-    break;
-  case 'K': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case 'L': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(2); 
-    break;
-  case 'M': 
-    send_dahs(2); 
-    break;
-  case 'N': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case 'O': 
-    send_dahs(3); 
-    break;
-  case 'P': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(2); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case 'Q': 
-    send_dahs(2); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case 'R': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case 'S': 
-    send_dits(3); 
-    break;
-  case 'T': 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case 'U': 
-    send_dits(2); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case 'V': 
-    send_dits(3); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case 'W': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(2); 
-    break;
-  case 'X': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(2); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case 'Y': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(2); 
-    break;
-  case 'Z': 
-    send_dahs(2); 
-    send_dits(2); 
-    break;
-
-  case '0': 
-    send_dahs(5); 
-    break;
-  case '1': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(4); 
-    break;
-  case '2': 
-    send_dits(2); 
-    send_dahs(3); 
-    break;
-  case '3': 
-    send_dits(3); 
-    send_dahs(2); 
-    break;
-  case '4': 
-    send_dits(4); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case '5': 
-    send_dits(5); 
-    break;
-  case '6': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(4); 
-    break;
-  case '7': 
-    send_dahs(2); 
-    send_dits(3); 
-    break;
-  case '8': 
-    send_dahs(3); 
-    send_dits(2); 
-    break;
-  case '9': 
-    send_dahs(4); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-
-  case '=': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(3); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case '/': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(2); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case ' ': 
-    loop_element_lengths((length_wordspace-length_letterspace-2),0,wpm,AUTOMATIC_SENDING); 
-    break;
-  case '*': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(3); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;    // using asterisk for BK
-    //case '&': send_dit(AUTOMATIC_SENDING); loop_element_lengths(3); send_dits(3); break;
-  case '.': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case ',': 
-    send_dahs(2); 
-    send_dits(2); 
-    send_dahs(2); 
-    break;
-  case '\'': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(4); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;                   // apostrophe
-  case '!': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(2); 
-    break;
-  case '(': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(2); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case ')': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(2); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case '&': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(3); 
-    break;
-  case ':': 
-    send_dahs(3); 
-    send_dits(3); 
-    break;
-  case ';': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case '+': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case '-': 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(4); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case '_': 
-    send_dits(2); 
-    send_dahs(2); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case '"': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(2); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case '$': 
-    send_dits(3); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(2); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;
-  case '@': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dahs(2); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;
-  case '<': 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    break;     // AR
-  case '>': 
-    send_dits(3); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break;               // SK
-  case '\n': 
-    break;
-  case '\r': 
-    break;
-
-#ifdef OPTION_NON_ENGLISH_EXTENSIONS
-  case 192: 
-    send_dit(AUTOMATIC_SENDING);
-    send_dahs(2);
-    send_dit(AUTOMATIC_SENDING);
-    send_dah(AUTOMATIC_SENDING); 
-    break; // 'À'
-  case 194: 
-    send_dit(AUTOMATIC_SENDING);
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break; // 'Â'
-  case 197: 
-    send_dit(AUTOMATIC_SENDING);
-    send_dahs(2);
-    send_dit(AUTOMATIC_SENDING);
-    send_dah(AUTOMATIC_SENDING); 
-    break; // 'Å' / 
-  case 196: 
-    send_dit(AUTOMATIC_SENDING);
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break; // 'Ä'
-  case 198: 
-    send_dit(AUTOMATIC_SENDING);
-    send_dah(AUTOMATIC_SENDING); 
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    break; // 'Æ'
-  case 199: 
-    send_dah(AUTOMATIC_SENDING);
-    send_dit(AUTOMATIC_SENDING); 
-    send_dah(AUTOMATIC_SENDING); 
-    send_dits(2); 
-    break;  // 'Ç'
-  case 208: 
-    send_dits(2);
-    send_dahs(2);
-    send_dit(AUTOMATIC_SENDING);
-    break;  // 'Ð'
-  case 138: 
-    send_dahs(4);
-    break; // 'Š'
-  case 200: 
-    send_dit(AUTOMATIC_SENDING);
-    send_dah(AUTOMATIC_SENDING);
-    send_dits(2);
-    send_dah(AUTOMATIC_SENDING); 
-    break; // 'È'
-  case 201: 
-    send_dits(2);
-    send_dah(AUTOMATIC_SENDING);
-    send_dits(2);
-    break; // 'É'
-  case 142: 
-    send_dahs(2);
-    send_dits(2);
-    send_dah(AUTOMATIC_SENDING);
-    send_dit(AUTOMATIC_SENDING);
-    break; // 'Ž'
-  case 209: 
-    send_dahs(2);
-    send_dit(AUTOMATIC_SENDING);
-    send_dahs(2);
-    break; // 'Ñ'
-  case 214: 
-    send_dahs(3);
-    send_dit(AUTOMATIC_SENDING);
-    break; // 'Ö'
-  case 216: 
-    send_dahs(3);
-    send_dit(AUTOMATIC_SENDING);
-    break; // 'Ø'
-  case 211: 
-    send_dahs(3);
-    send_dit(AUTOMATIC_SENDING);
-    break; // 'Ó'
-  case 220: 
-    send_dits(2);
-    send_dahs(2);
-    break; // 'Ü'
-  case 223: 
-    send_dits(6);
-    break; // 'ß'
-#endif //OPTION_NON_ENGLISH_EXTENSIONS      
-
-  case '|': 
-    loop_element_lengths(0.5,0,wpm,AUTOMATIC_SENDING); 
-    return; 
-    break;
-  default: 
-    send_dits(2); 
-    send_dahs(2); 
-    send_dits(2); 
-    break; 
+  if(!cw_char){ //space is represented as a zero
+    loop_element_lengths((length_wordspace-length_letterspace-2),0,wpm,AUTOMATIC_SENDING);
+  }
+  else {
+    while(!(cw_char & 64)) {  // a sendable character has value < 128 
+      cw_char = cw_char << 1;   // nibble to the start bit
+      morse_length--;
+    }
+    while(morse_length) {
+      if(cw_char & 32) {       // crank the bits leftward for the length in dits/dahs of the character
+        send_dah(AUTOMATIC_SENDING);
+      }
+      else {
+        send_dit(AUTOMATIC_SENDING);
+      }
+      cw_char = cw_char << 1;
+      morse_length--;
+    } 
   } 
   if (omit_letterspace != OMIT_LETTERSPACE) {
     loop_element_lengths((length_letterspace-1),0,wpm,AUTOMATIC_SENDING); //this is minus one because send_dit and send_dah have a trailing element space
@@ -3677,7 +3218,7 @@ void serial_program_memory()
 #ifdef FEATURE_MEMORIES
 void command_program_memory()
 {
-  int cw_char;
+  byte cw_char;
   cw_char = get_cw_input_from_user(0);            // get another cw character from the user to find out which memory number
 #ifdef DEBUG_COMMAND_MODE
   Serial.print(F("command_program_memory: cw_char: "));
@@ -3685,14 +3226,14 @@ void command_program_memory()
 #endif
   if (cw_char > 0) {  
     switch (cw_char) {
-    case 12222: 
+    case 47: 
       program_memory(0); 
-      break;      // 1 = memory 0
-    case 11222: 
-      program_memory(1); 
+      break;      // 1 = memory 0; 101111b
+    case 39: 
+      program_memory(1);  // 100111b
       break;
-    case 11122: 
-      program_memory(2); 
+    case 35: 
+      program_memory(2);  //100011b
       break;
     default: 
       send_char('?',NORMAL); 
@@ -3848,11 +3389,6 @@ void play_memory(byte memory_number)
 void program_memory(int memory_number)
 {
 
-  if (memory_number > (number_of_memories-1)) {
-    boop();
-    return;
-  }
-
   String lcd_print_string;
   lcd_print_string.concat("Pgm Memory ");
   lcd_print_string.concat(memory_number+1);
@@ -3865,7 +3401,7 @@ void program_memory(int memory_number)
   byte loop2 = 1;
   unsigned long last_element_time = 0;
   int memory_location_index = 0;
-  long cwchar = 0;
+  byte cwchar = 1;
   byte space_count = 0;
 
   dit_buffer = 0;
@@ -3873,23 +3409,23 @@ void program_memory(int memory_number)
   while ((digitalRead(paddle_left) == HIGH) && (digitalRead(paddle_right) == HIGH) && (!analogbuttonread(0))) { 
   }  // loop until user starts sending or hits the button
 
-  while (loop2) {
+  while (loop2) { // recording to memory
 
 #ifdef DEBUG_MEMORY_WRITE
     Serial.print(F("program_memory: entering loop2\r\n\r"));
 #endif
 
-    cwchar = 0;
+    cwchar = 1;
     paddle_hit = 0;
     loop1 = 1;
 
     while (loop1) {  // get a word, up to space
-      check_paddles();
+      check_paddles();             
       if (dit_buffer) {
         send_dit(MANUAL_SENDING);
         dit_buffer = 0;
         paddle_hit = 1;
-        cwchar = (cwchar * 10) + 1;
+        cwchar = cwchar << 1;
         last_element_time = millis();
 #ifdef DEBUG_MEMORY_WRITE
         Serial.write(".");
@@ -3899,7 +3435,8 @@ void program_memory(int memory_number)
         send_dah(MANUAL_SENDING);
         dah_buffer = 0;
         paddle_hit = 1;
-        cwchar = (cwchar * 10) + 2;
+        cwchar = cwchar << 1;
+        cwchar = cwchar | 1;
         last_element_time = millis();
 #ifdef DEBUG_MEMORY_WRITE
         Serial.write("_");
@@ -3908,10 +3445,14 @@ void program_memory(int memory_number)
       if ((paddle_hit) && (millis() > (last_element_time + (float(600/wpm) * length_letterspace)))) {   // this character is over
         loop1 = 0;
       }
+      
+      if (cwchar > 127) {
+         cwchar = 76;  // '?' = 1001100b
+      }
 
       if ((paddle_hit == 0) && (millis() > (last_element_time + ((float(1200/wpm) * length_wordspace)))) && (space_count < program_memory_limit_consec_spaces)) {   // we have a space
         loop1 = 0;
-        cwchar = 9;
+        cwchar = 0;
         space_count++;
       }
 
@@ -3921,12 +3462,12 @@ void program_memory(int memory_number)
       }
     }  //loop1
 
-    if (cwchar != 9) {
+    if (cwchar != 0) {
       space_count = 0;
     }
 
     // write the character to memory
-    if (cwchar > 0) {
+    if (cwchar != 1) {
 
 #ifdef DEBUG_MEMORY_WRITE
       Serial.print(F("program_memory: write_character_to_memory"));
@@ -3938,11 +3479,11 @@ void program_memory(int memory_number)
       Serial.print(memory_start[memory_number]+memory_location_index);
       Serial.print(F("   cwchar:"));
       Serial.print(cwchar);
-      Serial.print(F("   ascii to write:"));
-      Serial.println(convert_cw_number_to_ascii(cwchar));
+      //Serial.print(F("   ascii to write:"));
+      //Serial.println(convert_cw_number_to_ascii(cwchar));
 #endif
 
-      EEPROM.write((memory_start(memory_number)+memory_location_index),convert_cw_number_to_ascii(cwchar));
+      EEPROM.write((memory_start(memory_number)+memory_location_index),cwchar);
       memory_location_index++;
     }
 
@@ -3965,7 +3506,7 @@ void program_memory(int memory_number)
 
 #ifdef OPTION_PROG_MEM_TRIM_TRAILING_SPACES
   for (int x = (memory_location_index-1); x > 0; x--) {
-    if (EEPROM.read((memory_start(memory_number) + x)) == 32) {
+    if (EEPROM.read((memory_start(memory_number) + x)) == 0) {
       EEPROM.write((memory_start(memory_number) + x),255);
     } 
     else {
@@ -3976,7 +3517,9 @@ void program_memory(int memory_number)
 
   lcd_center_print_timed("Done", 0, default_display_msg_delay);
 
-  play_memory(memory_number);
+  //play_memory(memory_number);
+  boop;
+  boop;
 
   //  send_dit(AUTOMATIC_SENDING);
 
