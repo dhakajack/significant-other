@@ -2074,15 +2074,17 @@ void serial_qrss_mode()
 void service_send_buffer()
 {
   // send one character out of the send buffer
-  // values 200 and above do special things
-  // 200 - SERIAL_SEND_BUFFER_WPM_CHANGE - next two bytes are new speed
-  // 203 - SERIAL_SEND_BUFFER_TIMED_KEY_DOWN
-  // 204 - SERIAL_SEND_BUFFER_TIMED_WAIT
-  // 205 - SERIAL_SEND_BUFFER_NULL
-  // 206 - SERIAL_SEND_BUFFER_PROSIGN
-  // 207 - SERIAL_SEND_BUFFER_HOLD_SEND
-  // 208 - SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE
-  // 210 - SERIAL_SEND_BUFFER_MEMORY_NUMBER - next byte is memory number to play
+  // values 129 and above do special things
+  // SERIAL_SEND_BUFFER_SPECIAL_START     129  
+  // SERIAL_SEND_BUFFER_WPM_CHANGE        130
+  // SERIAL_SEND_BUFFER_TIMED_KEY_DOWN    131
+  // SERIAL_SEND_BUFFER_TIMED_WAIT        132
+  // SERIAL_SEND_BUFFER_NULL              133
+  // SERIAL_SEND_BUFFER_PROSIGN           134
+  // SERIAL_SEND_BUFFER_HOLD_SEND         135
+  // SERIAL_SEND_BUFFER_HOLD_SEND_RELEASE 136
+  // SERIAL_SEND_BUFFER_MEMORY_NUMBER     137
+  // SERIAL_SEND_BUFFER_SPECIAL_END       138
 
 #ifdef DEBUG_LOOP
   Serial.println(F("loop: entering service_send_buffer"));
