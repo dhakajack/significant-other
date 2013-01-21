@@ -549,6 +549,8 @@ void setup()
 // --------------------------------------------------------------------------------------------
 
 void loop()
+//Main event loop
+
 {  
 #ifdef OPTION_WATCHDOG_TIMER
   wdt_reset();
@@ -662,6 +664,9 @@ void service_display() {
 //-------------------------------------------------------------------------------------------------------
 
 void service_lcd_paddle_echo()
+// converts lcd_paddle_echo_buffer containing a single character code to ascii 
+// and sends that character to serial out, then resets the buffer
+
 {
 
 #ifdef DEBUG_LOOP
@@ -921,6 +926,9 @@ void put_memory_button_in_buffer(byte memory_number_to_put_in_buffer)
 //-------------------------------------------------------------------------------------------------------
 
 void check_paddles()
+//determines which paddle has been closed (via check_dit_paddle and check_day paddle) and keeps track of the 
+// last_closure state, appropriate to each mode (iambic, ultimatic, etc.)
+
 {
 
 #ifdef DEBUG_LOOP
@@ -1160,6 +1168,8 @@ void check_dah_paddle()
 //-------------------------------------------------------------------------------------------------------
 
 void send_dit(byte sending_type)
+//trigger dit sending, but also build lcd and cli (serial) paddle echo buffers bit by bit
+
 {
 
   // notes: key_compensation is a straight x mS lengthening or shortening of the key down time
@@ -1225,6 +1235,8 @@ void send_dit(byte sending_type)
 //-------------------------------------------------------------------------------------------------------
 
 void send_dah(byte sending_type)
+//trigger dit sending, but also build lcd and cli (serial) paddle echo buffers bit by bit
+
 {
 
   unsigned int character_wpm = wpm;
@@ -1394,7 +1406,14 @@ void speed_set(int wpm_set)
 //-------------------------------------------------------------------------------------------------------
 
 int get_cw_input_from_user(unsigned int exit_time_seconds) {
+//  Loop until something has been entered and more than a letter space interval has passed or until it hits 
+//  a time out (e.g., when called from command_program_memory, while it waits for a memory number ), or a 
+//  command button is hit again.  
+//  Characters are encoded as values < 128, with a 1 start bit and then up to 6 dahs as 1, dits as 0.
+//  Value of 128 is returned if command button is hit
+//  Spaces are encoded as zero.
 
+ 
   byte looping = 1;
   byte paddle_hit = 0;
   byte cw_char = 1;
@@ -1811,6 +1830,8 @@ void check_command_buttons()
 //-------------------------------------------------------------------------------------------------------
 
 void service_dit_dah_buffers()
+//send a dit or dah according to dit/dah_buffers, then reset the buffers.
+
 {
 #ifdef DEBUG_LOOP
   Serial.println(F("loop: entering service_dit_dah_buffers"));
@@ -2073,7 +2094,7 @@ void serial_qrss_mode()
 
 void service_send_buffer()
 {
-  // send one character out of the send buffer
+  // send or process one character out of the send buffer
   // values 129 and above do special things
   // SERIAL_SEND_BUFFER_SPECIAL_START     129  
   // SERIAL_SEND_BUFFER_WPM_CHANGE        130
@@ -2529,6 +2550,9 @@ void process_serial_command() {
 #ifdef FEATURE_COMMAND_LINE_INTERFACE
 
 void service_serial_paddle_echo()
+// converts cli_paddle_echo_buffer containing a single character code to ascii 
+// and sends that character to serial out, then resets the buffer
+
 {
 
 #ifdef DEBUG_LOOP
@@ -3169,6 +3193,8 @@ void serial_program_memory()
 
 #ifdef FEATURE_MEMORIES
 void command_program_memory()
+//reads in a memory number from paddles; that number becomes a parameter for program_memory routine
+
 {
   byte cw_char;
   cw_char = get_cw_input_from_user(0);            // get another cw character from the user to find out which memory number
@@ -3342,6 +3368,13 @@ void play_memory(byte memory_number)
 
 #ifdef FEATURE_MEMORIES
 void program_memory(int memory_number)
+// accumulate characters and/or spaces, with spaces encoded a 0
+// characters are up to seven bits, with a "1" start bit
+// and subsequently dah represented by 1 and dit represented by 0
+// write to memory without converting to ascii
+// optionally, trim trailing spaces
+// terminal 255 marks end of message
+
 {
 
   String lcd_print_string;
