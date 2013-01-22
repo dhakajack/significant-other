@@ -2342,9 +2342,6 @@ void check_serial()
   Serial.println(F("loop: entering check_serial")); 
 #endif 
 
-
-  // Reminder to Goody: multi-parameter commands must be nested in if-then-elses
-
   while (Serial.available() > 0) {
     incoming_serial_byte = Serial.read();
 #ifndef FEATURE_COMMAND_LINE_INTERFACE
