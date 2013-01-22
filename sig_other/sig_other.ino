@@ -115,7 +115,7 @@
 //#define FEATURE_DEAD_OP_WATCHDOG
 //#define FEATURE_AUTOSPACE
 //#define FEATURE_FARNSWORTH
-//#define OPTION_NON_ENGLISH_EXTENSIONS  // add support for additional CW characters (i.e. À, Å, Þ, etc.)
+//#define OPTION_NON_ENGLISH_EXTENSIONS  // add support for additional CW characters (i.e. √Ä, √Ö, √û, etc.)
 
 
 //#define OPTION_SUPPRESS_SERIAL_BOOT_MSG
@@ -1987,10 +1987,10 @@ int uppercase (int charbytein)
   }
   if (charbytein == 158) { 
     charbytein = 142; 
-  }  // ž -> Ž
+  }  // ≈æ -> ≈Ω
   if (charbytein == 154) { 
     charbytein = 138; 
-  }  // š -> Š
+  }  // ≈° -> ≈†
 
   return charbytein;
 }
@@ -2193,7 +2193,7 @@ void service_send_buffer()
         }
 #endif //FEATURE_SERIAL
         if (lcd_send_echo) {
-          display_scroll_print_char(send_buffer_array[0]);
+          display_scroll_print_char(convert_cw_number_to_ascii(send_buffer_array[0]));
           service_display();
         }
         send_char(send_buffer_array[0],NORMAL);
@@ -2314,7 +2314,9 @@ void service_command_line_interface() {
           }
         }
       }
-      add_to_send_buffer(ascii_to_cw(incoming_serial_byte));
+      if(incoming_serial_byte != 13){
+        add_to_send_buffer(ascii_to_cw(incoming_serial_byte));
+      }
     } 
     else {     //(incoming_serial_byte = 92)  -- we got a backslash
       serial_backslash_command = 1;
@@ -3506,4 +3508,5 @@ void initialize_debug_startup(){
   Serial.println(F("setup: exiting, going into loop"));
 }
 #endif //DEBUG_STARTUP
+
 
