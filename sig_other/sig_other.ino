@@ -2314,9 +2314,9 @@ void service_command_line_interface() {
           }
         }
       }
-      add_to_send_buffer(incoming_serial_byte);
+      add_to_send_buffer(ascii_to_cw(incoming_serial_byte));
     } 
-    else {     //(incoming_serial_byte != 92)  -- we got a backslash
+    else {     //(incoming_serial_byte = 92)  -- we got a backslash
       serial_backslash_command = 1;
       Serial.write(incoming_serial_byte);
     }
@@ -2331,6 +2331,28 @@ void service_command_line_interface() {
   }
 }
 #endif //FEATURE_COMMAND_LINE_INTERFACE
+
+//-------------------------------------------------------------------------------------------------------
+
+#ifdef FEATURE_SERIAL
+#ifdef FEATURE_COMMAND_LINE_INTERFACE
+byte ascii_to_cw(byte ascii_char) {
+// convert ASCII to cw encoding
+
+  switch(ascii_char) {
+  case 'A': return 5;
+  case 'B': return 24;
+  case 'C': return 26;
+  case 'D': return 12;
+  case 'E': return 2;
+  default: return 76;
+  }
+}
+
+#endif
+#endif
+
+
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -2895,137 +2917,50 @@ char convert_cw_number_to_ascii (byte number_in)
 {
 
   switch (number_in) {
-  case 5: 
-    return 65; // A
-    break;         
-  case 24: 
-    return 66;
-    break;
-  case 26: 
-    return 67; 
-    break;
-  case 12: 
-    return 68; 
-    break;
-  case 2: 
-    return 69; 
-    break;
-  case 18: 
-    return 70; 
-    break;
-  case 14: 
-    return 71; 
-    break;
-  case 16: 
-    return 72; 
-    break;
-  case 4: 
-    return 73; 
-    break;
-  case 23: 
-    return 74; 
-    break;
-  case 13: 
-    return 75; 
-    break;
-  case 20: 
-    return 76; 
-    break;
-  case 7: 
-    return 77; 
-    break;
-  case 6: 
-    return 78; 
-    break;
-  case 15: 
-    return 79; 
-    break;
-  case 22: 
-    return 80; 
-    break;
-  case 29: 
-    return 81; 
-    break;
-  case 10: 
-    return 82; 
-    break;
-  case 8: 
-    return 83; 
-    break;
-  case 3: 
-    return 84; 
-    break;
-  case 9: 
-    return 85; 
-    break;
-  case 17: 
-    return 86; 
-    break;
-  case 11: 
-    return 87; 
-    break;
-  case 25: 
-    return 88; 
-    break;
-  case 27: 
-    return 89; 
-    break;
-  case 28: 
-    return 90; 
-    break;    // Z
-  case 63: 
-    return 48; 
-    break;    // 0
-  case 47: 
-    return 49; 
-    break;
-  case 39: 
-    return 50; 
-    break;
-  case 35: 
-    return 51; 
-    break;
-  case 33: 
-    return 52; 
-    break;
-  case 32: 
-    return 53; 
-    break;
-  case 48: 
-    return 54; 
-    break;
-  case 56: 
-    return 55; 
-    break;
-  case 60: 
-    return 56; 
-    break;
-  case 62: 
-    return 57; 
-    break;
-  case 76: 
-    return 63; 
-    break;  // ?
-  case 50: 
-    return 47; 
-    break;   // /
-  case 49: 
-    return 45; 
-    break;   // -
-  case 115: 
-    return 44; 
-    break;  // ,
-  case 85:
-    return 46;
-  case 64: 
-    return 92; 
-    break;  // special hack; six dahs = \ (backslash)
-  case 0: 
-    return 32; 
-    break;       // special 0 = space
-  default: 
-    return 254; 
-    break;
+  case 5:   return 'A';      
+  case 24:  return 'B';
+  case 26:  return 'C';
+  case 12:  return 'D';
+  case 2:   return 'E';
+  case 18:  return 'F';
+  case 14:  return 'G';
+  case 16:  return 'H';
+  case 4:   return 'I';
+  case 23:  return 'J';
+  case 13:  return 'K';
+  case 20:  return 'L';
+  case 7:   return 'M'; 
+  case 6:   return 'N';
+  case 15:  return 'O'; 
+  case 22:  return 'P'; 
+  case 29:  return 'Q';
+  case 10:  return 'R';
+  case 8:   return 'S'; 
+  case 3:   return 'T'; 
+  case 9:   return 'U'; 
+  case 17:  return 'V';
+  case 11:  return 'W'; 
+  case 25:  return 'X';
+  case 27:  return 'Y'; 
+  case 28:  return 'Z';
+  case 63:  return '0';
+  case 47:  return '1';
+  case 39:  return '2'; 
+  case 35:  return '3';
+  case 33:  return '4'; 
+  case 32:  return '5'; 
+  case 48:  return '6';
+  case 56:  return '7';
+  case 60:  return '8';
+  case 62:  return '9'; 
+  case 76:  return '?';
+  case 50:  return '/';
+  case 49:  return '-';
+  case 115: return ',';
+  case 85:  return '.';
+  case 64:  return 92; // special hack; six dahs = \ (backslash)  [note: this renders as a yen sign on my lcd - jjw]
+  case 0:   return 32;
+  default:  return 254; 
   }
 }
 
